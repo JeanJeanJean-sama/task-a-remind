@@ -1,10 +1,9 @@
 # たすかReマインド（試作版 v0.3）
 
-[![テスト](https://github.com/OWNER/task-a-remind/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/task-a-remind/actions/workflows/ci.yml)
-[![Web版を公開](https://github.com/OWNER/task-a-remind/actions/workflows/pages.yml/badge.svg)](https://github.com/OWNER/task-a-remind/actions/workflows/pages.yml)
+[![テスト](https://github.com/jeanjeanjean-sama/task-a-remind/actions/workflows/ci.yml/badge.svg)](https://github.com/jeanjeanjean-sama/task-a-remind/actions/workflows/ci.yml)
+[![Web版を公開](https://github.com/jeanjeanjean-sama/task-a-remind/actions/workflows/pages.yml/badge.svg)](https://github.com/jeanjeanjean-sama/task-a-remind/actions/workflows/pages.yml)
 
-**▶ Web版を開く：https://OWNER.github.io/task-a-remind/**
-<!-- ↑ OWNER を GitHub のユーザー名（または Organization 名）に置き換えてください -->
+**▶ Web版を開く：https://jeanjeanjean-sama.github.io/task-a-remind/**
 
 障害児・医療的ケア児の家庭のための、**子どもの情報まとめ**と**手続きリマインド**の試作版です。
 
@@ -88,3 +87,9 @@ main にマージすると、テストが通ればWeb版は自動で公開され
 - **実在の子どもの情報を、このリポジトリに入れないでください。** テストは架空のサンプルで行います。
 - 手続きの型はサンプルです。実際の手順や期間は自治体によって異なります。
 - このアプリは医療的な判断や助言を行いません。手順書は、家族が書いた内容を整理して表示するものです。
+
+## ライセンス
+
+[MIT License](LICENSE)　© 2026 Jean=Summer
+
+コードは自由に使い、直し、配ることができます（著作権表示とライセンス文を残してください）。手続きの型やサンプルデータを含め、無保証です。

@@ -19,5 +19,11 @@
   "devDependencies": {
     "playwright": "1.56.0"
   },
-  "license": "UNLICENSED"
+  "license": "MIT",
+  "author": "Jean=Summer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeanjeanjean-sama/task-a-remind.git"
+  },
+  "homepage": "https://jeanjeanjean-sama.github.io/task-a-remind/"
 }

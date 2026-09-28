@@ -4,6 +4,10 @@
 
 ## [未リリース]
 
+### 追加
+- MITライセンス（© Jean=Summer）
+- 公開先：https://jeanjeanjean-sama.github.io/task-a-remind/
+
 ## [0.3.1] - 2026-09-28
 
 ### 変更
