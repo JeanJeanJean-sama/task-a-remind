@@ -1,7 +1,7 @@
 {
   "name": "tasuka-remind",
   "title": "たすかReマインド データ定義書",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "description": "子どもの情報を「1つの事実は1か所だけ」に保存するためのデータの形。ブラウザ保存・スプレッドシート・将来のデータベースのどれでも、この定義に従う。",
   "commonFields": [
     { "key": "id", "label": "ID", "type": "string", "help": "記録ごとの固有の番号（自動）。変更しない。" },
@@ -14,7 +14,27 @@
       { "value": "all", "label": "誰に見せてもよい" },
       { "value": "supporter", "label": "支援者まで" },
       { "value": "family", "label": "家族のみ" }
-    ]
+    ],
+    "categoryVisibility": {
+      "出生時の様子": "family",
+      "医療・服薬": "supporter",
+      "本人・家族の意向": "family"
+    },
+    "labelSuggestions": {
+      "基本情報": ["血液型", "身長", "体重", "通っている園・学校", "利用しているサービス", "言葉・コミュニケーション", "移動のしかた"],
+      "特徴と関わり方": ["成長のペース", "見て覚える", "体の特徴", "人との関わり", "疲れやすさ", "慣れない場所で", "伝わりやすい伝え方"],
+      "好きなこと・遊び": ["好きな遊び", "好きな音・音楽", "好きなおもちゃ", "好きな本", "好きな食べ物"],
+      "苦手なこと": ["苦手なこと", "苦手な音・場所", "触られるのが苦手なところ", "パニックになったとき"],
+      "食事": ["ミルクの種類", "ミルク1回の量", "ミルクの回数・時間", "ミルクの介助方法", "離乳食・食事の形態", "食事の介助方法", "食事の回数・時間", "食事の量", "食物アレルギー", "食事の注意点"],
+      "睡眠": ["寝る時間", "起きる時間", "お昼寝", "寝かしつけのしかた", "眠い時のサイン"],
+      "身体・アレルギー": ["アレルギー（食物）", "アレルギー（薬）", "体温の目安", "気をつける体の部位"],
+      "医療・服薬": ["服薬", "発作", "体調が悪い時のサイン", "受診の目安"],
+      "発達・できること": ["運動", "手先", "言葉", "身のまわりのこと", "発達検査の結果"],
+      "出生時の様子": ["出産日時", "身長・体重・頭囲・胸囲", "在胎週数・分娩の経過", "産院", "出産当時のメモ"],
+      "本人・家族の意向": ["家族の願い", "本人の希望", "目標"],
+      "その他": []
+    },
+    "milestoneSuggestions": ["追視", "首すわり", "寝返り", "ずりばい", "おすわり", "ハイハイ", "つかまり立ち", "伝い歩き", "ひとり歩き", "歯の生え始め", "指さし", "初めての言葉", "二語文", "スプーンで食べる", "コップで飲む", "トイレでおしっこ"]
   },
   "collections": {
     "children": {
@@ -22,11 +42,33 @@
       "sheet": "子ども",
       "display": "nickname",
       "fields": [
-        { "key": "nickname", "label": "呼び名", "type": "string", "required": true, "help": "通知にも表示されます。本名でなくてかまいません。" },
-        { "key": "birthDate", "label": "生年月日", "type": "date" },
+        { "key": "nickname", "label": "呼び名", "type": "string", "required": true, "help": "家で呼んでいる名前。通知にも表示されます。" },
+        { "key": "fullName", "label": "氏名", "type": "string" },
+        { "key": "furigana", "label": "ふりがな", "type": "string" },
+        { "key": "birthDate", "label": "生年月日", "type": "date", "help": "年齢（○歳○ヶ月）を自動で表示します。" },
         { "key": "prefecture", "label": "都道府県", "type": "string" },
         { "key": "municipality", "label": "市区町村", "type": "string" },
+        { "key": "address", "label": "住所", "type": "text", "help": "印刷では家族用にだけ載ります。" },
+        { "key": "phone", "label": "自宅の電話番号", "type": "tel" },
         { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "family": {
+      "label": "家族・緊急連絡先",
+      "sheet": "家族・緊急連絡先",
+      "display": "name",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "relation", "label": "続柄", "type": "string", "required": true, "help": "例：父、母、祖父、きょうだい" },
+        { "key": "name", "label": "氏名", "type": "string" },
+        { "key": "birthDate", "label": "生年月日", "type": "date" },
+        { "key": "occupation", "label": "職業", "type": "string" },
+        { "key": "phone", "label": "電話番号", "type": "tel" },
+        { "key": "address", "label": "住所", "type": "text" },
+        { "key": "emergencyOrder", "label": "緊急連絡の順番", "type": "number", "help": "1、2…と入れると緊急連絡先として順に載ります。空欄なら緊急連絡先にしません。" },
+        { "key": "livesTogether", "label": "同居", "type": "select", "options": ["同居", "別居"] },
+        { "key": "visibility", "label": "見せてよい範囲", "type": "select", "optionsRef": "visibility", "default": "supporter" },
+        { "key": "note", "label": "備考", "type": "text" }
       ]
     },
     "profile": {
@@ -37,43 +79,43 @@
       "fields": [
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
         { "key": "category", "label": "分類", "type": "select", "required": true, "default": "基本情報",
-          "options": ["基本情報", "家族・緊急連絡先", "医療・服薬", "身体・アレルギー", "性格・特性・関わり方", "生活リズム・食事", "発達・できること", "本人・家族の意向", "その他"] },
-        { "key": "label", "label": "項目名", "type": "string", "required": true, "help": "例：アレルギー、好きなこと、落ち着く方法" },
+          "options": ["基本情報", "特徴と関わり方", "好きなこと・遊び", "苦手なこと", "食事", "睡眠", "身体・アレルギー", "医療・服薬", "発達・できること", "出生時の様子", "本人・家族の意向", "その他"] },
+        { "key": "label", "label": "項目名", "type": "string", "required": true, "suggestFrom": "labelSuggestions", "help": "候補から選ぶか、自由に入力します。" },
         { "key": "value", "label": "内容", "type": "text", "required": true },
+        { "key": "caution", "label": "注意すること", "type": "text", "help": "例：首が弱いので支えが必要" },
         { "key": "validFrom", "label": "いつから", "type": "date" },
         { "key": "validTo", "label": "いつまで", "type": "date", "help": "空欄＝今の情報。過去の情報になったら日付を入れる。" },
         { "key": "visibility", "label": "見せてよい範囲", "type": "select", "optionsRef": "visibility", "default": "supporter" },
+        { "key": "order", "label": "並び順", "type": "number", "hidden": true },
         { "key": "note", "label": "メモ", "type": "text" }
       ]
     },
-    "contacts": {
-      "label": "関係機関",
-      "sheet": "関係機関",
+    "schedule": {
+      "label": "生活リズム",
+      "sheet": "生活リズム",
+      "display": "activity",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "time", "label": "時刻", "type": "time", "required": true },
+        { "key": "activity", "label": "すること", "type": "string", "required": true, "help": "例：ミルク1回目、お昼寝、お風呂" },
+        { "key": "kind", "label": "種類", "type": "select", "default": "食事・ミルク",
+          "options": ["食事・ミルク", "睡眠", "医療的ケア", "服薬", "入浴", "通園・療育", "遊び", "その他"] },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "diagnoses": {
+      "label": "診断名",
+      "sheet": "診断名",
       "display": "name",
       "fields": [
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
-        { "key": "kind", "label": "種類", "type": "select", "required": true, "default": "病院",
-          "options": ["病院", "療育", "福祉サービス", "相談支援", "保育園・学校", "役所", "訪問看護", "医療機器業者", "その他"] },
-        { "key": "name", "label": "名前", "type": "string", "required": true, "help": "例：○○こども病院 小児科" },
-        { "key": "person", "label": "担当者", "type": "string" },
-        { "key": "phone", "label": "電話番号", "type": "tel" },
-        { "key": "hours", "label": "受付時間", "type": "string", "help": "例：平日 9:00〜17:00" },
-        { "key": "note", "label": "メモ", "type": "text" }
-      ]
-    },
-    "certificates": {
-      "label": "受給者証・手帳・医療証",
-      "sheet": "受給者証・手帳",
-      "display": "kind",
-      "fields": [
-        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
-        { "key": "kind", "label": "種類", "type": "select", "required": true, "default": "療育手帳",
-          "options": ["療育手帳", "身体障害者手帳", "障害児通所受給者証", "障害福祉サービス受給者証", "小児慢性特定疾病医療受給者証", "重度障害者医療証", "特別児童扶養手当", "その他"] },
-        { "key": "name", "label": "自治体での呼び名", "type": "string", "help": "例：愛の手帳（東京都）" },
-        { "key": "number", "label": "番号", "type": "string" },
-        { "key": "grade", "label": "区分・等級", "type": "string" },
-        { "key": "validUntil", "label": "有効期限", "type": "date", "help": "ここから更新の手続きを知らせます。" },
-        { "key": "templateId", "label": "更新に使う手続きの型", "type": "template" },
+        { "key": "name", "label": "診断名", "type": "string", "required": true },
+        { "key": "detail", "label": "正式名・補足", "type": "text" },
+        { "key": "diagnosedOn", "label": "診断された時期", "type": "month" },
+        { "key": "department", "label": "病院・診療科", "type": "string" },
+        { "key": "status", "label": "いまの状態", "type": "select", "default": "経過観察中", "options": ["経過観察中", "治療中", "治療済み", "その他"] },
+        { "key": "explanation", "label": "支援者向けの説明", "type": "text", "help": "どんな病気・症状か、日常で気をつけること。サポートブックの「症状について」に載ります。" },
+        { "key": "visibility", "label": "見せてよい範囲", "type": "select", "optionsRef": "visibility", "default": "supporter" },
         { "key": "note", "label": "メモ", "type": "text" }
       ]
     },
@@ -83,12 +125,18 @@
       "display": "title",
       "fields": [
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
-        { "key": "title", "label": "ケアの名前", "type": "string", "required": true, "help": "例：経管栄養（注入）" },
+        { "key": "title", "label": "ケアの名前", "type": "string", "required": true, "help": "例：経鼻経管栄養、在宅酸素療法" },
         { "key": "status", "label": "状態", "type": "select", "options": ["実施中", "終了"], "default": "実施中" },
         { "key": "startedOn", "label": "開始日", "type": "date" },
         { "key": "endedOn", "label": "終了日", "type": "date" },
-        { "key": "reason", "label": "開始の理由", "type": "text" },
-        { "key": "equipment", "label": "使う器具・規格", "type": "text", "help": "例：チューブのサイズ・長さ" },
+        { "key": "reason", "label": "開始の理由・目的", "type": "text" },
+        { "key": "history", "label": "これまでの経過・変化", "type": "text", "help": "例：流量の変化、体重の変化、続けている理由" },
+        { "key": "dose", "label": "量・設定", "type": "text", "help": "例：1回○ml×○回、酸素 ○L/分" },
+        { "key": "schedule", "label": "実施する時間", "type": "text" },
+        { "key": "baseline", "label": "いつもの様子・数値の目安", "type": "text", "help": "例：酸素飽和度（SpO2）平時○〜○%" },
+        { "key": "equipment", "label": "器具・規格", "type": "text", "help": "例：チューブのサイズ・長さ" },
+        { "key": "supplies", "label": "使う物・消耗品", "type": "text" },
+        { "key": "supplierContactId", "label": "機器・業者の連絡先", "type": "ref", "ref": "contacts" },
         { "key": "visibility", "label": "見せてよい範囲", "type": "select", "optionsRef": "visibility", "default": "supporter" },
         { "key": "note", "label": "メモ", "type": "text" }
       ]
@@ -100,10 +148,10 @@
       "fields": [
         { "key": "procedureId", "label": "手順書", "type": "ref", "ref": "careProcedures", "hidden": true },
         { "key": "section", "label": "項目", "type": "select", "required": true,
-          "options": ["いつ・どれだけ", "準備", "実施前の確認", "実施", "中断の判断", "実施後", "いつもと違う時", "緊急時と連絡先"] },
+          "options": ["いつ・どれだけ", "準備", "実施前の確認", "実施", "中断の判断", "実施後", "注意点", "いつもと違う時", "交換・入れ直し", "緊急時と連絡先"] },
         { "key": "order", "label": "順番", "type": "number", "hidden": true },
         { "key": "text", "label": "やること", "type": "text", "required": true },
-        { "key": "criteria", "label": "判断の目安", "type": "text", "help": "例：咳き込んだら一度止め、落ち着いてから再開" },
+        { "key": "criteria", "label": "判断の目安・補足", "type": "text", "help": "例：咳き込んだら一度止め、落ち着いてから再開" },
         { "key": "photoUrl", "label": "写真・動画のリンク", "type": "url", "help": "Googleドライブなどの共有リンク" }
       ]
     },
@@ -113,13 +161,73 @@
       "display": "summary",
       "fields": [
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
-        { "key": "kind", "label": "種類", "type": "select", "default": "受診", "options": ["受診", "入院", "検査", "手術", "発達の記録", "その他"] },
+        { "key": "kind", "label": "種類", "type": "select", "default": "受診",
+          "options": ["受診", "入院", "日帰り入院", "検査", "手術", "診断", "医療的ケアの開始・変更", "事故・けが", "セカンドオピニオン", "発達の記録", "その他"] },
         { "key": "date", "label": "日付", "type": "date", "required": true },
         { "key": "endDate", "label": "終了日（入院など）", "type": "date" },
         { "key": "facility", "label": "病院・機関", "type": "string" },
         { "key": "department", "label": "診療科", "type": "string" },
-        { "key": "summary", "label": "内容", "type": "text", "required": true, "help": "音声入力で話したままでもかまいません。" },
+        { "key": "doctor", "label": "担当医", "type": "string" },
+        { "key": "summary", "label": "概要", "type": "text", "required": true, "help": "一覧に出る短い説明。音声入力で話したままでもかまいません。" },
+        { "key": "symptoms", "label": "症状・経緯", "type": "text" },
+        { "key": "treatment", "label": "治療・検査の内容", "type": "text" },
+        { "key": "result", "label": "結果・その後の経過", "type": "text" },
         { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "milestones": {
+      "label": "成長の記録",
+      "sheet": "成長の記録",
+      "display": "item",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "item", "label": "できたこと", "type": "string", "required": true, "suggestFrom": "milestoneSuggestions", "help": "例：首すわり、ひとり歩き" },
+        { "key": "achievedOn", "label": "できた日", "type": "date", "help": "日付を入れると、そのときの年齢を自動で出します。" },
+        { "key": "ageText", "label": "できた時期", "type": "string", "help": "日付が分からないときに「1歳2ヶ月」のように入れます。" },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "certificates": {
+      "label": "保険証・受給者証・手帳",
+      "sheet": "受給者証・手帳",
+      "display": "kind",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "kind", "label": "種類", "type": "select", "required": true, "default": "療育手帳",
+          "options": ["健康保険証", "小児医療証（子ども医療証）", "療育手帳", "身体障害者手帳", "障害児通所受給者証", "障害福祉サービス受給者証", "小児慢性特定疾病医療受給者証", "重度障害者医療証", "特別児童扶養手当", "その他"] },
+        { "key": "status", "label": "状態", "type": "select", "default": "取得済み", "options": ["取得済み", "申請中", "未取得・取得予定"] },
+        { "key": "name", "label": "自治体での呼び名", "type": "string", "help": "例：愛の手帳（東京都）" },
+        { "key": "issuerNumber", "label": "公費負担者番号・保険者番号", "type": "string" },
+        { "key": "issuerName", "label": "発行元・保険者の名前", "type": "string" },
+        { "key": "number", "label": "番号（受給者番号・記号番号など）", "type": "string" },
+        { "key": "grade", "label": "区分・等級・種別", "type": "string" },
+        { "key": "disease", "label": "対象の疾患名", "type": "string" },
+        { "key": "copay", "label": "自己負担（上限額・割合）", "type": "text" },
+        { "key": "issuedOn", "label": "取得日", "type": "date" },
+        { "key": "validUntil", "label": "有効期限", "type": "date", "help": "ここから更新の手続きを知らせます。" },
+        { "key": "renewalNote", "label": "更新の決まり", "type": "text", "help": "例：毎年更新、文書料が必要、自動更新" },
+        { "key": "templateId", "label": "更新に使う手続きの型", "type": "template" },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "contacts": {
+      "label": "医療機関・関係機関",
+      "sheet": "関係機関",
+      "display": "name",
+      "description": "同じ病院で診療科が複数あるときは、診療科ごとに1件ずつ登録する（画面では病院ごとにまとめて表示）。",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "kind", "label": "種類", "type": "select", "required": true, "default": "病院",
+          "options": ["病院", "療育", "訪問看護", "医療機器業者", "福祉サービス", "相談支援", "保育園・学校", "子育て支援", "教室・親の会", "役所", "児童相談所", "その他"] },
+        { "key": "name", "label": "機関の名前", "type": "string", "required": true, "help": "例：○○こども病院" },
+        { "key": "department", "label": "診療科・区分", "type": "string", "help": "例：循環器科、理学療法" },
+        { "key": "person", "label": "主治医・担当者", "type": "string" },
+        { "key": "phone", "label": "電話番号", "type": "tel" },
+        { "key": "hours", "label": "受付時間", "type": "string", "help": "例：平日 9:00〜17:00" },
+        { "key": "address", "label": "住所", "type": "text" },
+        { "key": "visitPattern", "label": "通院・利用のしかた", "type": "text", "help": "例：月1回、心臓の経過観察" },
+        { "key": "supplies", "label": "処方・診療材料", "type": "text" },
+        { "key": "note", "label": "備考", "type": "text" }
       ]
     },
     "tasks": {

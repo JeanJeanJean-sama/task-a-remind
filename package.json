@@ -1,6 +1,6 @@
 {
   "name": "tasuka-remind",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "たすかReマインド：障害児・医療的ケア児家庭のための、情報まとめと手続きリマインドの試作版",
   "type": "module",

@@ -36,7 +36,7 @@ jobs:
 
       - name: 個人情報らしいファイルが入っていないか確認
         run: |
-          bad=$(git ls-files | grep -E '(たすかReマインド_データ_.*\.json|_サポートブック_|_手順書_.*\.pdf|\.ics$)' || true)
+          bad=$(git ls-files | grep -E '(たすかReマインド_データ_.*\.json|取り込み用.*\.json|_サポートブック_|_手順書_.*\.pdf|\.ics$)' || true)
           if [ -n "$bad" ]; then
             echo "::error::書き出したデータやPDFがコミットされています。削除してください：$bad"
             exit 1

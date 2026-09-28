@@ -210,3 +210,25 @@ a { color: var(--accent); }
   .doc h2, .doc h3 { break-after: avoid; }
   .doc-table tr, .doc li { break-inside: avoid; }
 }
+
+/* 第2版で追加した表示 */
+.age { font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 2px; }
+.caution { display: block; font-size: 13px; color: var(--warn); margin-top: 2px; }
+.rhythm { list-style: none; margin: 0; padding: 0; }
+.rhythm-row { display: grid; grid-template-columns: 3.6em 1fr auto; gap: 10px; align-items: center; width: 100%; background: none; border: 0; border-top: 1px solid var(--line); padding: 8px 0; text-align: left; cursor: pointer; color: inherit; }
+.rhythm li:first-child .rhythm-row { border-top: 0; }
+.rhythm-time { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); }
+.dept { display: grid; gap: 2px; width: 100%; text-align: left; background: var(--bg); border: 0; border-radius: 10px; padding: 8px 10px; margin-top: 6px; cursor: pointer; color: inherit; }
+.dept-name { font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn.chip { border-radius: 99px; min-height: 32px; font-size: 13px; }
+.star { color: var(--warn); }
+.tl-more { padding-left: 14px; }
+.tl-detail { margin: 0 0 10px 14px; font-size: 13px; }
+.doc-toc { font-size: 13px; color: #333; columns: 2; margin: 6px 0 16px; padding-left: 1.4em; }
+.doc-event { font-weight: 700; margin: 10px 0 2px; }
+.rhythm-table th { width: 5em; }
+@media print {
+  .doc-chapter { break-before: page; }
+  .doc-chapter:first-of-type { break-before: auto; }
+}

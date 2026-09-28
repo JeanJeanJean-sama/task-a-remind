@@ -63,9 +63,9 @@ test('通知の文面に医療の情報が入らない', () => {
   const db = s.collections;
   const text = L.buildDigestText(db, '2026-09-28', { appUrl: 'https://example.com/app' });
   assert.ok(text.includes('今夜のまとめ'));
-  assert.ok(text.includes('療育手帳'));
+  assert.ok(text.includes('保育園に来月の注入時間の変更を伝える'));
   assert.ok(text.includes('https://example.com/app'));
-  for (const word of ['症候群', 'お薬', '経管', 'アレルギー']) assert.ok(!text.includes(word), word + ' が含まれている');
+  for (const word of ['症候群', 'お薬', '経管', 'アレルギー', '心臓', '見本']) assert.ok(!text.includes(word), word + ' が含まれている');
   const t = db.tasks.find((x) => x.window === 'day' && x.status === 'todo');
   t.scheduledDate = '2026-09-28';
   const day = L.buildDayText(db, '2026-09-28', {});
@@ -107,6 +107,34 @@ test('サンプルデータがデータ定義に合っている', () => {
       for (const f of def.fields) if (f.required) assert.ok(rec[f.key] !== '' && rec[f.key] != null, `${col}.${f.key} が必須なのに空`);
     }
   }
+});
+
+
+test('年齢の表示（○歳○ヶ月）', () => {
+  assert.equal(L.ageText('2022-01-26', '2022-02-05'), '10日');
+  assert.equal(L.ageText('2022-01-26', '2022-07-20'), '5ヶ月');
+  assert.equal(L.ageText('2022-01-26', '2023-01-25'), '11ヶ月');
+  assert.equal(L.ageText('2022-01-26', '2023-01-26'), '1歳');
+  assert.equal(L.ageText('2022-01-26', '2023-10-17'), '1歳8ヶ月');
+  assert.equal(L.ageText('2022-01-26', '2021-12-01'), '');
+  assert.equal(L.fmtYm('2022-03'), '2022年3月');
+});
+
+test('第1版のデータを第2版に直す（何度やっても同じ）', () => {
+  const v1 = {
+    format: 'tasuka-remind-export', schemaVersion: 1,
+    collections: {
+      profile: [{ id: 'a', category: '性格・特性・関わり方', label: '好き', value: 'x' }, { id: 'b', category: '生活リズム・食事', label: '食事', value: 'y' }, { id: 'c', category: '基本情報', label: 'z', value: 'z' }],
+      certificates: [{ id: 'k', kind: '療育手帳' }]
+    }
+  };
+  const d = L.migrate(JSON.parse(JSON.stringify(v1)));
+  assert.equal(d.schemaVersion, 2);
+  assert.equal(d.collections.profile[0].category, '特徴と関わり方');
+  assert.equal(d.collections.profile[1].category, '食事');
+  assert.equal(d.collections.profile[2].category, '基本情報');
+  assert.equal(d.collections.certificates[0].status, '取得済み');
+  assert.equal(L.upgradeCollections(d.collections).length, 0, '2回目は何も変わらない');
 });
 
 console.log(`ロジックのテスト：${n}件すべて成功`);

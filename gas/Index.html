@@ -222,14 +222,36 @@ a { color: var(--accent); }
   .doc-table tr, .doc li { break-inside: avoid; }
 }
 
+/* 第2版で追加した表示 */
+.age { font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 2px; }
+.caution { display: block; font-size: 13px; color: var(--warn); margin-top: 2px; }
+.rhythm { list-style: none; margin: 0; padding: 0; }
+.rhythm-row { display: grid; grid-template-columns: 3.6em 1fr auto; gap: 10px; align-items: center; width: 100%; background: none; border: 0; border-top: 1px solid var(--line); padding: 8px 0; text-align: left; cursor: pointer; color: inherit; }
+.rhythm li:first-child .rhythm-row { border-top: 0; }
+.rhythm-time { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--accent); }
+.dept { display: grid; gap: 2px; width: 100%; text-align: left; background: var(--bg); border: 0; border-radius: 10px; padding: 8px 10px; margin-top: 6px; cursor: pointer; color: inherit; }
+.dept-name { font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn.chip { border-radius: 99px; min-height: 32px; font-size: 13px; }
+.star { color: var(--warn); }
+.tl-more { padding-left: 14px; }
+.tl-detail { margin: 0 0 10px 14px; font-size: 13px; }
+.doc-toc { font-size: 13px; color: #333; columns: 2; margin: 6px 0 16px; padding-left: 1.4em; }
+.doc-event { font-weight: 700; margin: 10px 0 2px; }
+.rhythm-table th { width: 5em; }
+@media print {
+  .doc-chapter { break-before: page; }
+  .doc-chapter:first-of-type { break-before: auto; }
+}
+
 </style>
 </head>
 <body>
 <div id="app"><noscript>このアプリを使うには、JavaScriptを有効にしてください。</noscript></div>
 <script>
-window.__SCHEMA__={"name":"tasuka-remind","title":"たすかReマインド データ定義書","schemaVersion":1,"description":"子どもの情報を「1つの事実は1か所だけ」に保存するためのデータの形。ブラウザ保存・スプレッドシート・将来のデータベースのどれでも、この定義に従う。","commonFields":[{"key":"id","label":"ID","type":"string","help":"記録ごとの固有の番号（自動）。変更しない。"},{"key":"createdAt","label":"作成日時","type":"datetime","help":"自動"},{"key":"updatedAt","label":"更新日時","type":"datetime","help":"自動。移行・同期のとき、新しい方を判断するのに使う。"},{"key":"deleted","label":"削除済み","type":"bool","help":"削除しても記録は残し、この印を付ける（同期のため）。"}],"options":{"visibility":[{"value":"all","label":"誰に見せてもよい"},{"value":"supporter","label":"支援者まで"},{"value":"family","label":"家族のみ"}]},"collections":{"children":{"label":"子ども","sheet":"子ども","display":"nickname","fields":[{"key":"nickname","label":"呼び名","type":"string","required":true,"help":"通知にも表示されます。本名でなくてかまいません。"},{"key":"birthDate","label":"生年月日","type":"date"},{"key":"prefecture","label":"都道府県","type":"string"},{"key":"municipality","label":"市区町村","type":"string"},{"key":"note","label":"メモ","type":"text"}]},"profile":{"label":"子どもの情報","sheet":"子どもの情報","display":"label","description":"1項目1行。内容が変わったら古い行に「いつまで」を入れて残し、新しい行を追加する（履歴）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"category","label":"分類","type":"select","required":true,"default":"基本情報","options":["基本情報","家族・緊急連絡先","医療・服薬","身体・アレルギー","性格・特性・関わり方","生活リズム・食事","発達・できること","本人・家族の意向","その他"]},{"key":"label","label":"項目名","type":"string","required":true,"help":"例：アレルギー、好きなこと、落ち着く方法"},{"key":"value","label":"内容","type":"text","required":true},{"key":"validFrom","label":"いつから","type":"date"},{"key":"validTo","label":"いつまで","type":"date","help":"空欄＝今の情報。過去の情報になったら日付を入れる。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"contacts":{"label":"関係機関","sheet":"関係機関","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"病院","options":["病院","療育","福祉サービス","相談支援","保育園・学校","役所","訪問看護","医療機器業者","その他"]},{"key":"name","label":"名前","type":"string","required":true,"help":"例：○○こども病院 小児科"},{"key":"person","label":"担当者","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"hours","label":"受付時間","type":"string","help":"例：平日 9:00〜17:00"},{"key":"note","label":"メモ","type":"text"}]},"certificates":{"label":"受給者証・手帳・医療証","sheet":"受給者証・手帳","display":"kind","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"療育手帳","options":["療育手帳","身体障害者手帳","障害児通所受給者証","障害福祉サービス受給者証","小児慢性特定疾病医療受給者証","重度障害者医療証","特別児童扶養手当","その他"]},{"key":"name","label":"自治体での呼び名","type":"string","help":"例：愛の手帳（東京都）"},{"key":"number","label":"番号","type":"string"},{"key":"grade","label":"区分・等級","type":"string"},{"key":"validUntil","label":"有効期限","type":"date","help":"ここから更新の手続きを知らせます。"},{"key":"templateId","label":"更新に使う手続きの型","type":"template"},{"key":"note","label":"メモ","type":"text"}]},"careProcedures":{"label":"医療的ケア手順書","sheet":"医療的ケア手順書","display":"title","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"ケアの名前","type":"string","required":true,"help":"例：経管栄養（注入）"},{"key":"status","label":"状態","type":"select","options":["実施中","終了"],"default":"実施中"},{"key":"startedOn","label":"開始日","type":"date"},{"key":"endedOn","label":"終了日","type":"date"},{"key":"reason","label":"開始の理由","type":"text"},{"key":"equipment","label":"使う器具・規格","type":"text","help":"例：チューブのサイズ・長さ"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careSteps":{"label":"手順書の手順","sheet":"手順書の手順","display":"text","fields":[{"key":"procedureId","label":"手順書","type":"ref","ref":"careProcedures","hidden":true},{"key":"section","label":"項目","type":"select","required":true,"options":["いつ・どれだけ","準備","実施前の確認","実施","中断の判断","実施後","いつもと違う時","緊急時と連絡先"]},{"key":"order","label":"順番","type":"number","hidden":true},{"key":"text","label":"やること","type":"text","required":true},{"key":"criteria","label":"判断の目安","type":"text","help":"例：咳き込んだら一度止め、落ち着いてから再開"},{"key":"photoUrl","label":"写真・動画のリンク","type":"url","help":"Googleドライブなどの共有リンク"}]},"visits":{"label":"受診・入院の記録","sheet":"受診・入院の記録","display":"summary","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","default":"受診","options":["受診","入院","検査","手術","発達の記録","その他"]},{"key":"date","label":"日付","type":"date","required":true},{"key":"endDate","label":"終了日（入院など）","type":"date"},{"key":"facility","label":"病院・機関","type":"string"},{"key":"department","label":"診療科","type":"string"},{"key":"summary","label":"内容","type":"text","required":true,"help":"音声入力で話したままでもかまいません。"},{"key":"note","label":"メモ","type":"text"}]},"tasks":{"label":"タスク","sheet":"タスク","display":"title","description":"手続きは工程ごとのタスクに分け、「前の工程」が終わると次が出てくる。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"やること","type":"string","required":true},{"key":"processId","label":"手続きのまとまりID","type":"string","hidden":true},{"key":"processName","label":"手続き名","type":"string","hidden":true},{"key":"templateId","label":"手続きの型","type":"string","hidden":true},{"key":"stepNo","label":"工程番号","type":"number","hidden":true},{"key":"dependsOn","label":"前の工程","type":"refs","ref":"tasks","hidden":true},{"key":"dueDate","label":"目安の期限","type":"date"},{"key":"window","label":"いつできるか","type":"select","default":"night","options":[{"value":"night","label":"夜でもできる（書類・ネット）"},{"value":"day","label":"昼しかできない（電話・窓口）"}]},{"key":"scheduledDate","label":"昼にやる日","type":"date","help":"昼しかできないタスクを、この日の昼に1回だけ知らせます。"},{"key":"contactId","label":"連絡先","type":"ref","ref":"contacts"},{"key":"script","label":"伝えること・持ち物","type":"text"},{"key":"assignee","label":"担当","type":"string","help":"例：父、母"},{"key":"status","label":"状態","type":"select","default":"todo","options":[{"value":"todo","label":"未完了"},{"value":"done","label":"完了"},{"value":"skipped","label":"対象外"}]},{"key":"doneAt","label":"完了日","type":"date","hidden":true},{"key":"certificateId","label":"関係する受給者証・手帳","type":"ref","ref":"certificates"},{"key":"note","label":"メモ","type":"text"}]}}};
+window.__SCHEMA__={"name":"tasuka-remind","title":"たすかReマインド データ定義書","schemaVersion":2,"description":"子どもの情報を「1つの事実は1か所だけ」に保存するためのデータの形。ブラウザ保存・スプレッドシート・将来のデータベースのどれでも、この定義に従う。","commonFields":[{"key":"id","label":"ID","type":"string","help":"記録ごとの固有の番号（自動）。変更しない。"},{"key":"createdAt","label":"作成日時","type":"datetime","help":"自動"},{"key":"updatedAt","label":"更新日時","type":"datetime","help":"自動。移行・同期のとき、新しい方を判断するのに使う。"},{"key":"deleted","label":"削除済み","type":"bool","help":"削除しても記録は残し、この印を付ける（同期のため）。"}],"options":{"visibility":[{"value":"all","label":"誰に見せてもよい"},{"value":"supporter","label":"支援者まで"},{"value":"family","label":"家族のみ"}],"categoryVisibility":{"出生時の様子":"family","医療・服薬":"supporter","本人・家族の意向":"family"},"labelSuggestions":{"基本情報":["血液型","身長","体重","通っている園・学校","利用しているサービス","言葉・コミュニケーション","移動のしかた"],"特徴と関わり方":["成長のペース","見て覚える","体の特徴","人との関わり","疲れやすさ","慣れない場所で","伝わりやすい伝え方"],"好きなこと・遊び":["好きな遊び","好きな音・音楽","好きなおもちゃ","好きな本","好きな食べ物"],"苦手なこと":["苦手なこと","苦手な音・場所","触られるのが苦手なところ","パニックになったとき"],"食事":["ミルクの種類","ミルク1回の量","ミルクの回数・時間","ミルクの介助方法","離乳食・食事の形態","食事の介助方法","食事の回数・時間","食事の量","食物アレルギー","食事の注意点"],"睡眠":["寝る時間","起きる時間","お昼寝","寝かしつけのしかた","眠い時のサイン"],"身体・アレルギー":["アレルギー（食物）","アレルギー（薬）","体温の目安","気をつける体の部位"],"医療・服薬":["服薬","発作","体調が悪い時のサイン","受診の目安"],"発達・できること":["運動","手先","言葉","身のまわりのこと","発達検査の結果"],"出生時の様子":["出産日時","身長・体重・頭囲・胸囲","在胎週数・分娩の経過","産院","出産当時のメモ"],"本人・家族の意向":["家族の願い","本人の希望","目標"],"その他":[]},"milestoneSuggestions":["追視","首すわり","寝返り","ずりばい","おすわり","ハイハイ","つかまり立ち","伝い歩き","ひとり歩き","歯の生え始め","指さし","初めての言葉","二語文","スプーンで食べる","コップで飲む","トイレでおしっこ"]},"collections":{"children":{"label":"子ども","sheet":"子ども","display":"nickname","fields":[{"key":"nickname","label":"呼び名","type":"string","required":true,"help":"家で呼んでいる名前。通知にも表示されます。"},{"key":"fullName","label":"氏名","type":"string"},{"key":"furigana","label":"ふりがな","type":"string"},{"key":"birthDate","label":"生年月日","type":"date","help":"年齢（○歳○ヶ月）を自動で表示します。"},{"key":"prefecture","label":"都道府県","type":"string"},{"key":"municipality","label":"市区町村","type":"string"},{"key":"address","label":"住所","type":"text","help":"印刷では家族用にだけ載ります。"},{"key":"phone","label":"自宅の電話番号","type":"tel"},{"key":"note","label":"メモ","type":"text"}]},"family":{"label":"家族・緊急連絡先","sheet":"家族・緊急連絡先","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"relation","label":"続柄","type":"string","required":true,"help":"例：父、母、祖父、きょうだい"},{"key":"name","label":"氏名","type":"string"},{"key":"birthDate","label":"生年月日","type":"date"},{"key":"occupation","label":"職業","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"address","label":"住所","type":"text"},{"key":"emergencyOrder","label":"緊急連絡の順番","type":"number","help":"1、2…と入れると緊急連絡先として順に載ります。空欄なら緊急連絡先にしません。"},{"key":"livesTogether","label":"同居","type":"select","options":["同居","別居"]},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"備考","type":"text"}]},"profile":{"label":"子どもの情報","sheet":"子どもの情報","display":"label","description":"1項目1行。内容が変わったら古い行に「いつまで」を入れて残し、新しい行を追加する（履歴）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"category","label":"分類","type":"select","required":true,"default":"基本情報","options":["基本情報","特徴と関わり方","好きなこと・遊び","苦手なこと","食事","睡眠","身体・アレルギー","医療・服薬","発達・できること","出生時の様子","本人・家族の意向","その他"]},{"key":"label","label":"項目名","type":"string","required":true,"suggestFrom":"labelSuggestions","help":"候補から選ぶか、自由に入力します。"},{"key":"value","label":"内容","type":"text","required":true},{"key":"caution","label":"注意すること","type":"text","help":"例：首が弱いので支えが必要"},{"key":"validFrom","label":"いつから","type":"date"},{"key":"validTo","label":"いつまで","type":"date","help":"空欄＝今の情報。過去の情報になったら日付を入れる。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"order","label":"並び順","type":"number","hidden":true},{"key":"note","label":"メモ","type":"text"}]},"schedule":{"label":"生活リズム","sheet":"生活リズム","display":"activity","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"time","label":"時刻","type":"time","required":true},{"key":"activity","label":"すること","type":"string","required":true,"help":"例：ミルク1回目、お昼寝、お風呂"},{"key":"kind","label":"種類","type":"select","default":"食事・ミルク","options":["食事・ミルク","睡眠","医療的ケア","服薬","入浴","通園・療育","遊び","その他"]},{"key":"note","label":"メモ","type":"text"}]},"diagnoses":{"label":"診断名","sheet":"診断名","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"name","label":"診断名","type":"string","required":true},{"key":"detail","label":"正式名・補足","type":"text"},{"key":"diagnosedOn","label":"診断された時期","type":"month"},{"key":"department","label":"病院・診療科","type":"string"},{"key":"status","label":"いまの状態","type":"select","default":"経過観察中","options":["経過観察中","治療中","治療済み","その他"]},{"key":"explanation","label":"支援者向けの説明","type":"text","help":"どんな病気・症状か、日常で気をつけること。サポートブックの「症状について」に載ります。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careProcedures":{"label":"医療的ケア手順書","sheet":"医療的ケア手順書","display":"title","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"ケアの名前","type":"string","required":true,"help":"例：経鼻経管栄養、在宅酸素療法"},{"key":"status","label":"状態","type":"select","options":["実施中","終了"],"default":"実施中"},{"key":"startedOn","label":"開始日","type":"date"},{"key":"endedOn","label":"終了日","type":"date"},{"key":"reason","label":"開始の理由・目的","type":"text"},{"key":"history","label":"これまでの経過・変化","type":"text","help":"例：流量の変化、体重の変化、続けている理由"},{"key":"dose","label":"量・設定","type":"text","help":"例：1回○ml×○回、酸素 ○L/分"},{"key":"schedule","label":"実施する時間","type":"text"},{"key":"baseline","label":"いつもの様子・数値の目安","type":"text","help":"例：酸素飽和度（SpO2）平時○〜○%"},{"key":"equipment","label":"器具・規格","type":"text","help":"例：チューブのサイズ・長さ"},{"key":"supplies","label":"使う物・消耗品","type":"text"},{"key":"supplierContactId","label":"機器・業者の連絡先","type":"ref","ref":"contacts"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careSteps":{"label":"手順書の手順","sheet":"手順書の手順","display":"text","fields":[{"key":"procedureId","label":"手順書","type":"ref","ref":"careProcedures","hidden":true},{"key":"section","label":"項目","type":"select","required":true,"options":["いつ・どれだけ","準備","実施前の確認","実施","中断の判断","実施後","注意点","いつもと違う時","交換・入れ直し","緊急時と連絡先"]},{"key":"order","label":"順番","type":"number","hidden":true},{"key":"text","label":"やること","type":"text","required":true},{"key":"criteria","label":"判断の目安・補足","type":"text","help":"例：咳き込んだら一度止め、落ち着いてから再開"},{"key":"photoUrl","label":"写真・動画のリンク","type":"url","help":"Googleドライブなどの共有リンク"}]},"visits":{"label":"受診・入院の記録","sheet":"受診・入院の記録","display":"summary","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","default":"受診","options":["受診","入院","日帰り入院","検査","手術","診断","医療的ケアの開始・変更","事故・けが","セカンドオピニオン","発達の記録","その他"]},{"key":"date","label":"日付","type":"date","required":true},{"key":"endDate","label":"終了日（入院など）","type":"date"},{"key":"facility","label":"病院・機関","type":"string"},{"key":"department","label":"診療科","type":"string"},{"key":"doctor","label":"担当医","type":"string"},{"key":"summary","label":"概要","type":"text","required":true,"help":"一覧に出る短い説明。音声入力で話したままでもかまいません。"},{"key":"symptoms","label":"症状・経緯","type":"text"},{"key":"treatment","label":"治療・検査の内容","type":"text"},{"key":"result","label":"結果・その後の経過","type":"text"},{"key":"note","label":"メモ","type":"text"}]},"milestones":{"label":"成長の記録","sheet":"成長の記録","display":"item","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"item","label":"できたこと","type":"string","required":true,"suggestFrom":"milestoneSuggestions","help":"例：首すわり、ひとり歩き"},{"key":"achievedOn","label":"できた日","type":"date","help":"日付を入れると、そのときの年齢を自動で出します。"},{"key":"ageText","label":"できた時期","type":"string","help":"日付が分からないときに「1歳2ヶ月」のように入れます。"},{"key":"note","label":"メモ","type":"text"}]},"certificates":{"label":"保険証・受給者証・手帳","sheet":"受給者証・手帳","display":"kind","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"療育手帳","options":["健康保険証","小児医療証（子ども医療証）","療育手帳","身体障害者手帳","障害児通所受給者証","障害福祉サービス受給者証","小児慢性特定疾病医療受給者証","重度障害者医療証","特別児童扶養手当","その他"]},{"key":"status","label":"状態","type":"select","default":"取得済み","options":["取得済み","申請中","未取得・取得予定"]},{"key":"name","label":"自治体での呼び名","type":"string","help":"例：愛の手帳（東京都）"},{"key":"issuerNumber","label":"公費負担者番号・保険者番号","type":"string"},{"key":"issuerName","label":"発行元・保険者の名前","type":"string"},{"key":"number","label":"番号（受給者番号・記号番号など）","type":"string"},{"key":"grade","label":"区分・等級・種別","type":"string"},{"key":"disease","label":"対象の疾患名","type":"string"},{"key":"copay","label":"自己負担（上限額・割合）","type":"text"},{"key":"issuedOn","label":"取得日","type":"date"},{"key":"validUntil","label":"有効期限","type":"date","help":"ここから更新の手続きを知らせます。"},{"key":"renewalNote","label":"更新の決まり","type":"text","help":"例：毎年更新、文書料が必要、自動更新"},{"key":"templateId","label":"更新に使う手続きの型","type":"template"},{"key":"note","label":"メモ","type":"text"}]},"contacts":{"label":"医療機関・関係機関","sheet":"関係機関","display":"name","description":"同じ病院で診療科が複数あるときは、診療科ごとに1件ずつ登録する（画面では病院ごとにまとめて表示）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"病院","options":["病院","療育","訪問看護","医療機器業者","福祉サービス","相談支援","保育園・学校","子育て支援","教室・親の会","役所","児童相談所","その他"]},{"key":"name","label":"機関の名前","type":"string","required":true,"help":"例：○○こども病院"},{"key":"department","label":"診療科・区分","type":"string","help":"例：循環器科、理学療法"},{"key":"person","label":"主治医・担当者","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"hours","label":"受付時間","type":"string","help":"例：平日 9:00〜17:00"},{"key":"address","label":"住所","type":"text"},{"key":"visitPattern","label":"通院・利用のしかた","type":"text","help":"例：月1回、心臓の経過観察"},{"key":"supplies","label":"処方・診療材料","type":"text"},{"key":"note","label":"備考","type":"text"}]},"tasks":{"label":"タスク","sheet":"タスク","display":"title","description":"手続きは工程ごとのタスクに分け、「前の工程」が終わると次が出てくる。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"やること","type":"string","required":true},{"key":"processId","label":"手続きのまとまりID","type":"string","hidden":true},{"key":"processName","label":"手続き名","type":"string","hidden":true},{"key":"templateId","label":"手続きの型","type":"string","hidden":true},{"key":"stepNo","label":"工程番号","type":"number","hidden":true},{"key":"dependsOn","label":"前の工程","type":"refs","ref":"tasks","hidden":true},{"key":"dueDate","label":"目安の期限","type":"date"},{"key":"window","label":"いつできるか","type":"select","default":"night","options":[{"value":"night","label":"夜でもできる（書類・ネット）"},{"value":"day","label":"昼しかできない（電話・窓口）"}]},{"key":"scheduledDate","label":"昼にやる日","type":"date","help":"昼しかできないタスクを、この日の昼に1回だけ知らせます。"},{"key":"contactId","label":"連絡先","type":"ref","ref":"contacts"},{"key":"script","label":"伝えること・持ち物","type":"text"},{"key":"assignee","label":"担当","type":"string","help":"例：父、母"},{"key":"status","label":"状態","type":"select","default":"todo","options":[{"value":"todo","label":"未完了"},{"value":"done","label":"完了"},{"value":"skipped","label":"対象外"}]},{"key":"doneAt","label":"完了日","type":"date","hidden":true},{"key":"certificateId","label":"関係する受給者証・手帳","type":"ref","ref":"certificates"},{"key":"note","label":"メモ","type":"text"}]}}};
 window.__TEMPLATES__={"version":1,"caution":"これはサンプルの流れです。実際の手順・必要書類・かかる期間は、自治体や制度によって異なります。必ずお住まいの自治体の案内で確認し、必要に応じて工程を直してください。","templates":[{"id":"ryouiku-renew","name":"療育手帳の更新","certificateKinds":["療育手帳"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90,"script":"期限・必要なもの・判定（発達検査）の予約先を確認する"},{"title":"判定（発達検査）の予約を電話でとる","window":"day","daysBefore":85,"contactKind":"療育","script":"「療育手帳の更新の判定を予約したい」と伝える。子どもの名前・生年月日・手帳番号を手元に用意する"},{"title":"判定（発達検査）を受ける","window":"day","daysBefore":60,"script":"予約した日時・持ち物を確認する"},{"title":"判定の結果を受け取る","window":"day","daysBefore":30},{"title":"役所で更新を申請する","window":"day","daysBefore":21,"contactKind":"役所","script":"判定結果・今の手帳・写真など（自治体の案内で確認）。期限に間に合わない場合は、窓口で相談する"},{"title":"関係する医療証・受給者証の期限も確認する","window":"night","daysBefore":14,"script":"手帳の更新が遅れると切れてしまう証明書がないか確認する"},{"title":"新しい手帳を受け取り、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"tsusho-renew","name":"障害児通所受給者証の更新","certificateKinds":["障害児通所受給者証","障害福祉サービス受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":60},{"title":"相談支援専門員に連絡し、利用計画案の作成を依頼する","window":"day","daysBefore":55,"contactKind":"相談支援","script":"受給者証の更新時期と、今後使いたいサービス・日数を伝える"},{"title":"申請書類を記入する","window":"night","daysBefore":45},{"title":"役所に申請する（窓口・郵送など自治体の方法で）","window":"day","daysBefore":40,"contactKind":"役所"},{"title":"新しい受給者証を事業所に見せ、アプリの有効期限を直す","window":"night","daysBefore":0,"script":"コピーを渡す・写真を送るなど、事業所の方法で"}]},{"id":"shoman-renew","name":"小児慢性特定疾病医療受給者証の更新","certificateKinds":["小児慢性特定疾病医療受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90},{"title":"主治医に意見書（診断書）を依頼する","window":"day","daysBefore":75,"contactKind":"病院","script":"更新用の医療意見書が必要なことと、提出の期限を伝える"},{"title":"意見書を受け取る","window":"day","daysBefore":45},{"title":"申請書類をそろえる","window":"night","daysBefore":40},{"title":"申請する","window":"day","daysBefore":30,"contactKind":"役所"},{"title":"新しい受給者証を病院・薬局に見せ、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"generic","name":"期限のある手続き（汎用）","certificateKinds":[],"steps":[{"title":"必要なものを確認する","window":"night","daysBefore":30},{"title":"申請・提出する","window":"day","daysBefore":14},{"title":"完了を確認し、アプリの情報を直す","window":"night","daysBefore":0}]}]};
-window.__BUILD__={"version":"0.1.0"};
+window.__BUILD__={"version":"0.2.0"};
 </script>
 <script>
 /*
@@ -241,7 +263,7 @@ window.__BUILD__={"version":"0.1.0"};
 var Logic = (function () {
   'use strict';
 
-  var CURRENT_SCHEMA_VERSION = 1;
+  var CURRENT_SCHEMA_VERSION = 2;
   var EXPORT_FORMAT = 'tasuka-remind-export';
 
   // ---------- 日付（すべて 'YYYY-MM-DD' の文字列で扱う） ----------
@@ -275,6 +297,21 @@ var Logic = (function () {
   function fmtDate(s) {
     var d = parseYmd(s);
     return d ? d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日' : '';
+  }
+  function fmtYm(s) {
+    var m = /^(\d{4})-(\d{1,2})/.exec(String(s || ''));
+    return m ? m[1] + '年' + (+m[2]) + '月' : '';
+  }
+  /** 生年月日と日付から「1歳8ヶ月」「5ヶ月」「12日」のような年齢を作る */
+  function ageText(birth, date) {
+    var b = parseYmd(birth), d = parseYmd(date || ymd());
+    if (!b || !d || d < b) return '';
+    var months = (d.getFullYear() - b.getFullYear()) * 12 + (d.getMonth() - b.getMonth());
+    if (d.getDate() < b.getDate()) months -= 1;
+    if (months <= 0) return Math.round((d - b) / 86400000) + '日';
+    var y = Math.floor(months / 12), m = months % 12;
+    if (!y) return m + 'ヶ月';
+    return y + '歳' + (m ? m + 'ヶ月' : '');
   }
   function nowIso() { return new Date().toISOString(); }
 
@@ -518,7 +555,30 @@ var Logic = (function () {
     };
   }
 
-  /** 古い形式のデータを今の形に直す。定義を変えたらここに変換を足す。 */
+  /**
+   * 古い定義で保存されたデータを、今の定義に合わせて直す。
+   * 何度実行しても同じ結果になるように書く（起動のたびに実行するため）。
+   * 直した記録を [{col, rec}] で返す。
+   */
+  var CATEGORY_V1_TO_V2 = {
+    '性格・特性・関わり方': '特徴と関わり方',
+    '生活リズム・食事': '食事',
+    '家族・緊急連絡先': 'その他'
+  };
+  function upgradeCollections(cols) {
+    var changed = [];
+    var now = nowIso();
+    (cols.profile || []).forEach(function (r) {
+      var to = CATEGORY_V1_TO_V2[r.category];
+      if (to) { r.category = to; r.updatedAt = now; changed.push({ col: 'profile', rec: r }); }
+    });
+    (cols.certificates || []).forEach(function (r) {
+      if (!r.status) { r.status = '取得済み'; r.updatedAt = now; changed.push({ col: 'certificates', rec: r }); }
+    });
+    return changed;
+  }
+
+  /** 書き出しファイルを今の形に直す。定義を変えたらここ（と upgradeCollections）に変換を足す。 */
   function migrate(data) {
     if (!data || data.format !== EXPORT_FORMAT || !data.collections) {
       throw new Error('たすかReマインドの書き出しファイルではありません');
@@ -527,7 +587,7 @@ var Logic = (function () {
     if (v > CURRENT_SCHEMA_VERSION) {
       throw new Error('新しいバージョンのアプリで書き出されたデータです。アプリを更新してください');
     }
-    // 例： if (v < 2) { ...v1→v2の変換...; v = 2; }
+    if (v < 2) upgradeCollections(data.collections); // 第1版→第2版：分類の名前、受給者証の状態
     data.schemaVersion = CURRENT_SCHEMA_VERSION;
     return data;
   }
@@ -547,88 +607,150 @@ var Logic = (function () {
     return changed;
   }
 
-  // ---------- サンプルデータ（架空） ----------
+  // ---------- サンプルデータ（すべて架空） ----------
   function buildSample(today, templates) {
     today = today || ymd();
     var now = nowIso();
     function rec(o) { o.id = uuid(); o.createdAt = now; o.updatedAt = now; o.deleted = false; return o; }
-    var child = rec({ nickname: 'さくら（サンプル）', birthDate: addDays(today, -1650), prefecture: '東京都', municipality: '○○市', note: 'これは架空のサンプルです' });
+    var birth = addDays(today, -640);
+    var child = rec({ nickname: 'さくら（サンプル）', fullName: '見本 さくら', furigana: 'みほん さくら', birthDate: birth,
+      prefecture: '東京都', municipality: '○○市', address: '〒000-0000 東京都○○市○○町1-2-3（架空）', phone: '', note: 'これは架空のサンプルです' });
     var cid = child.id;
+
+    function fam(relation, name, order, extra) {
+      return rec(Object.assign({ childId: cid, relation: relation, name: name, birthDate: '', occupation: '', phone: '', address: '',
+        emergencyOrder: order || '', livesTogether: '同居', visibility: 'supporter', note: '' }, extra || {}));
+    }
+    var family = [
+      fam('母', '見本 花子', 1, { phone: '090-0000-0000', occupation: '会社員' }),
+      fam('父', '見本 太郎', 2, { phone: '090-0000-1111', occupation: '会社員' }),
+      fam('祖母', '見本 春子', 3, { phone: '000-000-0000', livesTogether: '別居', address: '（架空）○○県○○市' })
+    ];
+
+    var ord = 0;
     function p(category, label, value, extra) {
-      return rec(Object.assign({ childId: cid, category: category, label: label, value: value, validFrom: '', validTo: '', visibility: 'supporter', note: '' }, extra || {}));
+      ord += 1;
+      return rec(Object.assign({ childId: cid, category: category, label: label, value: value, caution: '', validFrom: '', validTo: '', visibility: 'supporter', order: ord, note: '' }, extra || {}));
     }
     var profile = [
-      p('基本情報', '呼ばれ方', 'さくちゃん'),
-      p('家族・緊急連絡先', '緊急連絡先', '母：090-0000-0000／父：090-0000-1111', { visibility: 'supporter' }),
-      p('医療・服薬', '主な診断名', '（架空）○○症候群', { visibility: 'family' }),
-      p('医療・服薬', '服薬', '（架空）お薬A　朝・夕', { visibility: 'supporter' }),
-      p('医療・服薬', '在宅酸素', '夜間のみ使用', { validFrom: addDays(today, -1500), validTo: addDays(today, -400) }),
-      p('医療・服薬', '在宅酸素', '終了（手術のため）', { validFrom: addDays(today, -400) }),
-      p('身体・アレルギー', 'アレルギー', 'なし（食物・薬とも）', { visibility: 'all' }),
-      p('性格・特性・関わり方', '好きなこと', '音の出るおもちゃ、手遊び歌', { visibility: 'all' }),
-      p('性格・特性・関わり方', '苦手なこと', '大きな音、急に触られること', { visibility: 'all' }),
-      p('性格・特性・関わり方', '落ち着く方法', '抱っこして背中をトントンする', { visibility: 'all' }),
-      p('生活リズム・食事', '食事', '経管栄養（注入）＋口から少量', { visibility: 'supporter' })
+      p('基本情報', '通っている園・学校', '（架空）○○保育園（週3日）'),
+      p('特徴と関わり方', '見て覚える', '言葉より、身ぶりや絵で見せると伝わりやすいです。まねをするのが得意です。', { visibility: 'all' }),
+      p('特徴と関わり方', '疲れやすさ', '同じ運動量でも疲れやすいです。眠そうなサインが出たら休ませてください。', { visibility: 'all' }),
+      p('特徴と関わり方', '慣れない場所で', '人が多いと緊張して表情がかたくなります。慣れると声が出てきます。', { visibility: 'all' }),
+      p('好きなこと・遊び', '好きな遊び', 'ハイハイで追いかけっこ、揺らし遊び', { caution: '首が弱いので、揺らすときは首を支えてください', visibility: 'all' }),
+      p('好きなこと・遊び', '好きな音・音楽', '手遊び歌、太鼓の音', { visibility: 'all' }),
+      p('苦手なこと', '触られるのが苦手なところ', '顔（特に鼻のまわり）', { visibility: 'all' }),
+      p('食事', 'ミルクの種類', '（架空）ミルクA'),
+      p('食事', 'ミルク1回の量', '160ml（口から飲めない分はチューブから）'),
+      p('食事', '離乳食・食事の形態', 'ペースト食'),
+      p('食事', '食物アレルギー', '牛乳・卵・小麦は確認済みで問題なし', { visibility: 'all' }),
+      p('睡眠', '眠い時のサイン', '目をこする、ぼんやりする', { visibility: 'all' }),
+      p('医療・服薬', '服薬', '（架空）お薬A　朝・夕'),
+      p('医療・服薬', '在宅酸素', '夜間のみ使用', { validFrom: addDays(today, -600), validTo: addDays(today, -60) }),
+      p('医療・服薬', '在宅酸素', '終了（手術のため）', { validFrom: addDays(today, -60) }),
+      p('出生時の様子', '身長・体重・頭囲・胸囲', '（架空）体重2,100g　身長44cm', { visibility: 'family' }),
+      p('本人・家族の意向', '家族の願い', 'いろいろな食べ物を楽しめるようになってほしい', { visibility: 'family' })
     ];
-    function c(kind, name, phone, hours, person) {
-      return rec({ childId: cid, kind: kind, name: name, person: person || '', phone: phone || '', hours: hours || '', note: '' });
+
+    function sc(time, activity, kind) { return rec({ childId: cid, time: time, activity: activity, kind: kind, note: '' }); }
+    var schedule = [
+      sc('06:00', 'ミルク1回目', '食事・ミルク'), sc('07:00', '起きる', '睡眠'), sc('09:00', 'ミルク2回目', '食事・ミルク'),
+      sc('12:00', '離乳食', '食事・ミルク'), sc('13:00', 'ミルク3回目', '食事・ミルク'), sc('14:00', 'お昼寝', '睡眠'),
+      sc('17:00', 'お風呂', '入浴'), sc('19:00', 'ミルク4回目', '食事・ミルク'), sc('21:00', '寝る', '睡眠')
+    ];
+
+    function dg(name, ym, dept, status, explanation, extra) {
+      return rec(Object.assign({ childId: cid, name: name, detail: '', diagnosedOn: ym, department: dept, status: status, explanation: explanation, visibility: 'supporter', note: '' }, extra || {}));
+    }
+    var diagnoses = [
+      dg('（架空）○○症候群', birth.slice(0, 7), '○○こども病院 遺伝科', '経過観察中', '（架空の説明）体力がつきにくく、かぜが重くなりやすいです。見て覚えるのが得意です。'),
+      dg('（架空）心臓の病気', birth.slice(0, 7), '○○こども病院 循環器科', '治療中', '（架空の説明）汗をたくさんかく、呼吸が苦しそうなときは家族に連絡してください。')
+    ];
+
+    function c(kind, name, department, phone, hours, extra) {
+      return rec(Object.assign({ childId: cid, kind: kind, name: name, department: department || '', person: '', phone: phone || '', hours: hours || '', address: '', visitPattern: '', supplies: '', note: '' }, extra || {}));
     }
     var contacts = [
-      c('病院', '○○こども病院 小児科', '03-0000-0000', '平日 9:00〜17:00'),
-      c('療育', '○○療育センター', '03-0000-1111', '平日 9:00〜16:00'),
-      c('相談支援', '○○相談支援センター', '03-0000-2222', '平日 9:00〜17:00', '△△さん'),
-      c('役所', '○○市役所 障害福祉課', '03-0000-3333', '平日 8:30〜17:15'),
-      c('医療機器業者', '○○メディカル', '0120-000-000', '24時間')
+      c('病院', '○○こども病院', '循環器科', '03-0000-0000', '平日 9:00〜17:00', { person: '主治医：○○先生', visitPattern: '月1回、心臓の経過観察', supplies: '（架空）お薬A、酸素のチューブ' }),
+      c('病院', '○○こども病院', '総合診療科', '03-0000-0000', '平日 9:00〜17:00', { visitPattern: '月1回、食事と体重の確認', supplies: '経管栄養チューブ' }),
+      c('病院', '○○クリニック', '小児科', '03-0000-0500', '', { visitPattern: 'かぜ・予防接種' }),
+      c('訪問看護', '○○訪問看護ステーション', '', '03-0000-0800', '', { person: '△△さん', visitPattern: '週1回、体調の確認とチューブ交換' }),
+      c('療育', '○○療育センター', '理学療法', '03-0000-1111', '平日 9:00〜16:00', { visitPattern: '月2回、運動の訓練' }),
+      c('相談支援', '○○相談支援センター', '', '03-0000-2222', '平日 9:00〜17:00', { person: '△△さん' }),
+      c('役所', '○○市役所 障害福祉課', '', '03-0000-3333', '平日 8:30〜17:15'),
+      c('医療機器業者', '○○メディカル', '在宅酸素', '0120-000-000', '24時間', { person: '△△さん', note: '災害時・停電時に連絡' })
     ];
     var byKind = {};
     contacts.forEach(function (x) { if (!byKind[x.kind]) byKind[x.kind] = x.id; });
+
     function cert(kind, days, templateId, extra) {
-      return rec(Object.assign({ childId: cid, kind: kind, name: '', number: '（架空）000000', grade: '', validUntil: addDays(today, days), templateId: templateId, note: '' }, extra || {}));
+      return rec(Object.assign({ childId: cid, kind: kind, status: '取得済み', name: '', issuerNumber: '', issuerName: '', number: '（架空）000000', grade: '', disease: '', copay: '',
+        issuedOn: '', validUntil: days === null ? '' : addDays(today, days), renewalNote: '', templateId: templateId || '', note: '' }, extra || {}));
     }
     var certs = [
-      cert('療育手帳', 85, 'ryouiku-renew', { grade: '（架空）B' }),
-      cert('障害児通所受給者証', 200, 'tsusho-renew'),
-      cert('小児慢性特定疾病医療受給者証', 70, 'shoman-renew')
+      cert('健康保険証', null, '', { issuerName: '（架空）○○健康保険組合', issuerNumber: '00000000' }),
+      cert('小児医療証（子ども医療証）', null, '', { renewalNote: '毎年自動で更新' }),
+      cert('身体障害者手帳', 400, 'generic', { grade: '（架空）3級' }),
+      cert('小児慢性特定疾病医療受給者証', 70, 'shoman-renew', { disease: '（架空）心臓の病気', copay: '月額上限 ○○円・2割', renewalNote: '毎年更新。文書料が必要' }),
+      cert('療育手帳', null, 'ryouiku-renew', { status: '未取得・取得予定', number: '', note: '2歳以降に取得予定' })
     ];
     var tasks = [];
     var tpl = findTemplate(templates, 'shoman-renew');
     if (tpl) {
-      tasks = planProcess(tpl, certs[2].validUntil, { childId: cid, certificateId: certs[2].id, processName: '小児慢性の受給者証の更新', today: today, contactIdsByKind: byKind });
+      tasks = planProcess(tpl, certs[3].validUntil, { childId: cid, certificateId: certs[3].id, processName: '小児慢性の受給者証の更新', today: today, contactIdsByKind: byKind });
       tasks[0].status = 'done';
       tasks[0].doneAt = today;
     }
     tasks.push(rec({ childId: cid, title: '保育園に来月の注入時間の変更を伝える', processId: '', processName: '', templateId: '', stepNo: '', dependsOn: [], dueDate: addDays(today, 3), window: 'night', scheduledDate: '', contactId: '', script: '連絡帳に書く', assignee: '母', status: 'todo', doneAt: '', certificateId: '', note: '' }));
 
-    var proc = rec({ childId: cid, title: '経管栄養（注入）', status: '実施中', startedOn: addDays(today, -1600), endedOn: '', reason: '（架空）口からの食事だけでは栄養が足りないため', equipment: '（例）経鼻胃管 ○Fr・○cm', visibility: 'supporter', note: '' });
+    var proc = rec({ childId: cid, title: '経管栄養（注入）', status: '実施中', startedOn: addDays(today, -300), endedOn: '',
+      reason: '（架空）口からの食事だけでは体重が増えないため', history: '（架空）開始後1か月で体重が500g増えたため継続',
+      dose: '（例）1回○ml × 1日○回', schedule: '（例）6:00、9:00、13:00、16:00、19:00、22:00', baseline: '',
+      equipment: '（例）経鼻胃管 ○Fr・○cm', supplies: 'シリンジ、白湯、固定用テープ', supplierContactId: '', visibility: 'supporter', note: '' });
     var order = 0;
     function st(section, text, criteria) {
       order += 1;
       return rec({ procedureId: proc.id, section: section, order: order, text: text, criteria: criteria || '', photoUrl: '' });
     }
     var steps = [
-      st('いつ・どれだけ', '（例）主治医の指示どおり：1日○回、1回○ml', '食事が取れなかった時の追加は、家族に確認する'),
+      st('いつ・どれだけ', '（例）主治医の指示どおり：口から飲めた残りをチューブから入れる', '食事が取れなかった時の追加は、家族に確認する'),
       st('準備', '石けんで手を洗う'),
       st('準備', '栄養剤・シリンジ・白湯を用意する'),
       st('実施前の確認', '（例）チューブの印の位置がずれていないか見る', 'ずれている・確認できない時は注入せず家族に連絡'),
       st('実施', '（例）ゆっくり○分以上かけて入れる'),
       st('中断の判断', '咳き込んだ・泣いた時は一度止める', '落ち着いてから再開する。止まらない時は家族に連絡'),
       st('実施後', '白湯○mlでチューブ内を流す', 'チューブが詰まるのを防ぐため'),
+      st('注意点', '体調が悪い時は、無理に全部入れない', '吐きやすい時は1回の量を減らす'),
       st('いつもと違う時', 'チューブが抜けた時は入れ直さず、家族に連絡する'),
+      st('交換・入れ直し', '（例）チューブの交換は週1回、家で家族が行う'),
       st('緊急時と連絡先', '顔色が悪い・呼吸が苦しそうな時はすぐ救急車（119）', '搬送の希望先：○○こども病院')
     ];
-    function v(kind, date, facility, department, summary, endDate) {
-      return rec({ childId: cid, kind: kind, date: date, endDate: endDate || '', facility: facility, department: department || '', summary: summary, note: '' });
+    var o2 = rec({ childId: cid, title: '在宅酸素療法', status: '終了', startedOn: addDays(today, -600), endedOn: addDays(today, -60),
+      reason: '（架空）血液中の酸素を補うため', history: '（架空）0.5L/分 → 1L/分 → 手術後に終了', dose: '（例）○L/分', schedule: '夜間',
+      baseline: '（例）SpO2 平時 ○〜○%', equipment: '酸素濃縮器、酸素ボンベ（外出時）', supplies: '鼻のチューブ（カニューラ）、固定用テープ',
+      supplierContactId: contacts[7].id, visibility: 'supporter', note: '' });
+    steps.push(rec({ procedureId: o2.id, section: '注意点', order: 1, text: '火から2m以上はなす', criteria: '', photoUrl: '' }));
+
+    function v(kind, date, facility, department, summary, extra) {
+      return rec(Object.assign({ childId: cid, kind: kind, date: date, endDate: '', facility: facility, department: department || '', doctor: '',
+        summary: summary, symptoms: '', treatment: '', result: '', note: '' }, extra || {}));
     }
     var visits = [
-      v('受診', addDays(today, -14), '○○こども病院', '小児科', '（架空）定期受診。体重が増えている。次回は3か月後'),
-      v('入院', addDays(today, -410), '○○こども病院', '小児外科', '（架空）手術のため入院', addDays(today, -398)),
-      v('発達の記録', addDays(today, -60), '', '', 'つかまり立ちができた！')
+      v('受診', addDays(today, -14), '○○こども病院', '循環器科', '（架空）定期受診。体重が増えている'),
+      v('入院', addDays(today, -75), '○○こども病院', '循環器科', '（架空）心臓の手術', {
+        endDate: addDays(today, -60), doctor: '○○先生', symptoms: '（架空）成長にともない呼吸が苦しくなってきた',
+        treatment: '（架空）手術', result: '（架空）経過は良好。在宅酸素は終了' }),
+      v('医療的ケアの開始・変更', addDays(today, -300), '○○こども病院', '耳鼻科', '（架空）経管栄養を始めるため入院', { endDate: addDays(today, -297) })
     ];
+    function ms(item, days, ageText) {
+      return rec({ childId: cid, item: item, achievedOn: days === null ? '' : addDays(birth, days), ageText: ageText || '', note: '' });
+    }
+    var milestones = [ms('追視', 60), ms('首すわり', 150), ms('寝返り', 240), ms('おすわり', null, '1歳2ヶ月')];
     return {
       childId: cid,
       collections: {
-        children: [child], profile: profile, contacts: contacts, certificates: certs,
-        careProcedures: [proc], careSteps: steps, visits: visits, tasks: tasks
+        children: [child], family: family, profile: profile, schedule: schedule, diagnoses: diagnoses, contacts: contacts,
+        certificates: certs, careProcedures: [proc, o2], careSteps: steps, visits: visits, milestones: milestones, tasks: tasks
       }
     };
   }
@@ -636,12 +758,12 @@ var Logic = (function () {
   return {
     CURRENT_SCHEMA_VERSION: CURRENT_SCHEMA_VERSION,
     EXPORT_FORMAT: EXPORT_FORMAT,
-    ymd: ymd, parseYmd: parseYmd, addDays: addDays, diffDays: diffDays, fmtMD: fmtMD, fmtDate: fmtDate,
+    ymd: ymd, parseYmd: parseYmd, addDays: addDays, diffDays: diffDays, fmtMD: fmtMD, fmtDate: fmtDate, fmtYm: fmtYm, ageText: ageText,
     nowIso: nowIso, uuid: uuid, alive: alive, indexById: indexById,
     isActionable: isActionable, dueLabel: dueLabel, findTemplate: findTemplate, planProcess: planProcess,
     certificateAlerts: certificateAlerts, summarize: summarize,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,
-    makeExport: makeExport, migrate: migrate, mergeImport: mergeImport, buildSample: buildSample
+    makeExport: makeExport, migrate: migrate, upgradeCollections: upgradeCollections, mergeImport: mergeImport, buildSample: buildSample
   };
 })();
 
@@ -868,7 +990,7 @@ var Logic = (function () {
       who = '<select class="child-select" data-change="child" aria-label="子どもを切り替え">' +
         children.map(function (c) { return '<option value="' + h(c.id) + '"' + (c.id === S.childId ? ' selected' : '') + '>' + h(c.nickname) + '</option>'; }).join('') + '</select>';
     } else if (children.length === 1) {
-      who = '<span class="child-name">' + h(children[0].nickname) + '</span>';
+      who = '<span class="child-name">' + h(children[0].nickname) + (children[0].birthDate ? ' <span class="age">' + h(L.ageText(children[0].birthDate)) + '</span>' : '') + '</span>';
     }
     return '<header class="top"><div class="brand">たすか<span>Re</span>マインド</div><div class="top-right">' + who +
       '<span class="store-badge" title="データの保存先">' + (S.store.kind === 'gas' ? 'Google' : 'この端末') + '</span></div></header>';
@@ -1077,21 +1199,40 @@ var Logic = (function () {
 
   // ---------------------------------------------------------------- 子どもの情報
   var INFO_TABS = [
-    { id: 'profile', label: '基本情報' }, { id: 'contacts', label: '関係機関' },
-    { id: 'certificates', label: '受給者証・手帳' }, { id: 'visits', label: '受診・入院' }
+    { id: 'profile', label: '本人' }, { id: 'family', label: '家族・緊急連絡先' }, { id: 'schedule', label: '生活リズム' },
+    { id: 'medical', label: '診断・医療歴' }, { id: 'growth', label: '成長' },
+    { id: 'certificates', label: '保険証・受給者証' }, { id: 'contacts', label: '医療機関・関係機関' }
   ];
   function viewInfo() {
+    if (!INFO_TABS.some(function (t) { return t.id === S.infoTab; })) S.infoTab = 'profile';
     var seg = '<div class="seg" role="tablist">' + INFO_TABS.map(function (t) {
       return '<button type="button" role="tab" data-act="infoTab" data-tab="' + t.id + '" class="' + (S.infoTab === t.id ? 'on' : '') + '" aria-selected="' + (S.infoTab === t.id) + '">' + t.label + '</button>';
     }).join('') + '</div>';
-    var body = ({ profile: infoProfile, contacts: infoContacts, certificates: infoCerts, visits: infoVisits })[S.infoTab]();
+    var body = ({ profile: infoProfile, family: infoFamily, schedule: infoSchedule, medical: infoMedical, growth: infoGrowth,
+      certificates: infoCerts, contacts: infoContacts })[S.infoTab]();
     return seg + body;
+  }
+  function byOrder(a, b) {
+    return (Number(a.order) || 0) - (Number(b.order) || 0) || String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
+  }
+  function ageAt(date) { var c = childOf(S.childId); return c.birthDate && date ? L.ageText(c.birthDate, date) : ''; }
+
+  function childCard() {
+    var c = childOf(S.childId);
+    return card('本人の情報', '<dl class="dl">' +
+      (c.fullName ? '<dt>氏名</dt><dd>' + h(c.fullName) + (c.furigana ? '（' + h(c.furigana) + '）' : '') + '</dd>' : '') +
+      '<dt>呼び名</dt><dd>' + h(c.nickname) + '</dd>' +
+      (c.birthDate ? '<dt>生年月日</dt><dd>' + h(L.fmtDate(c.birthDate)) + '（' + h(L.ageText(c.birthDate)) + '）</dd>' : '') +
+      (c.address ? '<dt>住所</dt><dd>' + br(c.address) + '</dd>' : '') +
+      (c.phone ? '<dt>電話</dt><dd>' + h(c.phone) + '</dd>' : '') + '</dl>',
+      btn('編集', 'editRec', { col: 'children', id: c.id }, 'sm ghost'));
   }
 
   function infoProfile() {
-    var items = mine('profile');
+    var items = mine('profile').sort(byOrder);
     var cats = fieldOptions(fieldDef('profile', 'category')).map(function (o) { return o.value; });
     var html = '<div class="toolbar">' + btn('＋ 項目を追加', 'newRec', { col: 'profile' }, 'primary') + btn('サポートブックを印刷', 'print', { type: 'book', audience: 'supporter' }) + '</div>';
+    html += childCard();
     var any = false;
     cats.forEach(function (cat) {
       var inCat = items.filter(function (p) { return p.category === cat; });
@@ -1105,7 +1246,8 @@ var Logic = (function () {
         var past = inCat.filter(function (p) { return p.label === lb && p.validTo; }).sort(function (a, b) { return String(b.validTo).localeCompare(String(a.validTo)); });
         var key = cat + '/' + lb;
         var html2 = cur.map(function (p) {
-          return '<button type="button" class="kv" data-act="editRec" data-col="profile" data-id="' + h(p.id) + '"><span class="k">' + h(p.label) + '</span><span class="v">' + br(p.value) + '</span>' + visBadge(p.visibility) + '</button>';
+          return '<button type="button" class="kv" data-act="editRec" data-col="profile" data-id="' + h(p.id) + '"><span class="k">' + h(p.label) + '</span><span class="v">' + br(p.value) +
+            (p.caution ? '<span class="caution">※ ' + br(p.caution) + '</span>' : '') + '</span>' + visBadge(p.visibility) + '</button>';
         }).join('');
         if (!cur.length) html2 += '<div class="kv past-only"><span class="k">' + h(lb) + '</span><span class="v muted">（今の情報はありません）</span></div>';
         if (past.length) {
@@ -1118,47 +1260,161 @@ var Logic = (function () {
         }
         return html2;
       }).join('');
-      html += card(h(cat), body, btn('＋', 'newRec', { col: 'profile', category: cat }, 'sm ghost icon-btn'));
+      html += card(h(cat), body, btn('＋', 'newRec', { col: 'profile', category: cat }, 'sm ghost icon-btn', cat + 'に追加'));
     });
-    if (!any) html += card('', empty('まだ項目がありません。「＋ 項目を追加」から、アレルギー・好きなこと・落ち着く方法などを登録しましょう。'));
+    if (!any) html += card('', empty('まだ項目がありません。「＋ 項目を追加」から、特徴と関わり方・好きなこと・食事などを登録しましょう。'));
     return html;
   }
 
-  function infoContacts() {
-    var list = mine('contacts');
+  function sortFamily(list) {
+    return list.sort(function (a, b) {
+      var ea = Number(a.emergencyOrder) || 99, eb = Number(b.emergencyOrder) || 99;
+      return ea - eb || String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
+    });
+  }
+  function infoFamily() {
+    var list = sortFamily(mine('family'));
+    return '<div class="toolbar">' + btn('＋ 家族・連絡先を追加', 'newRec', { col: 'family' }, 'primary') + '</div>' +
+      card('', list.length ? list.map(function (f) {
+        return '<div class="item"><div class="item-main"><button type="button" class="linklike item-title" data-act="editRec" data-col="family" data-id="' + h(f.id) + '">' +
+          h(f.relation) + (f.name ? '　' + h(f.name) : '') + '</button>' +
+          '<div class="item-sub">' + (f.emergencyOrder ? '<span class="pill pill-soon">緊急連絡 ' + h(f.emergencyOrder) + '</span> ' : '') +
+          h([f.livesTogether, f.occupation].filter(Boolean).join('・')) + '</div>' +
+          (f.address ? '<div class="item-note">' + br(f.address) + '</div>' : '') + '</div>' +
+          (f.phone ? '<div class="item-actions"><a class="btn sm" href="tel:' + h(f.phone.replace(/[^0-9+]/g, '')) + '">☎ ' + h(f.phone) + '</a></div>' : '') + '</div>';
+      }).join('') : empty('家族と、緊急時に連絡する人を登録します。「緊急連絡の順番」を入れると、サポートブックに順番どおり載ります。'));
+  }
+
+  function infoSchedule() {
+    var list = mine('schedule').sort(function (a, b) { return String(a.time).localeCompare(String(b.time)); });
+    return '<div class="toolbar">' + btn('＋ 予定を追加', 'newRec', { col: 'schedule' }, 'primary') + '</div>' +
+      card('1日の生活リズム', list.length ? '<ol class="rhythm">' + list.map(function (r) {
+        return '<li><button type="button" class="rhythm-row" data-act="editRec" data-col="schedule" data-id="' + h(r.id) + '">' +
+          '<span class="rhythm-time">' + h(r.time) + '</span><span class="rhythm-act">' + h(r.activity) + (r.note ? '<span class="muted small">　' + h(r.note) + '</span>' : '') + '</span>' +
+          (r.kind ? '<span class="pill">' + h(r.kind) + '</span>' : '') + '</button></li>';
+      }).join('') + '</ol>' : empty('起きる・ミルク・お昼寝・お風呂など、1日の流れを時刻ごとに登録します。'));
+  }
+
+  function visitDetail(v) {
+    var parts = [['担当医', v.doctor], ['症状・経緯', v.symptoms], ['治療・検査の内容', v.treatment], ['結果・その後の経過', v.result], ['メモ', v.note]]
+      .filter(function (x) { return x[1]; });
+    return parts;
+  }
+  function infoMedical() {
+    var dx = mine('diagnoses').sort(function (a, b) { return String(a.diagnosedOn || '').localeCompare(String(b.diagnosedOn || '')); });
+    var html = '<div class="toolbar">' + btn('＋ 診断名', 'newRec', { col: 'diagnoses' }, 'primary') + btn('＋ 受診・入院の記録', 'newRec', { col: 'visits' }, 'primary') + '</div>';
+    html += card('診断名', dx.length ? dx.map(function (d) {
+      return '<div class="item"><div class="item-main"><button type="button" class="linklike item-title" data-act="editRec" data-col="diagnoses" data-id="' + h(d.id) + '">' + h(d.name) + '</button>' +
+        '<div class="item-sub">' + (d.diagnosedOn ? h(L.fmtYm(d.diagnosedOn)) + '　' : '') + h(d.department || '') + ' ' + (d.status ? '<span class="pill">' + h(d.status) + '</span>' : '') + ' ' + visBadge(d.visibility) + '</div>' +
+        (d.detail ? '<div class="small">' + br(d.detail) + '</div>' : '') +
+        (d.explanation ? '<div class="item-note">' + br(d.explanation) + '</div>' : '') + '</div></div>';
+    }).join('') : empty('診断名と時期を登録します。「支援者向けの説明」に書いた内容は、サポートブックの「症状について」に載ります。'));
+
+    var list = mine('visits').sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    if (!list.length) return html + card('医療機関の記録', empty('受診のあとに、スマホの音声入力で「今日どうだったか」を話して記録できます。'));
+    var years = [];
+    list.forEach(function (v) { var y = String(v.date).slice(0, 4); if (years.indexOf(y) < 0) years.push(y); });
+    years.forEach(function (y) {
+      html += card(h(y) + '年', '<ol class="timeline">' + list.filter(function (v) { return String(v.date).slice(0, 4) === y; }).map(function (v) {
+        var days = v.endDate ? L.diffDays(v.date, v.endDate) + 1 : 0;
+        var detail = visitDetail(v);
+        var open = !!S.showHistory['visit:' + v.id];
+        var age = ageAt(v.date);
+        return '<li><button type="button" class="tl" data-act="editRec" data-col="visits" data-id="' + h(v.id) + '">' +
+          '<span class="tl-date">' + h(L.fmtDate(v.date)) + (v.endDate ? '〜' + h(L.fmtMD(v.endDate)) + '（' + days + '日間）' : '') + (age ? '　' + h(age) : '') + '</span>' +
+          '<span class="tl-body"><span class="pill">' + h(v.kind) + '</span> ' + h([v.facility, v.department].filter(Boolean).join(' ')) + '<br>' + br(v.summary) + '</span></button>' +
+          (detail.length ? '<button type="button" class="history-toggle tl-more" data-act="toggleHistory" data-key="visit:' + h(v.id) + '">' + (open ? '閉じる' : '詳しく') + '</button>' +
+            (open ? '<dl class="dl tl-detail">' + detail.map(function (x) { return '<dt>' + h(x[0]) + '</dt><dd>' + br(x[1]) + '</dd>'; }).join('') + '</dl>' : '') : '') + '</li>';
+      }).join('') + '</ol>');
+    });
+    return html;
+  }
+
+  function milestoneWhen(m) {
+    var c = childOf(S.childId);
+    if (m.achievedOn) return (c.birthDate ? L.ageText(c.birthDate, m.achievedOn) + '（' + L.fmtDate(m.achievedOn) + '）' : L.fmtDate(m.achievedOn));
+    return m.ageText || '';
+  }
+  function milestoneSortKey(m) {
+    if (m.achievedOn) return m.achievedOn;
+    var mm = /(\d+)歳/.exec(m.ageText || ''), mo = /(\d+)ヶ?か?月/.exec(m.ageText || '');
+    var months = (mm ? +mm[1] * 12 : 0) + (mo ? +mo[1] : 0);
+    var c = childOf(S.childId);
+    return c.birthDate ? L.addDays(c.birthDate, Math.round(months * 30.4)) : '9999';
+  }
+  function infoGrowth() {
+    var list = mine('milestones').sort(function (a, b) { return milestoneSortKey(a).localeCompare(milestoneSortKey(b)); });
+    var done = list.map(function (m) { return m.item; });
+    var rest = SCHEMA.options.milestoneSuggestions.filter(function (x) { return done.indexOf(x) < 0; });
+    var html = '<div class="toolbar">' + btn('＋ できたことを追加', 'newRec', { col: 'milestones' }, 'primary') + '</div>';
+    html += card('できた！の記録', list.length ? list.map(function (m) {
+      return '<button type="button" class="kv" data-act="editRec" data-col="milestones" data-id="' + h(m.id) + '"><span class="k">' + h(m.item) + '</span><span class="v">' + h(milestoneWhen(m)) +
+        (m.note ? '<span class="muted small"><br>' + br(m.note) + '</span>' : '') + '</span><span class="star" aria-hidden="true">★</span></button>';
+    }).join('') : empty('首すわり・おすわり・ひとり歩きなど、できるようになったことを記録します。'));
+    if (rest.length) {
+      html += card('これから', '<div class="chips">' + rest.map(function (x) {
+        return btn('＋ ' + h(x), 'newRec', { col: 'milestones', item: x }, 'sm chip');
+      }).join('') + '</div><p class="small muted">できたときに押して記録します。成長のペースは一人ひとり違います。</p>');
+    }
+    html += '<p class="small muted">出生時の様子（身長・体重・分娩の経過など）は「本人」→「＋ 項目を追加」→ 分類「出生時の様子」で登録します。</p>';
+    return html;
+  }
+
+  function contactGroups(list) {
     var kinds = fieldOptions(fieldDef('contacts', 'kind')).map(function (o) { return o.value; });
-    list.sort(function (a, b) { return kinds.indexOf(a.kind) - kinds.indexOf(b.kind); });
-    return '<div class="toolbar">' + btn('＋ 関係機関を追加', 'newRec', { col: 'contacts' }, 'primary') + '</div>' +
-      card('', list.length ? list.map(function (c) {
-        return '<div class="item"><div class="item-main"><button type="button" class="linklike item-title" data-act="editRec" data-col="contacts" data-id="' + h(c.id) + '">' + h(c.name) + '</button>' +
-          '<div class="item-sub"><span class="pill">' + h(c.kind) + '</span> ' + (c.person ? h(c.person) + '　' : '') + (c.hours ? '<span class="muted">' + h(c.hours) + '</span>' : '') + '</div></div>' +
-          (c.phone ? '<div class="item-actions"><a class="btn sm" href="tel:' + h(c.phone.replace(/[^0-9+]/g, '')) + '">☎ ' + h(c.phone) + '</a></div>' : '') + '</div>';
-      }).join('') : empty('病院・療育・相談支援・役所などを登録すると、手続きのタスクに電話番号が表示されます。'));
+    var groups = [];
+    var idx = {};
+    list.slice().sort(function (a, b) { return kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || String(a.createdAt || '').localeCompare(String(b.createdAt || '')); })
+      .forEach(function (c) {
+        var k = c.kind + '/' + c.name;
+        if (idx[k] === undefined) { idx[k] = groups.length; groups.push({ kind: c.kind, name: c.name, items: [] }); }
+        groups[idx[k]].items.push(c);
+      });
+    return groups;
+  }
+  function infoContacts() {
+    var groups = contactGroups(mine('contacts'));
+    return '<div class="toolbar">' + btn('＋ 医療機関・関係機関を追加', 'newRec', { col: 'contacts' }, 'primary') + '</div>' +
+      (groups.length ? groups.map(function (g) {
+        var first = g.items[0];
+        var phone = g.items.map(function (c) { return c.phone; }).filter(Boolean)[0];
+        var address = g.items.map(function (c) { return c.address; }).filter(Boolean)[0];
+        var body = '<div class="item-sub"><span class="pill">' + h(g.kind) + '</span> ' + (first.hours ? '<span class="muted">' + h(first.hours) + '</span>' : '') + '</div>' +
+          (address ? '<div class="small muted">' + br(address) + '</div>' : '') +
+          g.items.map(function (c) {
+            return '<button type="button" class="dept" data-act="editRec" data-col="contacts" data-id="' + h(c.id) + '">' +
+              '<span class="dept-name">' + h(c.department || '（診療科・区分なし）') + (c.person ? '　<span class="muted">' + h(c.person) + '</span>' : '') + '</span>' +
+              (c.visitPattern ? '<span class="small">' + br(c.visitPattern) + '</span>' : '') +
+              (c.supplies ? '<span class="small muted">処方・材料：' + br(c.supplies) + '</span>' : '') +
+              (c.note ? '<span class="small muted">' + br(c.note) + '</span>' : '') + '</button>';
+          }).join('') +
+          '<div class="row-end">' + btn('＋ 診療科・区分を追加', 'newRec', { col: 'contacts', kind: g.kind, name: g.name, phone: phone || '', hours: first.hours || '', address: address || '' }, 'sm ghost') +
+          (phone ? '<a class="btn sm" href="tel:' + h(phone.replace(/[^0-9+]/g, '')) + '">☎ ' + h(phone) + '</a>' : '') + '</div>';
+        return card(h(g.name), body);
+      }).join('') : card('', empty('病院・療育・訪問看護・相談支援・役所などを登録すると、手続きのタスクに電話番号が表示されます。')));
   }
 
   function infoCerts() {
     var list = mine('certificates').sort(function (a, b) { return (a.validUntil || '9').localeCompare(b.validUntil || '9'); });
     var t0 = today();
-    return '<div class="toolbar">' + btn('＋ 受給者証・手帳を追加', 'newRec', { col: 'certificates' }, 'primary') + '</div>' +
+    return '<div class="toolbar">' + btn('＋ 保険証・受給者証・手帳を追加', 'newRec', { col: 'certificates' }, 'primary') + '</div>' +
       card('', list.length ? list.map(function (c) {
         var d = c.validUntil ? L.diffDays(t0, c.validUntil) : null;
         var pill = d === null ? '' : '<span class="pill ' + (d < 30 ? 'pill-late' : d < 120 ? 'pill-soon' : '') + '">' + (d < 0 ? (-d) + '日過ぎ' : 'あと' + d + '日') + '</span>';
         var running = all('tasks').some(function (t) { return t.certificateId === c.id && t.status === 'todo'; });
+        var owned = !c.status || c.status === '取得済み';
+        var sub = [];
+        if (c.name) sub.push(h(c.kind));
+        if (c.grade) sub.push(h(c.grade));
+        if (c.disease) sub.push(h(c.disease));
+        if (c.issuerName) sub.push(h(c.issuerName));
+        if (!owned) sub.push('<span class="pill">' + h(c.status) + '</span>');
+        else if (c.validUntil) sub.push('有効期限 ' + h(L.fmtDate(c.validUntil)) + ' ' + pill);
         return '<div class="item"><div class="item-main"><button type="button" class="linklike item-title" data-act="editRec" data-col="certificates" data-id="' + h(c.id) + '">' + h(c.name || c.kind) + '</button>' +
-          '<div class="item-sub">' + (c.name ? h(c.kind) + '　' : '') + (c.grade ? h(c.grade) + '　' : '') + (c.validUntil ? '有効期限 ' + h(L.fmtDate(c.validUntil)) + ' ' + pill : '有効期限：未入力') + '</div></div>' +
-          '<div class="item-actions">' + (running ? '<span class="pill">更新手続き中</span>' : btn('更新の手続き', 'startProcess', { cert: c.id }, 'sm')) + '</div></div>';
-      }).join('') : empty('受給者証・手帳・医療証と有効期限を登録すると、期限が近づいたときにお知らせします。'));
-  }
-
-  function infoVisits() {
-    var list = mine('visits').sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
-    return '<div class="toolbar">' + btn('＋ 記録を追加', 'newRec', { col: 'visits' }, 'primary') + '</div>' +
-      card('', list.length ? '<ol class="timeline">' + list.map(function (v) {
-        var days = v.endDate ? L.diffDays(v.date, v.endDate) + 1 : 0;
-        return '<li><button type="button" class="tl" data-act="editRec" data-col="visits" data-id="' + h(v.id) + '">' +
-          '<span class="tl-date">' + h(L.fmtDate(v.date)) + (v.endDate ? '〜' + h(L.fmtMD(v.endDate)) + '（' + days + '日間）' : '') + '</span>' +
-          '<span class="tl-body"><span class="pill">' + h(v.kind) + '</span> ' + h([v.facility, v.department].filter(Boolean).join(' ')) + '<br>' + br(v.summary) + '</span></button></li>';
-      }).join('') + '</ol>' : empty('受診のあとに、スマホの音声入力で「今日どうだったか」を話して記録できます。'));
+          '<div class="item-sub">' + sub.join('　') + '</div>' +
+          (c.renewalNote ? '<div class="small muted">' + br(c.renewalNote) + '</div>' : '') + '</div>' +
+          '<div class="item-actions">' + (running ? '<span class="pill">手続き中</span>' : btn(owned ? '更新の手続き' : '取得の手続き', 'startProcess', { cert: c.id }, 'sm')) + '</div></div>';
+      }).join('') : empty('保険証・医療証・受給者証・手帳と有効期限を登録すると、期限が近づいたときにお知らせします。'));
   }
 
   // ---------------------------------------------------------------- 手順書
@@ -1169,6 +1425,8 @@ var Logic = (function () {
     '実施': '速さ・間隔・分け方は？',
     '中断の判断': 'どんな時に止めますか？ 再開の目安は？',
     '実施後': '片付け・洗浄と、その理由は？',
+    '注意点': 'いつも気をつけていること、やってはいけないことは？',
+    '交換・入れ直し': 'チューブや器具の交換はいつ・誰がしますか？ 抜けた時に入れ直す場合の手順は？',
     'いつもと違う時': '体調が悪い時、吐いた時、抜けた時はどうしていますか？',
     '緊急時と連絡先': '家族に連絡する目安、救急車を呼ぶ目安、搬送先の希望、業者の連絡先は？'
   };
@@ -1201,8 +1459,7 @@ var Logic = (function () {
       '<dl class="dl">' +
       '<dt>状態</dt><dd>' + h(p.status || '実施中') + (p.endedOn ? '（' + h(L.fmtDate(p.endedOn)) + ' 終了）' : '') + '</dd>' +
       (p.startedOn ? '<dt>開始日</dt><dd>' + h(L.fmtDate(p.startedOn)) + '</dd>' : '') +
-      (p.reason ? '<dt>開始の理由</dt><dd>' + br(p.reason) + '</dd>' : '') +
-      (p.equipment ? '<dt>使う器具</dt><dd>' + br(p.equipment) + '</dd>' : '') +
+      careInfoRows(p).map(function (x) { return '<dt>' + h(x[0]) + '</dt><dd>' + br(x[1]) + '</dd>'; }).join('') +
       '<dt>見せてよい範囲</dt><dd>' + visBadge(p.visibility) + '</dd></dl>',
       btn('編集', 'editRec', { col: 'careProcedures', id: p.id }, 'sm ghost'));
     sections().forEach(function (sec) {
@@ -1218,6 +1475,16 @@ var Logic = (function () {
     });
     html += '<p class="muted small">手順書は、主治医の指示にもとづいて家族が書いた内容を整理して表示するものです。アプリが医療的な判断をすることはありません。</p>';
     return html;
+  }
+
+  function careInfoRows(p) {
+    var sup = p.supplierContactId && get('contacts', p.supplierContactId);
+    return [
+      ['開始の理由・目的', p.reason], ['これまでの経過', p.history], ['量・設定', p.dose], ['実施する時間', p.schedule],
+      ['いつもの様子・目安', p.baseline], ['器具・規格', p.equipment], ['使う物・消耗品', p.supplies],
+      ['機器・業者', sup && !sup.deleted ? [sup.name, sup.department, sup.person, sup.phone ? '☎ ' + sup.phone : ''].filter(Boolean).join('　') : ''],
+      ['メモ', p.note]
+    ].filter(function (x) { return x[1]; });
   }
 
   function moveStep(id, dir) {
@@ -1313,7 +1580,12 @@ var Logic = (function () {
     var rec = {};
     SCHEMA.collections[col].fields.forEach(function (f) { if (f.default !== undefined) rec[f.key] = f.default; });
     if (col !== 'children' && col !== 'careSteps') rec.childId = S.childId;
-    return Object.assign(rec, extra || {});
+    Object.assign(rec, extra || {});
+    if (col === 'profile') {
+      rec.visibility = SCHEMA.options.categoryVisibility[rec.category] || rec.visibility;
+      rec.order = mine('profile').reduce(function (m, p) { return Math.max(m, Number(p.order) || 0); }, 0) + 1;
+    }
+    return rec;
   }
 
   function sheet(title, inner) {
@@ -1350,6 +1622,12 @@ var Logic = (function () {
       case 'date':
         input = '<input type="date"' + name + req + ' value="' + h(val) + '">';
         break;
+      case 'time':
+        input = '<input type="time"' + name + req + ' value="' + h(val) + '">';
+        break;
+      case 'month':
+        input = '<input type="month"' + name + req + ' value="' + h(val) + '" placeholder="2024-05">';
+        break;
       case 'number':
         input = '<input type="number" inputmode="numeric"' + name + req + ' value="' + h(val) + '">';
         break;
@@ -1367,7 +1645,8 @@ var Logic = (function () {
         var target = SCHEMA.collections[fd.ref];
         var list = fd.ref === 'children' ? all('children') : mine(fd.ref);
         input = '<select' + name + '><option value="">（なし）</option>' + list.map(function (r) {
-          return '<option value="' + h(r.id) + '"' + (r.id === val ? ' selected' : '') + '>' + h(r[target.display] || r.kind || r.id) + '</option>';
+          var lbl = (r[target.display] || r.kind || r.id) + (fd.ref === 'contacts' && r.department ? ' ' + r.department : '');
+          return '<option value="' + h(r.id) + '"' + (r.id === val ? ' selected' : '') + '>' + h(lbl) + '</option>';
         }).join('') + '</select>';
         break;
       case 'template':
@@ -1376,10 +1655,19 @@ var Logic = (function () {
         }).join('') + '</select>';
         break;
       default:
-        input = '<input type="text"' + name + req + ' value="' + h(val) + '">';
+        var list = fd.suggestFrom ? ' list="sugg-' + h(fd.key) + '" autocomplete="off"' : '';
+        input = '<input type="text"' + name + req + list + ' value="' + h(val) + '">';
+        if (fd.suggestFrom) input += '<datalist id="sugg-' + h(fd.key) + '">' + suggestionsFor(fd, S.form && S.form.rec).map(function (x) { return '<option value="' + h(x) + '">'; }).join('') + '</datalist>';
     }
     return '<label class="field"><span class="lbl">' + h(fd.label) + (fd.required ? ' <b class="req">必須</b>' : '') + '</span>' + input +
       (fd.help ? '<span class="help">' + h(fd.help) + '</span>' : '') + '</label>';
+  }
+
+  function suggestionsFor(fd, rec) {
+    var src = SCHEMA.options[fd.suggestFrom];
+    if (Array.isArray(src)) return src;
+    if (src && rec && rec.category) return src[rec.category] || [];
+    return [];
   }
 
   function submitRecord(form) {
@@ -1456,7 +1744,7 @@ var Logic = (function () {
   function contactsTable(list) {
     if (!list.length) return '';
     return '<table class="doc-table"><tr><th>種類</th><th>名前</th><th>電話</th><th>受付時間</th></tr>' + list.map(function (c) {
-      return '<tr><td>' + h(c.kind) + '</td><td>' + h(c.name) + (c.person ? '<br>' + h(c.person) : '') + '</td><td>' + h(c.phone) + '</td><td>' + h(c.hours) + '</td></tr>';
+      return '<tr><td>' + h(c.kind) + '</td><td>' + h(c.name) + (c.department ? ' ' + h(c.department) : '') + (c.person ? '<br>' + h(c.person) : '') + '</td><td>' + h(c.phone) + '</td><td>' + h(c.hours) + '</td></tr>';
     }).join('') + '</table>';
   }
 
@@ -1464,9 +1752,8 @@ var Logic = (function () {
     var steps = stepsOf(p.id);
     var html = '<table class="doc-table">' +
       '<tr><th>ケア</th><td>' + h(p.title) + '（' + h(p.status || '実施中') + '）</td></tr>' +
-      (p.startedOn ? '<tr><th>開始日</th><td>' + h(L.fmtDate(p.startedOn)) + '</td></tr>' : '') +
-      (p.reason ? '<tr><th>開始の理由</th><td>' + br(p.reason) + '</td></tr>' : '') +
-      (p.equipment ? '<tr><th>使う器具・規格</th><td>' + br(p.equipment) + '</td></tr>' : '') + '</table>';
+      (p.startedOn ? '<tr><th>開始日</th><td>' + h(L.fmtDate(p.startedOn)) + (p.endedOn ? '〜' + h(L.fmtDate(p.endedOn)) : '') + '</td></tr>' : '') +
+      careInfoRows(p).map(function (x) { return '<tr><th>' + h(x[0]) + '</th><td>' + br(x[1]) + '</td></tr>'; }).join('') + '</table>';
     sections().forEach(function (sec) {
       var list = steps.filter(function (s) { return s.section === sec; });
       if (!list.length) return;
@@ -1485,48 +1772,158 @@ var Logic = (function () {
     var steps = stepsOf(p.id);
     var updated = steps.concat([p]).reduce(function (m, s) { return String(s.updatedAt || '') > m ? String(s.updatedAt) : m; }, '');
     var emergency = mine('contacts').filter(function (c) { return ['病院', '訪問看護', '医療機器業者'].indexOf(c.kind) >= 0; });
+    var famEm = sortFamily(mine('family').filter(function (f) { return f.emergencyOrder && f.visibility !== 'family'; }));
     return '<h1>' + h(child.nickname || '') + '　' + h(p.title) + ' の手順書</h1>' +
       '<p class="doc-meta">最終更新：' + h(updated ? L.fmtDate(L.ymd(new Date(updated))) : '') + '　作成：家族</p>' +
       careBody(p) +
-      (emergency.length ? '<h3>連絡先</h3>' + contactsTable(emergency) : '') +
+      (famEm.length ? '<h3>家族への連絡（この順に）</h3><table class="doc-table">' + famEm.map(function (f) {
+        return '<tr><th>' + h(f.emergencyOrder) + '. ' + h(f.relation) + '</th><td>' + h(f.name) + '　' + h(f.phone) + '</td></tr>';
+      }).join('') + '</table>' : '') +
+      (emergency.length ? '<h3>医療機関・業者</h3>' + contactsTable(emergency) : '') +
       '<p class="doc-foot">この手順書は、主治医の指示にもとづいて家族が作成したものです。判断に迷うときは、家族または主治医に連絡してください。</p>';
   }
 
+  function profileTable(cat, audience) {
+    var list = mine('profile').filter(function (p) { return p.category === cat && !p.validTo && allowed(p.visibility, audience); }).sort(byOrder);
+    if (!list.length) return '';
+    return '<h3>' + h(cat) + '</h3><table class="doc-table">' + list.map(function (p) {
+      return '<tr><th>' + h(p.label) + '</th><td>' + br(p.value) + (p.caution ? '<div class="doc-criteria">※ ' + br(p.caution) + '</div>' : '') + '</td></tr>';
+    }).join('') + '</table>';
+  }
+
   function bookDoc(audience) {
+    var fam = audience === 'family';
     var child = childOf(S.childId);
     var t0 = today();
-    var html = '<h1>' + h(child.nickname || '') + ' のサポートブック</h1>' +
-      '<p class="doc-meta">' + h(L.fmtDate(t0)) + ' 作成　' + (audience === 'family' ? '家族用（すべての情報）' : '支援者向け') + '</p>';
-    var items = mine('profile').filter(function (p) { return !p.validTo && allowed(p.visibility, audience); });
-    fieldOptions(fieldDef('profile', 'category')).forEach(function (o) {
-      var list = items.filter(function (p) { return p.category === o.value; });
-      if (!list.length) return;
-      html += '<h2>' + h(o.value) + '</h2><table class="doc-table">' + list.map(function (p) {
-        return '<tr><th>' + h(p.label) + '</th><td>' + br(p.value) + '</td></tr>';
+    var n = 0;
+    var chapters = [];
+    function chapter(title, body) { if (body) { n += 1; chapters.push('<section class="doc-chapter"><h2>' + n + '. ' + h(title) + '</h2>' + body + '</section>'); } }
+
+    // 1. プロフィール
+    var prof = '<h3>本人の情報</h3><table class="doc-table">' +
+      (child.furigana ? '<tr><th>ふりがな</th><td>' + h(child.furigana) + '</td></tr>' : '') +
+      (child.fullName ? '<tr><th>氏名</th><td>' + h(child.fullName) + '</td></tr>' : '') +
+      '<tr><th>家庭での呼び名</th><td>' + h(child.nickname) + '</td></tr>' +
+      (child.birthDate ? '<tr><th>生年月日</th><td>' + h(L.fmtDate(child.birthDate)) + '生（' + h(L.ageText(child.birthDate, t0)) + '）</td></tr>' : '') +
+      (fam && child.address ? '<tr><th>住所</th><td>' + br(child.address) + '</td></tr>' : '') +
+      (fam && child.phone ? '<tr><th>電話番号</th><td>' + h(child.phone) + '</td></tr>' : '') + '</table>';
+    var family = sortFamily(mine('family').filter(function (f) { return allowed(f.visibility, audience); }));
+    var members = family.filter(function (f) { return f.livesTogether !== '別居'; });
+    if (members.length) {
+      prof += '<h3>家族の情報</h3><table class="doc-table"><tr><th>続柄</th><th>氏名</th>' + (fam ? '<th>生年月日</th><th>職業</th>' : '') + '<th>電話</th><th>備考</th></tr>' + members.map(function (f) {
+        return '<tr><td>' + h(f.relation) + '</td><td>' + h(f.name) + '</td>' + (fam ? '<td>' + h(L.fmtDate(f.birthDate)) + '</td><td>' + h(f.occupation) + '</td>' : '') + '<td>' + h(f.phone) + '</td><td>' + br(f.note) + '</td></tr>';
       }).join('') + '</table>';
-    });
+    }
+    var emergency = family.filter(function (f) { return f.emergencyOrder; });
+    if (emergency.length) {
+      prof += '<h3>緊急連絡先</h3><table class="doc-table"><tr><th>順位</th><th>連絡先</th><th>電話</th>' + (fam ? '<th>住所</th>' : '') + '</tr>' + emergency.map(function (f) {
+        return '<tr><td>' + h(f.emergencyOrder) + '</td><td>' + h(f.name) + '（' + h(f.relation) + '）</td><td>' + h(f.phone) + '</td>' + (fam ? '<td>' + br(f.address) + '</td>' : '') + '</tr>';
+      }).join('') + '</table>';
+    }
+    prof += profileTable('基本情報', audience);
+    chapter('プロフィール', prof);
+
+    // 2. 本人について
+    chapter(child.nickname + 'について', ['特徴と関わり方', '好きなこと・遊び', '苦手なこと', '身体・アレルギー'].map(function (c) { return profileTable(c, audience); }).join(''));
+
+    // 3. 睡眠・食事・生活リズム
+    var rhythm = mine('schedule').sort(function (a, b) { return String(a.time).localeCompare(String(b.time)); });
+    chapter('睡眠・食事', profileTable('食事', audience) + profileTable('睡眠', audience) +
+      (rhythm.length ? '<h3>生活リズム</h3><table class="doc-table rhythm-table">' + rhythm.map(function (r) {
+        return '<tr><th>' + h(r.time) + '</th><td>' + h(r.activity) + (r.note ? '　' + h(r.note) : '') + '</td></tr>';
+      }).join('') + '</table>' : ''));
+
+    // 4. 医療的ケア・服薬
     var procs = mine('careProcedures').filter(function (p) { return p.status !== '終了' && allowed(p.visibility, audience); });
-    if (procs.length) {
-      html += '<h2>医療的ケア</h2>' + procs.map(function (p) { return '<div class="doc-block"><h3 class="doc-sub">' + h(p.title) + '</h3>' + careBody(p) + '</div>'; }).join('');
+    chapter('医療的ケア・服薬', profileTable('医療・服薬', audience) +
+      procs.map(function (p) { return '<div class="doc-block"><h3 class="doc-sub">● ' + h(p.title) + '</h3>' + careBody(p) + '</div>'; }).join(''));
+
+    // 5. 医療歴（簡易）
+    var dx = mine('diagnoses').filter(function (d) { return allowed(d.visibility, audience); }).sort(function (a, b) { return String(a.diagnosedOn || '').localeCompare(String(b.diagnosedOn || '')); });
+    var visits = mine('visits').sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); });
+    var med = '';
+    if (dx.length) {
+      med += '<h3>診断名</h3><table class="doc-table"><tr><th>診断名</th><th>診断時期</th><th>病院・診療科</th><th>いまの状態</th></tr>' + dx.map(function (d) {
+        return '<tr><td>' + h(d.name) + (d.detail ? '<br><span class="doc-criteria">' + br(d.detail) + '</span>' : '') + '</td><td>' + h(L.fmtYm(d.diagnosedOn)) + '</td><td>' + h(d.department) + '</td><td>' + h(d.status) + '</td></tr>';
+      }).join('') + '</table>';
     }
-    var contacts = mine('contacts');
-    if (contacts.length) html += '<h2>関係機関</h2>' + contactsTable(contacts);
-    if (audience === 'family') {
+    if (fam && visits.length) {
+      med += '<h3>医療機関の記録</h3><table class="doc-table"><tr><th>年月日</th><th>医療機関・診療科</th><th>概要</th></tr>' + visits.map(function (v) {
+        return '<tr><td>' + h(L.fmtDate(v.date)) + (v.endDate ? '<br>〜' + h(L.fmtDate(v.endDate)) : '') + '</td><td>' + h([v.facility, v.department].filter(Boolean).join(' ')) + (v.doctor ? '<br>' + h(v.doctor) : '') + '</td><td><b>' + h(v.kind) + '</b> ' + br(v.summary) + '</td></tr>';
+      }).join('') + '</table>';
+    }
+    chapter('医療歴', med);
+
+    // 6. 症状について
+    chapter('症状について', dx.filter(function (d) { return d.explanation; }).map(function (d) {
+      return '<h3>● ' + h(d.name) + 'について</h3><p>' + br(d.explanation) + '</p>';
+    }).join(''));
+
+    // 7. 医療歴（詳細）：家族用のみ・年ごと
+    if (fam) {
+      var withDetail = visits.filter(function (v) { return visitDetail(v).length; });
+      var years = [];
+      withDetail.forEach(function (v) { var y = String(v.date).slice(0, 4); if (years.indexOf(y) < 0) years.push(y); });
+      chapter('医療歴（詳細）', years.map(function (y) {
+        return '<h3>' + h(y) + '年</h3>' + withDetail.filter(function (v) { return String(v.date).slice(0, 4) === y; }).map(function (v) {
+          var days = v.endDate ? L.diffDays(v.date, v.endDate) + 1 : 0;
+          var age = child.birthDate ? L.ageText(child.birthDate, v.date) : '';
+          return '<div class="doc-block"><p class="doc-event">（' + h(v.kind) + '）【' + h(v.summary) + '】</p><table class="doc-table">' +
+            '<tr><th>期間</th><td>' + h(L.fmtDate(v.date)) + (v.endDate ? '〜' + h(L.fmtDate(v.endDate)) + '（' + days + '日間）' : '') + (age ? '　' + h(age) : '') + '</td></tr>' +
+            ((v.facility || v.department) ? '<tr><th>病院</th><td>' + h([v.facility, v.department].filter(Boolean).join(' ')) + '</td></tr>' : '') +
+            visitDetail(v).map(function (x) { return '<tr><th>' + h(x[0]) + '</th><td>' + br(x[1]) + '</td></tr>'; }).join('') + '</table></div>';
+        }).join('');
+      }).join(''));
+    }
+
+    // 8. 成育歴
+    var ms = mine('milestones').sort(function (a, b) { return milestoneSortKey(a).localeCompare(milestoneSortKey(b)); });
+    chapter('成育歴', (ms.length ? '<h3>乳幼児期の発達</h3><table class="doc-table">' + ms.map(function (m) {
+      return '<tr><th>' + h(m.item) + '</th><td>' + h(milestoneWhen(m)) + (m.note ? '　' + h(m.note) : '') + '</td></tr>';
+    }).join('') + '</table>' : '') + profileTable('発達・できること', audience) + profileTable('出生時の様子', audience));
+
+    // 9. 保険証・医療証など：家族用のみ
+    if (fam) {
       var certs = mine('certificates');
-      if (certs.length) {
-        html += '<h2>受給者証・手帳・医療証</h2><table class="doc-table"><tr><th>種類</th><th>番号</th><th>区分・等級</th><th>有効期限</th></tr>' + certs.map(function (c) {
-          return '<tr><td>' + h(c.name || c.kind) + '</td><td>' + h(c.number) + '</td><td>' + h(c.grade) + '</td><td>' + h(L.fmtDate(c.validUntil)) + '</td></tr>';
-        }).join('') + '</table>';
-      }
-      var visits = mine('visits').sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
-      if (visits.length) {
-        html += '<h2>受診・入院の記録</h2><table class="doc-table"><tr><th>日付</th><th>種類</th><th>病院・機関</th><th>内容</th></tr>' + visits.map(function (v) {
-          return '<tr><td>' + h(L.fmtDate(v.date)) + (v.endDate ? '〜' + h(L.fmtMD(v.endDate)) : '') + '</td><td>' + h(v.kind) + '</td><td>' + h([v.facility, v.department].filter(Boolean).join(' ')) + '</td><td>' + br(v.summary) + '</td></tr>';
-        }).join('') + '</table>';
-      }
+      chapter('保険証・医療証など', certs.length ? '<table class="doc-table"><tr><th>区分</th><th>番号など</th></tr>' + certs.map(function (c) {
+        var lines = [
+          c.issuerNumber ? (c.kind === '健康保険証' ? '保険者番号：' : '公費負担者番号：') + c.issuerNumber : '',
+          c.issuerName ? '名称：' + c.issuerName : '',
+          c.number ? '番号：' + c.number : '',
+          c.grade ? '区分・等級：' + c.grade : '',
+          c.disease ? '疾患名：' + c.disease : '',
+          c.copay ? '自己負担：' + c.copay : '',
+          c.issuedOn ? '取得日：' + L.fmtDate(c.issuedOn) : '',
+          c.validUntil ? '有効期限：' + L.fmtDate(c.validUntil) : '',
+          c.renewalNote ? '更新：' + c.renewalNote : '',
+          c.status && c.status !== '取得済み' ? c.status + (c.note ? '（' + c.note + '）' : '') : ''
+        ].filter(Boolean);
+        return '<tr><th>' + h(c.name || c.kind) + '</th><td>' + lines.map(h).join('<br>') + '</td></tr>';
+      }).join('') + '</table>' : '');
     }
-    html += '<p class="doc-foot">このサポートブックは家族が作成したものです。内容について分からないことは、家族にお問い合わせください。</p>';
-    return html;
+
+    // 10. 医療機関・関係機関
+    var groups = contactGroups(mine('contacts'));
+    chapter('医療機関・関係機関', groups.length ? '<table class="doc-table"><tr><th>機関名</th><th>診療科・区分</th><th>通院・利用のしかた</th></tr>' + groups.map(function (g) {
+      var head = g.items[0];
+      var phone = g.items.map(function (c) { return c.phone; }).filter(Boolean)[0];
+      var address = g.items.map(function (c) { return c.address; }).filter(Boolean)[0];
+      return g.items.map(function (c, i) {
+        return '<tr>' + (i === 0 ? '<td rowspan="' + g.items.length + '"><b>' + h(g.name) + '</b><br><span class="doc-criteria">' + h(g.kind) + '</span>' +
+          (phone ? '<br>TEL ' + h(phone) : '') + (head.hours ? '<br>' + h(head.hours) : '') + (address ? '<br>' + br(address) : '') + '</td>' : '') +
+          '<td>' + h(c.department) + (c.person ? '<br>' + h(c.person) : '') + '</td><td>' + br(c.visitPattern) +
+          (c.supplies ? '<br><span class="doc-criteria">処方・材料：' + br(c.supplies) + '</span>' : '') + (c.note ? '<br><span class="doc-criteria">' + br(c.note) + '</span>' : '') + '</td></tr>';
+      }).join('');
+    }).join('') + '</table>' : '');
+
+    // 11. 家族の願い・その他
+    chapter('本人・家族の意向、その他', profileTable('本人・家族の意向', audience) + profileTable('その他', audience));
+
+    var toc = '<ol class="doc-toc">' + chapters.map(function (c) { return '<li>' + c.match(/<h2>\d+\. (.*?)<\/h2>/)[1] + '</li>'; }).join('') + '</ol>';
+    return '<h1>' + h(child.nickname || '') + ' のサポートブック</h1>' +
+      '<p class="doc-meta">記入日：' + h(L.fmtDate(t0)) + '　' + (fam ? '家族用（すべての情報）' : '支援者向け') + '</p>' + toc +
+      chapters.join('') +
+      '<p class="doc-foot">このサポートブックは家族が作成したものです。内容について分からないことは、家族にお問い合わせください。</p>';
   }
 
   function printFileName() {
@@ -1619,7 +2016,11 @@ var Logic = (function () {
     reload: function () { window.location.reload(); },
     tab: function (d) { S.tab = d.tab; S.form = null; if (d.tab !== 'care') S.careId = null; saveUi(); render(); window.scrollTo(0, 0); },
     infoTab: function (d) { S.infoTab = d.tab; render(); },
-    newRec: function (d) { openForm(d.col, newRecord(d.col, d.category ? { category: d.category } : null)); },
+    newRec: function (d) {
+      var extra = {};
+      ['category', 'item', 'kind', 'name', 'phone', 'hours', 'address'].forEach(function (k) { if (d[k]) extra[k] = d[k]; });
+      openForm(d.col, newRecord(d.col, extra));
+    },
     editRec: function (d) { var r = get(d.col, d.id); if (r) openForm(d.col, r); },
     closeForm: function () { S.form = null; render(); },
     deleteRec: deleteCurrent,
@@ -1684,7 +2085,8 @@ var Logic = (function () {
 
   var PDF_CSS = 'body{font-family:sans-serif;font-size:11pt;line-height:1.6;color:#111}h1{font-size:17pt;margin:0 0 4pt}h2{font-size:13pt;border-bottom:1.5pt solid #333;margin:14pt 0 6pt;padding-bottom:2pt}h3{font-size:11.5pt;margin:10pt 0 4pt}' +
     '.doc-meta{color:#555;font-size:9.5pt}table{border-collapse:collapse;width:100%;margin:4pt 0}th,td{border:0.75pt solid #999;padding:4pt 6pt;text-align:left;vertical-align:top}th{background:#f1f1f1;width:28%}' +
-    '.doc-criteria{color:#444;font-size:10pt;margin-top:2pt}.doc-foot{margin-top:16pt;font-size:9pt;color:#555}ol{padding-left:18pt}li{margin:3pt 0}';
+    '.doc-criteria{color:#444;font-size:10pt;margin-top:2pt}.doc-foot{margin-top:16pt;font-size:9pt;color:#555}ol{padding-left:18pt}li{margin:3pt 0}' +
+    '.doc-toc{font-size:10pt;color:#333;columns:2}.doc-event{font-weight:bold;margin:8pt 0 2pt}.doc-chapter{page-break-before:always}.doc-chapter:first-of-type{page-break-before:auto}';
 
   document.addEventListener('click', function (e) {
     var el = e.target.closest('[data-act]');
@@ -1712,6 +2114,12 @@ var Logic = (function () {
     var kind = el.getAttribute && el.getAttribute('data-change');
     if (kind === 'child') { S.childId = el.value; S.careId = null; saveUi(); render(); }
     else if (kind === 'import') { importFile(el.files && el.files[0]); el.value = ''; }
+    else if (el.name === 'category' && S.form && S.form.col === 'profile') {
+      var dl = document.getElementById('sugg-label');
+      if (dl) dl.innerHTML = suggestionsFor(fieldDef('profile', 'label'), { category: el.value }).map(function (x) { return '<option value="' + h(x) + '">'; }).join('');
+      var vis = el.form.querySelector('select[name=visibility]');
+      if (vis && S.form.isNew) vis.value = SCHEMA.options.categoryVisibility[el.value] || 'supporter';
+    }
     else if (kind === 'tplPreview') {
       var form = el.form;
       var fd = new FormData(form);
@@ -1739,6 +2147,9 @@ var Logic = (function () {
       S.settings = res[1] || {};
       S.ready = true;
       render();
+      // 古い定義で保存されたデータを今の定義に直して保存し直す（何度実行しても同じ結果）
+      var upgraded = L.upgradeCollections(S.db);
+      if (upgraded.length) saveMany(upgraded, { keepStamp: true }).catch(function () { /* 表示はできているので続ける */ });
     }).catch(function (e) {
       S.error = errMsg(e);
       render();

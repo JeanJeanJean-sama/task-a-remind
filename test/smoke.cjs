@@ -60,15 +60,50 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
 
   // 子どもの情報：履歴
   await page.click('button[data-tab=info]');
-  await page.click('.kv:has-text("好きなこと")');
-  await page.fill('textarea[name=value]', '音の出るおもちゃ、手遊び歌、水遊び');
+  ok(await page.isVisible('text=本人の情報'), '本人の基本情報（氏名・生年月日・年齢）が出る');
+  await page.click('.kv:has-text("好きな音・音楽")');
+  await page.fill('textarea[name=value]', '太鼓の音、ピアノ');
   await page.click('.sheet button[type=submit]');
   await page.waitForSelector('text=保存しました');
-  await page.locator('.card:has-text("性格・特性") >> .history-toggle').first().click();
+  await page.locator('.card:has-text("好きなこと・遊び") >> .history-toggle').first().click();
   ok(await page.isVisible('.kv.past:has-text("手遊び歌")'), '内容を変えると前の内容が履歴に残る');
+  ok(await page.isVisible('.caution:has-text("首が弱い")'), '注意することが表示される');
+  // 項目名の候補
+  await page.click('text=＋ 項目を追加');
+  await page.selectOption('.sheet select[name=category]', '食事');
+  const sugg = await page.$$eval('#sugg-label option', (o) => o.map((x) => x.value));
+  ok(sugg.includes('ミルクの種類'), '分類に合わせて項目名の候補が出る');
+  ok((await page.inputValue('.sheet select[name=visibility]')) === 'supporter', '分類に合わせて見せる範囲の初期値が入る');
+  await page.selectOption('.sheet select[name=category]', '出生時の様子');
+  ok((await page.inputValue('.sheet select[name=visibility]')) === 'family', '出生時の様子は「家族のみ」が初期値');
+  await page.click('.sheet button:has-text("やめる")');
   await shot('04_子どもの情報');
+
+  await page.click('button[data-tab=family]');
+  ok(await page.isVisible('text=緊急連絡 1'), '家族・緊急連絡先が順番つきで出る');
+  await page.click('button[data-tab=schedule]');
+  ok(await page.isVisible('.rhythm-time:has-text("06:00")'), '生活リズムが時刻順に出る');
+  await page.click('text=＋ 予定を追加');
+  await page.fill('.sheet input[name=time]', '05:30');
+  await page.fill('.sheet input[name=activity]', 'テストの予定');
+  await page.click('.sheet button[type=submit]');
+  await page.waitForSelector('text=テストの予定');
+  ok((await page.locator('.rhythm-time').first().textContent()) === '05:30', '時刻を入れると並び順に入る');
+  await page.click('button[data-tab=medical]');
+  ok(await page.isVisible('text=診断名') && await page.isVisible('.tl-date'), '診断名と医療機関の記録が出る');
+  await page.locator('.tl-more').first().click();
+  ok(await page.isVisible('.tl-detail'), '記録の詳しい内容（症状・治療・結果）を開ける');
+  await shot('05_診断・医療歴');
+  await page.click('button[data-tab=growth]');
+  await page.click('button.chip:has-text("ハイハイ")');
+  await page.fill('.sheet input[name=ageText]', '1歳8ヶ月');
+  await page.click('.sheet button[type=submit]');
+  await page.waitForSelector('.kv:has-text("ハイハイ")');
+  ok(true, '成長の記録を候補から追加できる');
+  await page.click('button[data-tab=contacts]');
+  ok((await page.locator('.card:has-text("○○こども病院") .dept').count()) === 2, '同じ病院の診療科がまとめて出る');
   await page.click('button[data-tab=certificates]');
-  ok(await page.isVisible('text=更新手続き中'), '受給者証の画面で手続き中が分かる');
+  ok(await page.isVisible('text=手続き中') && await page.isVisible('text=未取得・取得予定'), '受給者証の状態（手続き中・未取得）が分かる');
 
   // 手順書
   await page.click('button[data-tab=care]');
@@ -76,22 +111,26 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   await page.waitForSelector('text=判断の目安');
   await page.locator('.card:has-text("準備") >> button:has-text("↓")').first().click();
   ok(true, '手順を並べ替えできる');
-  await shot('05_手順書');
+  await shot('06_手順書');
   await page.click('text=印刷・PDF');
   await page.waitForSelector('.doc h1');
   ok((await page.textContent('.doc h1')).includes('手順書'), '手順書の印刷画面が出る');
-  await shot('06_手順書_印刷');
+  await shot('07_手順書_印刷');
   await page.click('text=‹ 戻る');
 
   // サポートブック（支援者向けは「家族のみ」を出さない）
   await page.click('button[data-tab=settings]');
   await page.click('text=サポートブック（支援者向け）');
   const book = await page.textContent('.doc');
-  ok(!book.includes('症候群') && book.includes('好きなこと'), '支援者向けに「家族のみ」の情報が載らない');
-  await shot('07_サポートブック');
+  ok(!book.includes('2,100g') && !book.includes('医療歴（詳細）') && !book.includes('保険証・医療証') && book.includes('好きな遊び'), '支援者向けに「家族のみ」の情報・番号・詳しい医療歴が載らない');
+  ok(book.includes('症状について') && book.includes('緊急連絡先') && book.includes('生活リズム'), '支援者向けにも症状の説明・緊急連絡先・生活リズムは載る');
+  await shot('08_サポートブック');
   await page.click('text=‹ 戻る');
   await page.click('text=サポートブック（家族用・すべて）');
-  ok((await page.textContent('.doc')).includes('症候群'), '家族用にはすべて載る');
+  const full = await page.textContent('.doc');
+  for (const ch of ['プロフィール', 'について', '睡眠・食事', '医療的ケア・服薬', '医療歴', '症状について', '医療歴（詳細）', '成育歴', '保険証・医療証など', '医療機関・関係機関']) ok(full.includes(ch), '家族用に章「' + ch + '」がある');
+  ok(full.includes('2,100g') && full.includes('ハイハイ'), '家族用にはすべて載る');
+  await shot('09_サポートブック_家族用');
   await page.click('text=‹ 戻る');
 
   // 書き出し → 消して → 読み込み
@@ -116,7 +155,7 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   await page.setViewportSize({ width: 1100, height: 800 });
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.click('button[data-tab=today]');
-  await shot('08_PC_ダーク');
+  await shot('10_PC_ダーク');
 
   ok(errors.length === 0, 'JavaScriptのエラーなし' + (errors.length ? '：' + errors.join(' / ') : ''));
   await browser.close();
