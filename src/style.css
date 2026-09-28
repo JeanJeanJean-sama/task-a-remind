@@ -232,3 +232,11 @@ a { color: var(--accent); }
   .doc-chapter { break-before: page; }
   .doc-chapter:first-of-type { break-before: auto; }
 }
+
+/* Googleドライブ同期 */
+button.store-badge { border: 0; cursor: pointer; font: inherit; font-size: 11px; }
+.store-badge.sync-syncing { background: var(--warn-soft); color: var(--warn); }
+.store-badge.sync-needLogin, .store-badge.sync-error { background: var(--late-soft); color: var(--late); }
+.sync-banner { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--warn-soft); font-size: 13px; border-bottom: 1px solid var(--line); }
+.sync-banner-error { background: var(--late-soft); }
+.sync-banner .btn { white-space: nowrap; flex-shrink: 0; }

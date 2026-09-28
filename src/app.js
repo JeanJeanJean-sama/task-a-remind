@@ -10,6 +10,7 @@
   var SCHEMA = window.__SCHEMA__;
   var TEMPLATES = window.__TEMPLATES__;
   var BUILD = window.__BUILD__ || {};
+  var CONFIG = Object.assign({}, window.__CONFIG__ || {}, window.__CONFIG_OVERRIDE__ || {});
   var COLS = Object.keys(SCHEMA.collections);
   var L = Logic;
   var IS_GAS = typeof google !== 'undefined' && google && google.script && google.script.run;
@@ -99,7 +100,8 @@
     store: null, db: {}, settings: {}, ready: false, error: '',
     childId: null, tab: 'today', infoTab: 'profile', careId: null,
     openProcess: {}, showHistory: {}, showDone: false,
-    form: null, print: null, toast: '', notice: null, busy: false
+    form: null, print: null, toast: '', notice: null, busy: false,
+    sync: null
   };
   var UI_KEY = 'tasuka-remind/v1/ui';
   function loadUi() { try { return JSON.parse(window.localStorage.getItem(UI_KEY)) || {}; } catch (e) { return {}; } }
@@ -129,6 +131,7 @@
     });
     render();
     return S.store.putMany(items.map(function (it) { return { col: it.col, rec: it.rec }; }))
+      .then(function (r) { if (S.sync && !opts.noSync) S.sync.schedule(); return r; })
       .catch(function (e) { showNotice('保存に失敗しました', errMsg(e) + '\n画面を再読み込みして、もう一度お試しください。'); throw e; });
   }
   function save(col, rec) { return saveMany([{ col: col, rec: rec }]); }
@@ -221,8 +224,28 @@
     } else if (children.length === 1) {
       who = '<span class="child-name">' + h(children[0].nickname) + (children[0].birthDate ? ' <span class="age">' + h(L.ageText(children[0].birthDate)) + '</span>' : '') + '</span>';
     }
-    return '<header class="top"><div class="brand">たすか<span>Re</span>マインド</div><div class="top-right">' + who +
-      '<span class="store-badge" title="データの保存先">' + (S.store.kind === 'gas' ? 'Google' : 'この端末') + '</span></div></header>';
+    return '<header class="top"><div class="brand">たすか<span>Re</span>マインド</div><div class="top-right">' + who + storeBadge() + '</div></header>' + syncBanner();
+  }
+
+  var SYNC_LABEL = { idle: '同期済み', syncing: '同期中…', needLogin: '同期：要ログイン', error: '同期エラー' };
+  function storeBadge() {
+    if (S.store.kind === 'gas') return '<span class="store-badge" title="データの保存先">Google</span>';
+    if (S.sync && S.sync.enabled()) {
+      var stt = S.sync.state();
+      return '<button type="button" class="store-badge sync-' + stt + '" data-act="tab" data-tab="settings" title="Googleドライブと同期">' + (SYNC_LABEL[stt] || '同期') + '</button>';
+    }
+    return '<span class="store-badge" title="データの保存先">この端末</span>';
+  }
+  function syncBanner() {
+    if (!S.sync || !S.sync.enabled()) return '';
+    var stt = S.sync.state();
+    if (stt === 'needLogin') {
+      return '<div class="sync-banner" role="status"><span>ほかの端末と同期するには、Googleにもう一度ログインしてください。</span>' + btn('同期する', 'syncResume', {}, 'sm primary') + '</div>';
+    }
+    if (stt === 'error') {
+      return '<div class="sync-banner sync-banner-error" role="alert"><span>同期できませんでした：' + h(S.sync.error()) + '</span>' + btn('もう一度', 'syncNow', {}, 'sm') + '</div>';
+    }
+    return '';
   }
 
   function navView() {
@@ -774,6 +797,7 @@
         '<p>この版には通知を送るしくみがありません。代わりに、ToDoを<b>カレンダー用ファイル</b>で書き出せます。iPhoneやGoogleのカレンダーに取り込むと、前日の22時に通知されます。</p>' +
         '<p class="small muted">Discordへの毎晩の通知や家族との共有を使うには、Googleスプレッドシート版に移ります（データを書き出して読み込むだけで移れます）。</p>' +
         btn('カレンダー用ファイル（.ics）を書き出す', 'exportIcs', {}, 'block'));
+      html += syncCard();
     }
 
     html += card('印刷・PDF',
@@ -783,7 +807,9 @@
 
     var last = S.settings.lastExportAt;
     html += card('データ',
-      (S.store.kind === 'local' ? '<p class="warn">データはこの端末のブラウザの中だけにあります。iPhoneでは「ホーム画面に追加」して使い、<b>ときどき書き出してバックアップ</b>してください。</p>' : '') +
+      (S.store.kind === 'local' ? (S.sync && S.sync.enabled()
+        ? '<p class="small muted">データはこの端末と、あなたのGoogleドライブの両方にあります。</p>'
+        : '<p class="warn">データはこの端末のブラウザの中だけにあります。iPhoneでは「ホーム画面に追加」して使い、<b>ときどき書き出してバックアップ</b>するか、下の「Googleドライブで同期」を使ってください。</p>') : '') +
       '<p class="small muted">最後に書き出した日時：' + (last ? h(new Date(last).toLocaleString('ja-JP')) : 'まだありません') + '</p>' +
       '<div class="stack">' + btn('データを書き出す（バックアップ・移行用）', 'exportJson', {}, 'block') +
       '<label class="btn block file-btn">書き出したデータを読み込む<input type="file" accept=".json,application/json" data-change="import" hidden></label>' +
@@ -793,6 +819,28 @@
       '<dl class="dl"><dt>保存先</dt><dd>' + h(S.store.label) + '</dd><dt>アプリ</dt><dd>' + h(BUILD.version || '') + '</dd><dt>データ定義</dt><dd>第' + h(SCHEMA.schemaVersion) + '版</dd></dl>' +
       '<p class="small muted">手続きの型はサンプルです。実際の手順は自治体の案内で確認してください。このアプリは医療的な判断や助言を行いません。</p>');
     return html;
+  }
+
+  function syncCard() {
+    var intro = '<p>Googleドライブに保存しておくと、<b>パソコンとスマホ</b>など、ほかの端末でも同じデータを見られます。家族と同じGoogleアカウントでログインすれば、家族とも共有できます。</p>';
+    var privacy = '<p class="small muted">保存先は、あなたのGoogleドライブの「このアプリ専用の見えない場所」です。アプリがドライブのほかのファイルを見ることはありません。開発・運営する人にデータが送られることもありません。</p>';
+    if (!S.sync || !S.sync.available()) {
+      return card('Googleドライブで同期', intro + '<p class="warn">この公開先では、まだ同期が使えるように設定されていません（管理する人がGoogle CloudのクライアントIDを設定すると使えるようになります）。</p>');
+    }
+    if (!S.sync.enabled()) {
+      return card('Googleドライブで同期', intro + privacy + btn('Googleでログインして同期を始める', 'syncStart', {}, 'primary block') +
+        '<p class="small muted">この端末にあるデータとドライブのデータは、合わせて1つになります（同じ記録は更新日時の新しい方が残ります）。</p>');
+    }
+    var last = S.sync.lastSyncAt();
+    var stt = S.sync.state();
+    return card('Googleドライブで同期',
+      '<dl class="dl"><dt>アカウント</dt><dd>' + h(S.sync.email() || '（不明）') + '</dd>' +
+      '<dt>状態</dt><dd>' + h(SYNC_LABEL[stt] || stt) + (stt === 'error' ? '<br><span class="small">' + h(S.sync.error()) + '</span>' : '') + '</dd>' +
+      '<dt>最後に同期</dt><dd>' + (last ? h(new Date(last).toLocaleString('ja-JP')) : 'まだありません') + '</dd></dl>' +
+      '<p class="small muted">入力するたびに自動で同期します。ほかの端末で直した内容は、アプリを開いたときに届きます。</p>' +
+      '<div class="stack">' + (stt === 'needLogin' ? btn('Googleにもう一度ログインして同期', 'syncResume', {}, 'primary block') : btn('今すぐ同期する', 'syncNow', {}, 'block')) +
+      btn('同期をやめる（この端末のデータは残ります）', 'syncStop', {}, 'block ghost') +
+      btn('同期をやめて、ドライブのデータも消す', 'syncStopDelete', {}, 'block ghost danger') + '</div>' + privacy);
   }
 
   // =====================================================================
@@ -1309,7 +1357,28 @@
       S.store.sendDigestNow().then(function (r) { toast(r && r.sent ? 'まとめを送りました' : '送る内容がありませんでした'); })
         .catch(function (e) { showNotice('送れませんでした', errMsg(e)); });
     },
-    closeNotice: function () { S.notice = null; render(); }
+    closeNotice: function () { S.notice = null; render(); },
+    syncStart: function () {
+      S.sync.start().then(function (ok) { toast(ok ? 'Googleドライブと同期しました' : '同期を始めました'); })
+        .catch(function (e) { showNotice('同期を始められませんでした', errMsg(e)); });
+    },
+    syncResume: function () {
+      S.sync.resume().then(function (ok) { if (ok) toast('同期しました'); })
+        .catch(function (e) { showNotice('ログインできませんでした', errMsg(e)); });
+    },
+    syncNow: function () {
+      if (!S.sync.tokenValid()) { ACTIONS.syncResume(); return; }
+      S.sync.syncNow().then(function (ok) { if (ok) toast('同期しました'); });
+    },
+    syncStop: function () {
+      if (!window.confirm('Googleドライブとの同期をやめますか？\nこの端末のデータは残ります。ドライブのデータも残ります。')) return;
+      S.sync.stop(false).then(function () { toast('同期をやめました'); });
+    },
+    syncStopDelete: function () {
+      if (!window.confirm('同期をやめて、Googleドライブに保存したデータを消しますか？\nこの端末のデータは残ります。ほかの端末で同期していた場合、その端末のデータも残ります。')) return;
+      var go = S.sync.tokenValid() ? Promise.resolve() : S.sync.resume().catch(function () {});
+      go.then(function () { return S.sync.stop(true); }).then(function () { toast('同期をやめ、ドライブのデータを消しました'); });
+    }
   };
 
   var PDF_CSS = 'body{font-family:sans-serif;font-size:11pt;line-height:1.6;color:#111}h1{font-size:17pt;margin:0 0 4pt}h2{font-size:13pt;border-bottom:1.5pt solid #333;margin:14pt 0 6pt;padding-bottom:2pt}h3{font-size:11.5pt;margin:10pt 0 4pt}' +
@@ -1363,8 +1432,28 @@
   // =====================================================================
   // 起動
   // =====================================================================
+  function setupSync() {
+    if (IS_GAS || typeof DriveSync === 'undefined') return;
+    S.sync = DriveSync.create({
+      clientId: CONFIG.googleClientId || '',
+      fileName: 'tasuka-remind-data.json',
+      collections: COLS,
+      getDb: function () { return S.db; },
+      applyRemote: function (changed) { return saveMany(changed, { keepStamp: true, noSync: true }); },
+      onChange: function () { render(); },
+      meta: { name: 'tasuka-remind', version: BUILD.version || '', from: 'drive-sync' }
+    });
+    window.addEventListener('online', function () {
+      if (S.ready && S.sync.enabled() && S.sync.tokenValid()) S.sync.syncNow();
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && S.ready && S.sync.enabled() && S.sync.tokenValid()) S.sync.syncNow();
+    });
+  }
+
   function init() {
     S.store = IS_GAS ? createGasStore() : createLocalStore();
+    setupSync();
     var ui = loadUi();
     S.childId = ui.childId || null;
     S.tab = ui.tab || 'today';
@@ -1379,6 +1468,7 @@
       // 古い定義で保存されたデータを今の定義に直して保存し直す（何度実行しても同じ結果）
       var upgraded = L.upgradeCollections(S.db);
       if (upgraded.length) saveMany(upgraded, { keepStamp: true }).catch(function () { /* 表示はできているので続ける */ });
+      if (S.sync && S.sync.enabled()) S.sync.syncNow();
     }).catch(function (e) {
       S.error = errMsg(e);
       render();

@@ -25,6 +25,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Googleドライブ同期に使うクライアントID（Settings → Secrets and variables → Actions → Variables に GOOGLE_CLIENT_ID を登録）
+      GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +37,11 @@ jobs:
 
       - name: テスト（失敗したら公開しない）
         run: npm test
+
+      - name: クライアントIDを入れてビルドし直す
+        run: |
+          node build.mjs
+          if [ -n "$GOOGLE_CLIENT_ID" ]; then echo "Googleドライブ同期：有効"; else echo "::warning::GOOGLE_CLIENT_ID が未設定のため、Googleドライブ同期は使えない状態で公開します"; fi
 
       - name: 公開するファイルを用意
         run: |

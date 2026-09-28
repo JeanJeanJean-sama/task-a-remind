@@ -24,16 +24,20 @@ const schema = JSON.parse(read('src/schema.json'));
 const templates = JSON.parse(read('src/templates.json'));
 const logic = read('src/logic.js');
 const app = read('src/app.js');
+const sync = read('src/drive-sync.js');
+// GoogleのクライアントID：環境変数 GOOGLE_CLIENT_ID があればそれを使う（GitHub Actions の変数から渡す）
+const config = JSON.parse(read('src/config.json'));
+if (process.env.GOOGLE_CLIENT_ID) config.googleClientId = process.env.GOOGLE_CLIENT_ID.trim();
 const css = read('src/style.css');
 const tpl = read('src/index.template.html');
 const build = { version: pkg.version };
 
 // </script> が中に入っていたら、HTMLが壊れるので止める
-for (const [name, s] of [['logic.js', logic], ['app.js', app]]) {
+for (const [name, s] of [['logic.js', logic], ['app.js', app], ['drive-sync.js', sync]]) {
   if (/<\/script/i.test(s)) throw new Error(`${name} に </script> が含まれています`);
 }
 const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
-const data = `window.__SCHEMA__=${json(schema)};\nwindow.__TEMPLATES__=${json(templates)};\nwindow.__BUILD__=${json(build)};`;
+const data = `window.__CONFIG__=${json(config)};\nwindow.__SCHEMA__=${json(schema)};\nwindow.__TEMPLATES__=${json(templates)};\nwindow.__BUILD__=${json(build)};`;
 
 const PAGES_HEAD = [
   '<link rel="manifest" href="manifest.webmanifest">',
@@ -45,6 +49,7 @@ const page = (head) => tpl
   .replace('/*STYLE*/', () => css)
   .replace('/*DATA*/', () => data)
   .replace('/*LOGIC*/', () => logic)
+  .replace('/*SYNC*/', () => sync)
   .replace('/*APP*/', () => app);
 
 console.log('ビルド中… v' + build.version);

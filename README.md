@@ -1,4 +1,4 @@
-# たすかReマインド（試作版 v0.2）
+# たすかReマインド（試作版 v0.3）
 
 [![テスト](https://github.com/OWNER/tasuka-remind/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/tasuka-remind/actions/workflows/ci.yml)
 [![Web版を公開](https://github.com/OWNER/tasuka-remind/actions/workflows/pages.yml/badge.svg)](https://github.com/OWNER/tasuka-remind/actions/workflows/pages.yml)
@@ -25,9 +25,10 @@
 | | かんたん版（GitHub Pages） | Google版（スプレッドシート＋GAS） |
 |---|---|---|
 | 始め方 | URLを開くだけ | スプレッドシートをコピーして初期設定 |
-| 保存場所 | その端末のブラウザの中 | 自分のGoogleドライブのスプレッドシート |
+| 保存場所 | その端末のブラウザの中（同期をオンにすると自分のGoogleドライブにも） | 自分のGoogleドライブのスプレッドシート |
 | 通知 | カレンダー用ファイル（.ics）を書き出す | **毎晩のまとめと昼の予定をDiscordに通知** |
-| 家族との共有 | データファイルの受け渡し | 同じスプレッドシートを共有 |
+| パソコンとスマホで同じデータ | **Googleでログインして同期**（自分のドライブのアプリ専用フォルダに保存） | 同じWebアプリのURLを開く |
+| 家族との共有 | 同じGoogleアカウントで同期、またはデータファイルの受け渡し | 同じスプレッドシートを共有 |
 | PDF | ブラウザの印刷で「PDFに保存」 | ドライブに保存して共有リンクで渡せる |
 
 かんたん版で「データを書き出す」→ Google版で「読み込む」だけで移れます。
@@ -38,7 +39,7 @@
 |---|---|
 | Web版を使いたい | 上の「Web版を開く」をスマホで開き、ホーム画面に追加 → [かんたん版の使い方](guide/01_かんたん版の公開と使い方.md) |
 | Google版（Discord通知つき）を使いたい | [Google版の導入手順](guide/02_Google版の導入手順.md) |
-| このリポジトリを管理・公開したい | **[推奨手順：リポジトリでの管理とWeb版の公開](guide/00_推奨手順.md)** |
+| このリポジトリを管理・公開したい | **[推奨手順：リポジトリでの管理とWeb版の公開](guide/00_推奨手順.md)**、[Googleドライブ同期の設定](guide/04_Googleドライブ同期の設定.md) |
 | 開発に参加したい | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 設計の資料：[データ定義書](guide/データ定義書.md)／[将来の移行を見据えた設計メモ](guide/03_設計メモ.md)／[セキュリティと個人情報](SECURITY.md)／[変更履歴](CHANGELOG.md)
@@ -51,6 +52,8 @@ src/                    ← 元のファイル（ここを直す）
   templates.json        ← 手続きの型（療育手帳の更新など）
   logic.js              ← 共通ロジック（ブラウザとGASの両方で使う）
   app.js / style.css    ← 画面
+  drive-sync.js         ← Googleドライブ同期（かんたん版だけで使う）
+  config.json           ← GoogleのクライアントID（GitHubの変数 GOOGLE_CLIENT_ID でも指定できる）
   sw.js / manifest.webmanifest / assets/ ← Web版をアプリのように使うための部品
 build.mjs               ← src/ から下の「自動で作るファイル」を作る
 docs/                   ← 自動：Web版（GitHub Pagesで公開される）

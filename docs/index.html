@@ -246,14 +246,23 @@ a { color: var(--accent); }
   .doc-chapter:first-of-type { break-before: auto; }
 }
 
+/* Googleドライブ同期 */
+button.store-badge { border: 0; cursor: pointer; font: inherit; font-size: 11px; }
+.store-badge.sync-syncing { background: var(--warn-soft); color: var(--warn); }
+.store-badge.sync-needLogin, .store-badge.sync-error { background: var(--late-soft); color: var(--late); }
+.sync-banner { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--warn-soft); font-size: 13px; border-bottom: 1px solid var(--line); }
+.sync-banner-error { background: var(--late-soft); }
+.sync-banner .btn { white-space: nowrap; flex-shrink: 0; }
+
 </style>
 </head>
 <body>
 <div id="app"><noscript>このアプリを使うには、JavaScriptを有効にしてください。</noscript></div>
 <script>
+window.__CONFIG__={"googleClientId":""};
 window.__SCHEMA__={"name":"tasuka-remind","title":"たすかReマインド データ定義書","schemaVersion":2,"description":"子どもの情報を「1つの事実は1か所だけ」に保存するためのデータの形。ブラウザ保存・スプレッドシート・将来のデータベースのどれでも、この定義に従う。","commonFields":[{"key":"id","label":"ID","type":"string","help":"記録ごとの固有の番号（自動）。変更しない。"},{"key":"createdAt","label":"作成日時","type":"datetime","help":"自動"},{"key":"updatedAt","label":"更新日時","type":"datetime","help":"自動。移行・同期のとき、新しい方を判断するのに使う。"},{"key":"deleted","label":"削除済み","type":"bool","help":"削除しても記録は残し、この印を付ける（同期のため）。"}],"options":{"visibility":[{"value":"all","label":"誰に見せてもよい"},{"value":"supporter","label":"支援者まで"},{"value":"family","label":"家族のみ"}],"categoryVisibility":{"出生時の様子":"family","医療・服薬":"supporter","本人・家族の意向":"family"},"labelSuggestions":{"基本情報":["血液型","身長","体重","通っている園・学校","利用しているサービス","言葉・コミュニケーション","移動のしかた"],"特徴と関わり方":["成長のペース","見て覚える","体の特徴","人との関わり","疲れやすさ","慣れない場所で","伝わりやすい伝え方"],"好きなこと・遊び":["好きな遊び","好きな音・音楽","好きなおもちゃ","好きな本","好きな食べ物"],"苦手なこと":["苦手なこと","苦手な音・場所","触られるのが苦手なところ","パニックになったとき"],"食事":["ミルクの種類","ミルク1回の量","ミルクの回数・時間","ミルクの介助方法","離乳食・食事の形態","食事の介助方法","食事の回数・時間","食事の量","食物アレルギー","食事の注意点"],"睡眠":["寝る時間","起きる時間","お昼寝","寝かしつけのしかた","眠い時のサイン"],"身体・アレルギー":["アレルギー（食物）","アレルギー（薬）","体温の目安","気をつける体の部位"],"医療・服薬":["服薬","発作","体調が悪い時のサイン","受診の目安"],"発達・できること":["運動","手先","言葉","身のまわりのこと","発達検査の結果"],"出生時の様子":["出産日時","身長・体重・頭囲・胸囲","在胎週数・分娩の経過","産院","出産当時のメモ"],"本人・家族の意向":["家族の願い","本人の希望","目標"],"その他":[]},"milestoneSuggestions":["追視","首すわり","寝返り","ずりばい","おすわり","ハイハイ","つかまり立ち","伝い歩き","ひとり歩き","歯の生え始め","指さし","初めての言葉","二語文","スプーンで食べる","コップで飲む","トイレでおしっこ"]},"collections":{"children":{"label":"子ども","sheet":"子ども","display":"nickname","fields":[{"key":"nickname","label":"呼び名","type":"string","required":true,"help":"家で呼んでいる名前。通知にも表示されます。"},{"key":"fullName","label":"氏名","type":"string"},{"key":"furigana","label":"ふりがな","type":"string"},{"key":"birthDate","label":"生年月日","type":"date","help":"年齢（○歳○ヶ月）を自動で表示します。"},{"key":"prefecture","label":"都道府県","type":"string"},{"key":"municipality","label":"市区町村","type":"string"},{"key":"address","label":"住所","type":"text","help":"印刷では家族用にだけ載ります。"},{"key":"phone","label":"自宅の電話番号","type":"tel"},{"key":"note","label":"メモ","type":"text"}]},"family":{"label":"家族・緊急連絡先","sheet":"家族・緊急連絡先","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"relation","label":"続柄","type":"string","required":true,"help":"例：父、母、祖父、きょうだい"},{"key":"name","label":"氏名","type":"string"},{"key":"birthDate","label":"生年月日","type":"date"},{"key":"occupation","label":"職業","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"address","label":"住所","type":"text"},{"key":"emergencyOrder","label":"緊急連絡の順番","type":"number","help":"1、2…と入れると緊急連絡先として順に載ります。空欄なら緊急連絡先にしません。"},{"key":"livesTogether","label":"同居","type":"select","options":["同居","別居"]},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"備考","type":"text"}]},"profile":{"label":"子どもの情報","sheet":"子どもの情報","display":"label","description":"1項目1行。内容が変わったら古い行に「いつまで」を入れて残し、新しい行を追加する（履歴）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"category","label":"分類","type":"select","required":true,"default":"基本情報","options":["基本情報","特徴と関わり方","好きなこと・遊び","苦手なこと","食事","睡眠","身体・アレルギー","医療・服薬","発達・できること","出生時の様子","本人・家族の意向","その他"]},{"key":"label","label":"項目名","type":"string","required":true,"suggestFrom":"labelSuggestions","help":"候補から選ぶか、自由に入力します。"},{"key":"value","label":"内容","type":"text","required":true},{"key":"caution","label":"注意すること","type":"text","help":"例：首が弱いので支えが必要"},{"key":"validFrom","label":"いつから","type":"date"},{"key":"validTo","label":"いつまで","type":"date","help":"空欄＝今の情報。過去の情報になったら日付を入れる。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"order","label":"並び順","type":"number","hidden":true},{"key":"note","label":"メモ","type":"text"}]},"schedule":{"label":"生活リズム","sheet":"生活リズム","display":"activity","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"time","label":"時刻","type":"time","required":true},{"key":"activity","label":"すること","type":"string","required":true,"help":"例：ミルク1回目、お昼寝、お風呂"},{"key":"kind","label":"種類","type":"select","default":"食事・ミルク","options":["食事・ミルク","睡眠","医療的ケア","服薬","入浴","通園・療育","遊び","その他"]},{"key":"note","label":"メモ","type":"text"}]},"diagnoses":{"label":"診断名","sheet":"診断名","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"name","label":"診断名","type":"string","required":true},{"key":"detail","label":"正式名・補足","type":"text"},{"key":"diagnosedOn","label":"診断された時期","type":"month"},{"key":"department","label":"病院・診療科","type":"string"},{"key":"status","label":"いまの状態","type":"select","default":"経過観察中","options":["経過観察中","治療中","治療済み","その他"]},{"key":"explanation","label":"支援者向けの説明","type":"text","help":"どんな病気・症状か、日常で気をつけること。サポートブックの「症状について」に載ります。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careProcedures":{"label":"医療的ケア手順書","sheet":"医療的ケア手順書","display":"title","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"ケアの名前","type":"string","required":true,"help":"例：経鼻経管栄養、在宅酸素療法"},{"key":"status","label":"状態","type":"select","options":["実施中","終了"],"default":"実施中"},{"key":"startedOn","label":"開始日","type":"date"},{"key":"endedOn","label":"終了日","type":"date"},{"key":"reason","label":"開始の理由・目的","type":"text"},{"key":"history","label":"これまでの経過・変化","type":"text","help":"例：流量の変化、体重の変化、続けている理由"},{"key":"dose","label":"量・設定","type":"text","help":"例：1回○ml×○回、酸素 ○L/分"},{"key":"schedule","label":"実施する時間","type":"text"},{"key":"baseline","label":"いつもの様子・数値の目安","type":"text","help":"例：酸素飽和度（SpO2）平時○〜○%"},{"key":"equipment","label":"器具・規格","type":"text","help":"例：チューブのサイズ・長さ"},{"key":"supplies","label":"使う物・消耗品","type":"text"},{"key":"supplierContactId","label":"機器・業者の連絡先","type":"ref","ref":"contacts"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careSteps":{"label":"手順書の手順","sheet":"手順書の手順","display":"text","fields":[{"key":"procedureId","label":"手順書","type":"ref","ref":"careProcedures","hidden":true},{"key":"section","label":"項目","type":"select","required":true,"options":["いつ・どれだけ","準備","実施前の確認","実施","中断の判断","実施後","注意点","いつもと違う時","交換・入れ直し","緊急時と連絡先"]},{"key":"order","label":"順番","type":"number","hidden":true},{"key":"text","label":"やること","type":"text","required":true},{"key":"criteria","label":"判断の目安・補足","type":"text","help":"例：咳き込んだら一度止め、落ち着いてから再開"},{"key":"photoUrl","label":"写真・動画のリンク","type":"url","help":"Googleドライブなどの共有リンク"}]},"visits":{"label":"受診・入院の記録","sheet":"受診・入院の記録","display":"summary","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","default":"受診","options":["受診","入院","日帰り入院","検査","手術","診断","医療的ケアの開始・変更","事故・けが","セカンドオピニオン","発達の記録","その他"]},{"key":"date","label":"日付","type":"date","required":true},{"key":"endDate","label":"終了日（入院など）","type":"date"},{"key":"facility","label":"病院・機関","type":"string"},{"key":"department","label":"診療科","type":"string"},{"key":"doctor","label":"担当医","type":"string"},{"key":"summary","label":"概要","type":"text","required":true,"help":"一覧に出る短い説明。音声入力で話したままでもかまいません。"},{"key":"symptoms","label":"症状・経緯","type":"text"},{"key":"treatment","label":"治療・検査の内容","type":"text"},{"key":"result","label":"結果・その後の経過","type":"text"},{"key":"note","label":"メモ","type":"text"}]},"milestones":{"label":"成長の記録","sheet":"成長の記録","display":"item","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"item","label":"できたこと","type":"string","required":true,"suggestFrom":"milestoneSuggestions","help":"例：首すわり、ひとり歩き"},{"key":"achievedOn","label":"できた日","type":"date","help":"日付を入れると、そのときの年齢を自動で出します。"},{"key":"ageText","label":"できた時期","type":"string","help":"日付が分からないときに「1歳2ヶ月」のように入れます。"},{"key":"note","label":"メモ","type":"text"}]},"certificates":{"label":"保険証・受給者証・手帳","sheet":"受給者証・手帳","display":"kind","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"療育手帳","options":["健康保険証","小児医療証（子ども医療証）","療育手帳","身体障害者手帳","障害児通所受給者証","障害福祉サービス受給者証","小児慢性特定疾病医療受給者証","重度障害者医療証","特別児童扶養手当","その他"]},{"key":"status","label":"状態","type":"select","default":"取得済み","options":["取得済み","申請中","未取得・取得予定"]},{"key":"name","label":"自治体での呼び名","type":"string","help":"例：愛の手帳（東京都）"},{"key":"issuerNumber","label":"公費負担者番号・保険者番号","type":"string"},{"key":"issuerName","label":"発行元・保険者の名前","type":"string"},{"key":"number","label":"番号（受給者番号・記号番号など）","type":"string"},{"key":"grade","label":"区分・等級・種別","type":"string"},{"key":"disease","label":"対象の疾患名","type":"string"},{"key":"copay","label":"自己負担（上限額・割合）","type":"text"},{"key":"issuedOn","label":"取得日","type":"date"},{"key":"validUntil","label":"有効期限","type":"date","help":"ここから更新の手続きを知らせます。"},{"key":"renewalNote","label":"更新の決まり","type":"text","help":"例：毎年更新、文書料が必要、自動更新"},{"key":"templateId","label":"更新に使う手続きの型","type":"template"},{"key":"note","label":"メモ","type":"text"}]},"contacts":{"label":"医療機関・関係機関","sheet":"関係機関","display":"name","description":"同じ病院で診療科が複数あるときは、診療科ごとに1件ずつ登録する（画面では病院ごとにまとめて表示）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"病院","options":["病院","療育","訪問看護","医療機器業者","福祉サービス","相談支援","保育園・学校","子育て支援","教室・親の会","役所","児童相談所","その他"]},{"key":"name","label":"機関の名前","type":"string","required":true,"help":"例：○○こども病院"},{"key":"department","label":"診療科・区分","type":"string","help":"例：循環器科、理学療法"},{"key":"person","label":"主治医・担当者","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"hours","label":"受付時間","type":"string","help":"例：平日 9:00〜17:00"},{"key":"address","label":"住所","type":"text"},{"key":"visitPattern","label":"通院・利用のしかた","type":"text","help":"例：月1回、心臓の経過観察"},{"key":"supplies","label":"処方・診療材料","type":"text"},{"key":"note","label":"備考","type":"text"}]},"tasks":{"label":"タスク","sheet":"タスク","display":"title","description":"手続きは工程ごとのタスクに分け、「前の工程」が終わると次が出てくる。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"やること","type":"string","required":true},{"key":"processId","label":"手続きのまとまりID","type":"string","hidden":true},{"key":"processName","label":"手続き名","type":"string","hidden":true},{"key":"templateId","label":"手続きの型","type":"string","hidden":true},{"key":"stepNo","label":"工程番号","type":"number","hidden":true},{"key":"dependsOn","label":"前の工程","type":"refs","ref":"tasks","hidden":true},{"key":"dueDate","label":"目安の期限","type":"date"},{"key":"window","label":"いつできるか","type":"select","default":"night","options":[{"value":"night","label":"夜でもできる（書類・ネット）"},{"value":"day","label":"昼しかできない（電話・窓口）"}]},{"key":"scheduledDate","label":"昼にやる日","type":"date","help":"昼しかできないタスクを、この日の昼に1回だけ知らせます。"},{"key":"contactId","label":"連絡先","type":"ref","ref":"contacts"},{"key":"script","label":"伝えること・持ち物","type":"text"},{"key":"assignee","label":"担当","type":"string","help":"例：父、母"},{"key":"status","label":"状態","type":"select","default":"todo","options":[{"value":"todo","label":"未完了"},{"value":"done","label":"完了"},{"value":"skipped","label":"対象外"}]},{"key":"doneAt","label":"完了日","type":"date","hidden":true},{"key":"certificateId","label":"関係する受給者証・手帳","type":"ref","ref":"certificates"},{"key":"note","label":"メモ","type":"text"}]}}};
 window.__TEMPLATES__={"version":1,"caution":"これはサンプルの流れです。実際の手順・必要書類・かかる期間は、自治体や制度によって異なります。必ずお住まいの自治体の案内で確認し、必要に応じて工程を直してください。","templates":[{"id":"ryouiku-renew","name":"療育手帳の更新","certificateKinds":["療育手帳"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90,"script":"期限・必要なもの・判定（発達検査）の予約先を確認する"},{"title":"判定（発達検査）の予約を電話でとる","window":"day","daysBefore":85,"contactKind":"療育","script":"「療育手帳の更新の判定を予約したい」と伝える。子どもの名前・生年月日・手帳番号を手元に用意する"},{"title":"判定（発達検査）を受ける","window":"day","daysBefore":60,"script":"予約した日時・持ち物を確認する"},{"title":"判定の結果を受け取る","window":"day","daysBefore":30},{"title":"役所で更新を申請する","window":"day","daysBefore":21,"contactKind":"役所","script":"判定結果・今の手帳・写真など（自治体の案内で確認）。期限に間に合わない場合は、窓口で相談する"},{"title":"関係する医療証・受給者証の期限も確認する","window":"night","daysBefore":14,"script":"手帳の更新が遅れると切れてしまう証明書がないか確認する"},{"title":"新しい手帳を受け取り、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"tsusho-renew","name":"障害児通所受給者証の更新","certificateKinds":["障害児通所受給者証","障害福祉サービス受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":60},{"title":"相談支援専門員に連絡し、利用計画案の作成を依頼する","window":"day","daysBefore":55,"contactKind":"相談支援","script":"受給者証の更新時期と、今後使いたいサービス・日数を伝える"},{"title":"申請書類を記入する","window":"night","daysBefore":45},{"title":"役所に申請する（窓口・郵送など自治体の方法で）","window":"day","daysBefore":40,"contactKind":"役所"},{"title":"新しい受給者証を事業所に見せ、アプリの有効期限を直す","window":"night","daysBefore":0,"script":"コピーを渡す・写真を送るなど、事業所の方法で"}]},{"id":"shoman-renew","name":"小児慢性特定疾病医療受給者証の更新","certificateKinds":["小児慢性特定疾病医療受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90},{"title":"主治医に意見書（診断書）を依頼する","window":"day","daysBefore":75,"contactKind":"病院","script":"更新用の医療意見書が必要なことと、提出の期限を伝える"},{"title":"意見書を受け取る","window":"day","daysBefore":45},{"title":"申請書類をそろえる","window":"night","daysBefore":40},{"title":"申請する","window":"day","daysBefore":30,"contactKind":"役所"},{"title":"新しい受給者証を病院・薬局に見せ、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"generic","name":"期限のある手続き（汎用）","certificateKinds":[],"steps":[{"title":"必要なものを確認する","window":"night","daysBefore":30},{"title":"申請・提出する","window":"day","daysBefore":14},{"title":"完了を確認し、アプリの情報を直す","window":"night","daysBefore":0}]}]};
-window.__BUILD__={"version":"0.2.0"};
+window.__BUILD__={"version":"0.3.0"};
 </script>
 <script>
 /*
@@ -772,6 +781,227 @@ var Logic = (function () {
 </script>
 <script>
 /*
+ * たすかReマインド Googleドライブ同期（かんたん版＝GitHub Pages版だけで使う）
+ *
+ * しくみ
+ *   - データの本体はこれまでどおり「この端末」（localStorage）。ネットがなくても使える
+ *   - 同期をオンにすると、利用者自身のGoogleドライブの「アプリ専用フォルダ（appDataFolder）」に
+ *     書き出しファイルと同じ形のJSONを1つ置き、端末どうしで「取得 → 結合 → 保存」する
+ *   - 結合の決まりは読み込みと同じ：同じIDなら更新日時が新しい方を残す。削除は「削除済み」の印で伝わる
+ *   - 権限は drive.appdata（このアプリが作ったファイルだけ）と email（どのアカウントか表示するため）だけ。
+ *     ドライブのほかのファイルは見えない
+ *   - ログインの合言葉（アクセストークン）はこのブラウザのタブの中だけに置き、外には送らない
+ */
+var DriveSync = (function () {
+  'use strict';
+
+  var GIS_SRC = 'https://accounts.google.com/gsi/client';
+  var API = 'https://www.googleapis.com/drive/v3/files';
+  var UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
+  var SCOPE = 'https://www.googleapis.com/auth/drive.appdata email';
+  var META_KEY = 'tasuka-remind/v1/sync';
+  var TOKEN_KEY = 'tasuka-remind/v1/sync-token';
+
+  function readJson(storage, key) {
+    try { return JSON.parse(storage.getItem(key)) || null; } catch (e) { return null; }
+  }
+  function writeJson(storage, key, v) {
+    try { if (v == null) storage.removeItem(key); else storage.setItem(key, JSON.stringify(v)); } catch (e) { /* 保存できなくても動く */ }
+  }
+
+  var gisPromise = null;
+  function loadGis() {
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) return Promise.resolve();
+    if (gisPromise) return gisPromise;
+    gisPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = GIS_SRC;
+      s.async = true;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { gisPromise = null; reject(new Error('Googleのログイン画面を読み込めませんでした。ネットにつながっているか確認してください')); };
+      document.head.appendChild(s);
+    });
+    return gisPromise;
+  }
+
+  /**
+   * opts: {
+   *   clientId, fileName, collections: [名前...],
+   *   getDb(): 今のデータ { col: [records] },
+   *   applyRemote(changed: [{col, rec}]): Promise  … ドライブ側の新しい記録を端末に保存する
+   *   onChange(): 状態が変わったら呼ぶ（画面の描き直し）
+   *   meta: { app情報 }
+   * }
+   */
+  function create(opts) {
+    var meta = readJson(localStorage, META_KEY) || { enabled: false, fileId: '', lastSyncAt: '', email: '' };
+    var tok = readJson(sessionStorage, TOKEN_KEY); // { access_token, exp }
+    var st = { state: meta.enabled ? 'idle' : 'off', error: '', syncing: false, again: false };
+    var tokenClient = null;
+    var timer = null;
+
+    function saveMeta() { writeJson(localStorage, META_KEY, meta); }
+    function set(state, error) { st.state = state; st.error = error || ''; if (opts.onChange) opts.onChange(); }
+    function tokenValid() { return !!(tok && tok.access_token && tok.exp > Date.now() + 60000); }
+
+    function requestToken(prompt) {
+      return loadGis().then(function () {
+        return new Promise(function (resolve, reject) {
+          if (!tokenClient) {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+              client_id: opts.clientId, scope: SCOPE, callback: function () {}
+            });
+          }
+          tokenClient.callback = function (res) {
+            if (!res || res.error || !res.access_token) { reject(new Error(res && res.error === 'access_denied' ? 'Googleへのログインが許可されませんでした' : 'Googleにログインできませんでした')); return; }
+            tok = { access_token: res.access_token, exp: Date.now() + (Number(res.expires_in) || 3600) * 1000 };
+            writeJson(sessionStorage, TOKEN_KEY, tok);
+            resolve();
+          };
+          tokenClient.error_callback = function (err) {
+            reject(new Error(err && err.type === 'popup_closed' ? 'ログインの画面が閉じられました' : 'Googleのログイン画面を開けませんでした（ポップアップがブロックされていないか確認してください）'));
+          };
+          tokenClient.requestAccessToken({ prompt: prompt, login_hint: meta.email || undefined });
+        });
+      });
+    }
+
+    function api(url, init) {
+      init = init || {};
+      init.headers = Object.assign({ Authorization: 'Bearer ' + tok.access_token }, init.headers || {});
+      return fetch(url, init).catch(function () {
+        throw new Error('ネットにつながっていないため同期できませんでした。データはこの端末に保存されています。電波が戻ると自動で同期します');
+      }).then(function (res) {
+        if (res.status === 401) { tok = null; writeJson(sessionStorage, TOKEN_KEY, null); var e = new Error('login'); e.needLogin = true; throw e; }
+        if (!res.ok) throw new Error('Googleドライブとの通信に失敗しました（' + res.status + '）。しばらくしてからもう一度お試しください');
+        return res;
+      });
+    }
+
+    function findFile() {
+      var q = encodeURIComponent("name='" + opts.fileName + "' and trashed=false");
+      return api(API + '?spaces=appDataFolder&fields=files(id,modifiedTime)&q=' + q).then(function (r) { return r.json(); })
+        .then(function (j) { return j.files && j.files[0] ? j.files[0].id : ''; });
+    }
+    function download(id) {
+      return api(API + '/' + encodeURIComponent(id) + '?alt=media').then(function (r) { return r.text(); })
+        .then(function (t) { return t ? JSON.parse(t) : null; });
+    }
+    function createFile(content) {
+      var boundary = 'tasuka' + Date.now();
+      var body = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' +
+        JSON.stringify({ name: opts.fileName, parents: ['appDataFolder'], mimeType: 'application/json' }) +
+        '\r\n--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + content + '\r\n--' + boundary + '--';
+      return api(UPLOAD + '?uploadType=multipart&fields=id', { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + boundary }, body: body })
+        .then(function (r) { return r.json(); }).then(function (j) { return j.id; });
+    }
+    function updateFile(id, content) {
+      return api(UPLOAD + '/' + encodeURIComponent(id) + '?uploadType=media&fields=id', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: content });
+    }
+    function fetchEmail() {
+      return api('https://www.googleapis.com/oauth2/v3/userinfo').then(function (r) { return r.json(); })
+        .then(function (j) { meta.email = j.email || meta.email; saveMeta(); }).catch(function () { /* 表示できなくても同期はできる */ });
+    }
+
+    /** 取得 → 結合 → 保存 */
+    function syncNow() {
+      if (!meta.enabled) return Promise.resolve(false);
+      if (!tokenValid()) { set('needLogin'); return Promise.resolve(false); }
+      if (st.syncing) { st.again = true; return Promise.resolve(false); }
+      st.syncing = true;
+      set('syncing');
+      var remoteCols = null;
+      return (meta.fileId ? Promise.resolve(meta.fileId) : findFile()).then(function (id) {
+        meta.fileId = id;
+        return id ? download(id).catch(function (e) {
+          if (e.needLogin) throw e;
+          meta.fileId = ''; return null; // ファイルが消されていたら作り直す
+        }) : null;
+      }).then(function (remote) {
+        var applied = Promise.resolve();
+        remoteCols = {};
+        opts.collections.forEach(function (c) { remoteCols[c] = []; });
+        if (remote) {
+          var data = Logic.migrate(remote);
+          Object.keys(data.collections).forEach(function (c) { if (remoteCols[c]) remoteCols[c] = data.collections[c] || []; });
+          var incoming = Logic.mergeImport(opts.getDb(), remoteCols);
+          if (incoming.length) applied = opts.applyRemote(incoming);
+        }
+        return applied;
+      }).then(function () {
+        // 端末の方が新しい記録（またはドライブにない記録）があれば、ドライブを更新する
+        var outgoing = Logic.mergeImport(remoteCols, opts.getDb());
+        if (meta.fileId && !outgoing.length) return;
+        var content = JSON.stringify(Logic.makeExport(opts.getDb(), opts.meta || {}));
+        return meta.fileId ? updateFile(meta.fileId, content) : createFile(content).then(function (id) { meta.fileId = id; });
+      }).then(function () {
+        meta.lastSyncAt = new Date().toISOString();
+        saveMeta();
+        st.syncing = false;
+        set('idle');
+        if (st.again) { st.again = false; return syncNow(); }
+        return true;
+      }).catch(function (e) {
+        st.syncing = false;
+        st.again = false;
+        saveMeta();
+        if (e && e.needLogin) set('needLogin'); else set('error', (e && e.message) || String(e));
+        return false;
+      });
+    }
+
+    return {
+      available: function () { return !!opts.clientId; },
+      enabled: function () { return !!meta.enabled; },
+      state: function () { return st.state; },
+      error: function () { return st.error; },
+      email: function () { return meta.email; },
+      lastSyncAt: function () { return meta.lastSyncAt; },
+      tokenValid: tokenValid,
+      /** 最初の設定（ボタンを押したときに呼ぶ） */
+      start: function () {
+        set('syncing');
+        return requestToken('consent').then(function () {
+          meta.enabled = true; meta.fileId = ''; saveMeta();
+          return fetchEmail();
+        }).then(syncNow).catch(function (e) { set(meta.enabled ? 'needLogin' : 'off'); throw e; });
+      },
+      /** ログインが切れたあとに、もう一度つなぐ（ボタンを押したときに呼ぶ） */
+      resume: function () {
+        return requestToken('').then(syncNow).catch(function (e) { set('needLogin', e.message); throw e; });
+      },
+      syncNow: syncNow,
+      /** 保存のたびに呼ぶ。少し待ってまとめて同期する */
+      schedule: function () {
+        if (!meta.enabled) return;
+        if (!tokenValid()) { if (st.state !== 'needLogin') set('needLogin'); return; }
+        clearTimeout(timer);
+        timer = setTimeout(syncNow, 1500);
+      },
+      /** 同期をやめる（端末のデータは残る） */
+      stop: function (alsoDeleteRemote) {
+        var p = Promise.resolve();
+        if (alsoDeleteRemote && tokenValid() && meta.fileId) {
+          p = api(API + '/' + encodeURIComponent(meta.fileId), { method: 'DELETE' }).catch(function () { /* 消せなくても同期は止める */ });
+        }
+        return p.then(function () {
+          if (tok && typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+            try { google.accounts.oauth2.revoke(tok.access_token, function () {}); } catch (e) { /* 無視 */ }
+          }
+          tok = null; writeJson(sessionStorage, TOKEN_KEY, null);
+          meta = { enabled: false, fileId: '', lastSyncAt: '', email: '' }; saveMeta();
+          set('off');
+        });
+      }
+    };
+  }
+
+  return { create: create };
+})();
+
+</script>
+<script>
+/*
  * たすかReマインド 画面
  * 同じこのファイルが、GitHub Pages版（端末に保存）とGAS版（スプレッドシートに保存）の両方で動く。
  * 保存先の違いは「保存アダプタ」（createLocalStore / createGasStore）だけに閉じ込めている。
@@ -783,6 +1013,7 @@ var Logic = (function () {
   var SCHEMA = window.__SCHEMA__;
   var TEMPLATES = window.__TEMPLATES__;
   var BUILD = window.__BUILD__ || {};
+  var CONFIG = Object.assign({}, window.__CONFIG__ || {}, window.__CONFIG_OVERRIDE__ || {});
   var COLS = Object.keys(SCHEMA.collections);
   var L = Logic;
   var IS_GAS = typeof google !== 'undefined' && google && google.script && google.script.run;
@@ -872,7 +1103,8 @@ var Logic = (function () {
     store: null, db: {}, settings: {}, ready: false, error: '',
     childId: null, tab: 'today', infoTab: 'profile', careId: null,
     openProcess: {}, showHistory: {}, showDone: false,
-    form: null, print: null, toast: '', notice: null, busy: false
+    form: null, print: null, toast: '', notice: null, busy: false,
+    sync: null
   };
   var UI_KEY = 'tasuka-remind/v1/ui';
   function loadUi() { try { return JSON.parse(window.localStorage.getItem(UI_KEY)) || {}; } catch (e) { return {}; } }
@@ -902,6 +1134,7 @@ var Logic = (function () {
     });
     render();
     return S.store.putMany(items.map(function (it) { return { col: it.col, rec: it.rec }; }))
+      .then(function (r) { if (S.sync && !opts.noSync) S.sync.schedule(); return r; })
       .catch(function (e) { showNotice('保存に失敗しました', errMsg(e) + '\n画面を再読み込みして、もう一度お試しください。'); throw e; });
   }
   function save(col, rec) { return saveMany([{ col: col, rec: rec }]); }
@@ -994,8 +1227,28 @@ var Logic = (function () {
     } else if (children.length === 1) {
       who = '<span class="child-name">' + h(children[0].nickname) + (children[0].birthDate ? ' <span class="age">' + h(L.ageText(children[0].birthDate)) + '</span>' : '') + '</span>';
     }
-    return '<header class="top"><div class="brand">たすか<span>Re</span>マインド</div><div class="top-right">' + who +
-      '<span class="store-badge" title="データの保存先">' + (S.store.kind === 'gas' ? 'Google' : 'この端末') + '</span></div></header>';
+    return '<header class="top"><div class="brand">たすか<span>Re</span>マインド</div><div class="top-right">' + who + storeBadge() + '</div></header>' + syncBanner();
+  }
+
+  var SYNC_LABEL = { idle: '同期済み', syncing: '同期中…', needLogin: '同期：要ログイン', error: '同期エラー' };
+  function storeBadge() {
+    if (S.store.kind === 'gas') return '<span class="store-badge" title="データの保存先">Google</span>';
+    if (S.sync && S.sync.enabled()) {
+      var stt = S.sync.state();
+      return '<button type="button" class="store-badge sync-' + stt + '" data-act="tab" data-tab="settings" title="Googleドライブと同期">' + (SYNC_LABEL[stt] || '同期') + '</button>';
+    }
+    return '<span class="store-badge" title="データの保存先">この端末</span>';
+  }
+  function syncBanner() {
+    if (!S.sync || !S.sync.enabled()) return '';
+    var stt = S.sync.state();
+    if (stt === 'needLogin') {
+      return '<div class="sync-banner" role="status"><span>ほかの端末と同期するには、Googleにもう一度ログインしてください。</span>' + btn('同期する', 'syncResume', {}, 'sm primary') + '</div>';
+    }
+    if (stt === 'error') {
+      return '<div class="sync-banner sync-banner-error" role="alert"><span>同期できませんでした：' + h(S.sync.error()) + '</span>' + btn('もう一度', 'syncNow', {}, 'sm') + '</div>';
+    }
+    return '';
   }
 
   function navView() {
@@ -1547,6 +1800,7 @@ var Logic = (function () {
         '<p>この版には通知を送るしくみがありません。代わりに、ToDoを<b>カレンダー用ファイル</b>で書き出せます。iPhoneやGoogleのカレンダーに取り込むと、前日の22時に通知されます。</p>' +
         '<p class="small muted">Discordへの毎晩の通知や家族との共有を使うには、Googleスプレッドシート版に移ります（データを書き出して読み込むだけで移れます）。</p>' +
         btn('カレンダー用ファイル（.ics）を書き出す', 'exportIcs', {}, 'block'));
+      html += syncCard();
     }
 
     html += card('印刷・PDF',
@@ -1556,7 +1810,9 @@ var Logic = (function () {
 
     var last = S.settings.lastExportAt;
     html += card('データ',
-      (S.store.kind === 'local' ? '<p class="warn">データはこの端末のブラウザの中だけにあります。iPhoneでは「ホーム画面に追加」して使い、<b>ときどき書き出してバックアップ</b>してください。</p>' : '') +
+      (S.store.kind === 'local' ? (S.sync && S.sync.enabled()
+        ? '<p class="small muted">データはこの端末と、あなたのGoogleドライブの両方にあります。</p>'
+        : '<p class="warn">データはこの端末のブラウザの中だけにあります。iPhoneでは「ホーム画面に追加」して使い、<b>ときどき書き出してバックアップ</b>するか、下の「Googleドライブで同期」を使ってください。</p>') : '') +
       '<p class="small muted">最後に書き出した日時：' + (last ? h(new Date(last).toLocaleString('ja-JP')) : 'まだありません') + '</p>' +
       '<div class="stack">' + btn('データを書き出す（バックアップ・移行用）', 'exportJson', {}, 'block') +
       '<label class="btn block file-btn">書き出したデータを読み込む<input type="file" accept=".json,application/json" data-change="import" hidden></label>' +
@@ -1566,6 +1822,28 @@ var Logic = (function () {
       '<dl class="dl"><dt>保存先</dt><dd>' + h(S.store.label) + '</dd><dt>アプリ</dt><dd>' + h(BUILD.version || '') + '</dd><dt>データ定義</dt><dd>第' + h(SCHEMA.schemaVersion) + '版</dd></dl>' +
       '<p class="small muted">手続きの型はサンプルです。実際の手順は自治体の案内で確認してください。このアプリは医療的な判断や助言を行いません。</p>');
     return html;
+  }
+
+  function syncCard() {
+    var intro = '<p>Googleドライブに保存しておくと、<b>パソコンとスマホ</b>など、ほかの端末でも同じデータを見られます。家族と同じGoogleアカウントでログインすれば、家族とも共有できます。</p>';
+    var privacy = '<p class="small muted">保存先は、あなたのGoogleドライブの「このアプリ専用の見えない場所」です。アプリがドライブのほかのファイルを見ることはありません。開発・運営する人にデータが送られることもありません。</p>';
+    if (!S.sync || !S.sync.available()) {
+      return card('Googleドライブで同期', intro + '<p class="warn">この公開先では、まだ同期が使えるように設定されていません（管理する人がGoogle CloudのクライアントIDを設定すると使えるようになります）。</p>');
+    }
+    if (!S.sync.enabled()) {
+      return card('Googleドライブで同期', intro + privacy + btn('Googleでログインして同期を始める', 'syncStart', {}, 'primary block') +
+        '<p class="small muted">この端末にあるデータとドライブのデータは、合わせて1つになります（同じ記録は更新日時の新しい方が残ります）。</p>');
+    }
+    var last = S.sync.lastSyncAt();
+    var stt = S.sync.state();
+    return card('Googleドライブで同期',
+      '<dl class="dl"><dt>アカウント</dt><dd>' + h(S.sync.email() || '（不明）') + '</dd>' +
+      '<dt>状態</dt><dd>' + h(SYNC_LABEL[stt] || stt) + (stt === 'error' ? '<br><span class="small">' + h(S.sync.error()) + '</span>' : '') + '</dd>' +
+      '<dt>最後に同期</dt><dd>' + (last ? h(new Date(last).toLocaleString('ja-JP')) : 'まだありません') + '</dd></dl>' +
+      '<p class="small muted">入力するたびに自動で同期します。ほかの端末で直した内容は、アプリを開いたときに届きます。</p>' +
+      '<div class="stack">' + (stt === 'needLogin' ? btn('Googleにもう一度ログインして同期', 'syncResume', {}, 'primary block') : btn('今すぐ同期する', 'syncNow', {}, 'block')) +
+      btn('同期をやめる（この端末のデータは残ります）', 'syncStop', {}, 'block ghost') +
+      btn('同期をやめて、ドライブのデータも消す', 'syncStopDelete', {}, 'block ghost danger') + '</div>' + privacy);
   }
 
   // =====================================================================
@@ -2082,7 +2360,28 @@ var Logic = (function () {
       S.store.sendDigestNow().then(function (r) { toast(r && r.sent ? 'まとめを送りました' : '送る内容がありませんでした'); })
         .catch(function (e) { showNotice('送れませんでした', errMsg(e)); });
     },
-    closeNotice: function () { S.notice = null; render(); }
+    closeNotice: function () { S.notice = null; render(); },
+    syncStart: function () {
+      S.sync.start().then(function (ok) { toast(ok ? 'Googleドライブと同期しました' : '同期を始めました'); })
+        .catch(function (e) { showNotice('同期を始められませんでした', errMsg(e)); });
+    },
+    syncResume: function () {
+      S.sync.resume().then(function (ok) { if (ok) toast('同期しました'); })
+        .catch(function (e) { showNotice('ログインできませんでした', errMsg(e)); });
+    },
+    syncNow: function () {
+      if (!S.sync.tokenValid()) { ACTIONS.syncResume(); return; }
+      S.sync.syncNow().then(function (ok) { if (ok) toast('同期しました'); });
+    },
+    syncStop: function () {
+      if (!window.confirm('Googleドライブとの同期をやめますか？\nこの端末のデータは残ります。ドライブのデータも残ります。')) return;
+      S.sync.stop(false).then(function () { toast('同期をやめました'); });
+    },
+    syncStopDelete: function () {
+      if (!window.confirm('同期をやめて、Googleドライブに保存したデータを消しますか？\nこの端末のデータは残ります。ほかの端末で同期していた場合、その端末のデータも残ります。')) return;
+      var go = S.sync.tokenValid() ? Promise.resolve() : S.sync.resume().catch(function () {});
+      go.then(function () { return S.sync.stop(true); }).then(function () { toast('同期をやめ、ドライブのデータを消しました'); });
+    }
   };
 
   var PDF_CSS = 'body{font-family:sans-serif;font-size:11pt;line-height:1.6;color:#111}h1{font-size:17pt;margin:0 0 4pt}h2{font-size:13pt;border-bottom:1.5pt solid #333;margin:14pt 0 6pt;padding-bottom:2pt}h3{font-size:11.5pt;margin:10pt 0 4pt}' +
@@ -2136,8 +2435,28 @@ var Logic = (function () {
   // =====================================================================
   // 起動
   // =====================================================================
+  function setupSync() {
+    if (IS_GAS || typeof DriveSync === 'undefined') return;
+    S.sync = DriveSync.create({
+      clientId: CONFIG.googleClientId || '',
+      fileName: 'tasuka-remind-data.json',
+      collections: COLS,
+      getDb: function () { return S.db; },
+      applyRemote: function (changed) { return saveMany(changed, { keepStamp: true, noSync: true }); },
+      onChange: function () { render(); },
+      meta: { name: 'tasuka-remind', version: BUILD.version || '', from: 'drive-sync' }
+    });
+    window.addEventListener('online', function () {
+      if (S.ready && S.sync.enabled() && S.sync.tokenValid()) S.sync.syncNow();
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && S.ready && S.sync.enabled() && S.sync.tokenValid()) S.sync.syncNow();
+    });
+  }
+
   function init() {
     S.store = IS_GAS ? createGasStore() : createLocalStore();
+    setupSync();
     var ui = loadUi();
     S.childId = ui.childId || null;
     S.tab = ui.tab || 'today';
@@ -2152,6 +2471,7 @@ var Logic = (function () {
       // 古い定義で保存されたデータを今の定義に直して保存し直す（何度実行しても同じ結果）
       var upgraded = L.upgradeCollections(S.db);
       if (upgraded.length) saveMany(upgraded, { keepStamp: true }).catch(function () { /* 表示はできているので続ける */ });
+      if (S.sync && S.sync.enabled()) S.sync.syncNow();
     }).catch(function (e) {
       S.error = errMsg(e);
       render();
