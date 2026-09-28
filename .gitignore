@@ -1,0 +1,18 @@
+# 依存パッケージ・一時ファイル
+node_modules/
+test/screens/
+test-results/
+*.log
+.DS_Store
+Thumbs.db
+
+# clasp（GASのアップロード設定）は人ごとに違うのでコミットしない
+.clasp.json
+.clasprc.json
+
+# ⚠️ 実在の子どもの情報を含む可能性があるファイル（誤ってコミットしないため）
+たすかReマインド_データ_*.json
+*_サポートブック_*.pdf
+*_手順書_*.pdf
+*.ics
+private/

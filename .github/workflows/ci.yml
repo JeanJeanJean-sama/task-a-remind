@@ -1,0 +1,57 @@
+# プルリクエストと main への push のたびに、テストと画面の確認を自動で行う
+name: テスト
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: 依存パッケージを入れる
+        run: npm ci
+
+      - name: ロジックとGAS版のテスト
+        run: npm test
+
+      - name: 自動で作るファイルが最新か確認（src/ を直したら npm run build してコミットする）
+        run: |
+          if ! git diff --exit-code -- docs gas guide/データ定義書.md sample; then
+            echo "::error::docs/ や gas/ が src/ と合っていません。手元で npm run build を実行し、できたファイルもコミットしてください。"
+            exit 1
+          fi
+
+      - name: 個人情報らしいファイルが入っていないか確認
+        run: |
+          bad=$(git ls-files | grep -E '(たすかReマインド_データ_.*\.json|_サポートブック_|_手順書_.*\.pdf|\.ics$)' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::書き出したデータやPDFがコミットされています。削除してください：$bad"
+            exit 1
+          fi
+
+      - name: 画面の確認用ブラウザを入れる
+        run: npx playwright install --with-deps chromium
+
+      - name: 画面の動作確認（かんたん版・Google版）
+        run: npm run test:ui
+
+      - name: 失敗したときの画面写真を残す
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens
+          path: test/screens/
+          if-no-files-found: ignore

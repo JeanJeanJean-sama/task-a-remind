@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.png binary
+# 自動で作られるファイル（差分の表示を簡単にする）
+docs/index.html linguist-generated=true
+gas/Index.html linguist-generated=true
+gas/Shared.gs linguist-generated=true
+guide/データ定義書.md linguist-generated=true

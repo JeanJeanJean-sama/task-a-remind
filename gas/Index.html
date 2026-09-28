@@ -1,0 +1,1765 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f7d6d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="たすかRe">
+<title>たすかReマインド</title>
+
+<style>
+:root {
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --ink: #23262b;
+  --muted: #6a6f78;
+  --line: #e3dfd6;
+  --accent: #2f7d6d;
+  --accent-ink: #ffffff;
+  --accent-soft: #e2f1ec;
+  --warn: #b5620b;
+  --warn-soft: #fcefdc;
+  --late: #b3261e;
+  --late-soft: #fbe4e2;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 2px 8px rgba(0,0,0,.04);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16181b; --surface: #202328; --ink: #eceae6; --muted: #a2a7ae; --line: #33373d;
+    --accent: #5fbfa8; --accent-ink: #0d1f1a; --accent-soft: #1f3530;
+    --warn: #f0a656; --warn-soft: #3a2c1b; --late: #ff8a80; --late-soft: #3d2221;
+    --shadow: none; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  font-size: 16px; line-height: 1.6;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); }
+
+.top {
+  position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 700; letter-spacing: .02em; white-space: nowrap; font-size: 15px; }
+.brand span { color: var(--accent); }
+.top-right { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.child-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; }
+.child-select { max-width: 44vw; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.store-badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+
+.main { max-width: 720px; margin: 0 auto; padding: 12px 16px calc(88px + env(safe-area-inset-bottom)); }
+.tabs {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 5; display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom);
+}
+.tabs button {
+  border: 0; background: none; padding: 8px 2px 10px; font-size: 11px; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;
+}
+.tabs button .ico { font-size: 18px; line-height: 1.2; }
+.tabs button.on { color: var(--accent); font-weight: 700; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin: 0 0 12px; box-shadow: var(--shadow); }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.card h2 { font-size: 16px; margin: 0; }
+.date-line { margin: 4px 2px 10px; color: var(--muted); font-size: 14px; }
+.sub-head { margin: 10px 0 2px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.empty { color: var(--muted); margin: 6px 0; font-size: 14px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.warn { background: var(--warn-soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.hint { background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin: 0 0 10px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 40px; padding: 8px 14px;
+  border-radius: 10px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; text-decoration: none;
+  font-size: 15px; line-height: 1.3; text-align: center;
+}
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--accent); }
+.btn.danger { color: var(--late); }
+.btn.sm { min-height: 34px; padding: 5px 10px; font-size: 14px; }
+.btn.block { display: flex; width: 100%; }
+.icon-btn { min-width: 36px; padding: 4px 8px; font-size: 18px; }
+.btn:focus-visible, .linklike:focus-visible, .kv:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.file-btn { cursor: pointer; }
+.stack { display: grid; gap: 8px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.spacer { flex: 1; }
+.row-end { display: flex; justify-content: flex-end; margin-top: 8px; }
+.linklike { border: 0; background: none; padding: 0; text-align: left; cursor: pointer; color: inherit; }
+
+.item { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--line); }
+.card-head + .item, .sub-head + .item, .card > .item:first-child { border-top: 0; }
+.item-main { min-width: 0; flex: 1; }
+.item-title { font-weight: 600; display: block; }
+.item-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.item-contact { font-size: 14px; margin-top: 4px; }
+.item-note { font-size: 13px; margin-top: 4px; padding: 6px 8px; background: var(--bg); border-radius: 8px; }
+.item-actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; flex-shrink: 0; }
+.item-btn { width: 100%; background: none; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; cursor: pointer; color: inherit; }
+.chev { font-size: 22px; color: var(--muted); align-self: center; }
+
+.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; vertical-align: middle; }
+.pill-soon { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.pill-late { background: var(--late-soft); color: var(--late); border-color: transparent; font-weight: 600; }
+.pill-ok { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.vis-family { background: var(--late-soft); color: var(--late); border-color: transparent; }
+.vis-all { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+
+.seg { display: flex; gap: 4px; overflow-x: auto; margin: 0 0 12px; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.seg button { flex: 1 0 auto; border: 0; background: none; padding: 7px 10px; border-radius: 9px; font-size: 14px; cursor: pointer; color: var(--muted); white-space: nowrap; }
+.seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+
+.kv { display: grid; grid-template-columns: 7.5em 1fr auto; gap: 8px; align-items: start; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 9px 0; cursor: pointer; color: inherit; }
+.card-head + .kv { border-top: 0; }
+.kv .k { font-size: 13px; color: var(--muted); font-weight: 600; }
+.kv .v { word-break: break-word; }
+.kv.past { opacity: .75; padding-left: 12px; }
+.kv.past .v { text-decoration: line-through; text-decoration-color: var(--muted); }
+.kv.past-only { cursor: default; }
+.history-toggle { border: 0; background: none; color: var(--accent); font-size: 13px; padding: 0 0 6px 7.5em; cursor: pointer; }
+
+.proc { padding: 10px 0; border-top: 1px solid var(--line); }
+.card-head + .proc { border-top: 0; }
+.proc-head { display: flex; width: 100%; justify-content: space-between; gap: 8px; border: 0; background: none; padding: 0; text-align: left; cursor: pointer; color: inherit; font-weight: 600; }
+.bar { height: 6px; background: var(--bg); border-radius: 99px; margin: 6px 0; overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.steps { list-style: none; margin: 6px 0 0; padding: 0; }
+.step { display: grid; grid-template-columns: 1.5em 1fr; gap: 2px 6px; align-items: center; padding: 6px 0; }
+.step .step-meta { grid-column: 2; display: flex; gap: 6px; align-items: center; }
+.step .btn { grid-column: 2; justify-self: start; }
+.step .mark { color: var(--muted); text-align: center; }
+.step.done .mark { color: var(--accent); }
+.step.done .linklike { color: var(--muted); }
+.step.now .mark { color: var(--warn); }
+.step.now .linklike { font-weight: 600; }
+
+.timeline { list-style: none; margin: 0; padding: 0; }
+.tl { display: grid; gap: 2px; width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid var(--accent-soft); padding: 6px 0 10px 12px; cursor: pointer; color: inherit; }
+.tl-date { font-size: 13px; color: var(--muted); font-weight: 600; }
+
+.dl { display: grid; grid-template-columns: 7em 1fr; gap: 4px 10px; margin: 0; font-size: 14px; }
+.dl dt { color: var(--muted); }
+.dl dd { margin: 0; }
+.care-steps { margin: 0; padding-left: 1.4em; }
+.care-steps li { padding: 6px 0; border-top: 1px dashed var(--line); }
+.care-steps li:first-child { border-top: 0; }
+.care-step { display: grid; gap: 2px; width: 100%; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; }
+.care-criteria { font-size: 13px; color: var(--warn); }
+.mover { display: inline-flex; gap: 2px; }
+.guide-q { font-size: 14px; color: var(--muted); background: var(--bg); border-radius: 10px; padding: 10px 12px; }
+.guide-q b { color: var(--ink); font-weight: 600; }
+
+/* フォーム（下から出るシート） */
+.backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 20; }
+.sheet {
+  position: fixed; z-index: 21; left: 0; right: 0; bottom: 0; max-height: 92vh; overflow-y: auto;
+  background: var(--surface); border-radius: 18px 18px 0 0; padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+}
+@media (min-width: 760px) {
+  .sheet { left: 50%; right: auto; width: 640px; transform: translateX(-50%); bottom: auto; top: 6vh; border-radius: 18px; max-height: 88vh; }
+}
+.sheet-head { display: flex; align-items: center; justify-content: space-between; position: sticky; top: -12px; background: var(--surface); padding: 4px 0 6px; z-index: 1; }
+.sheet-head h2 { font-size: 17px; margin: 0; }
+.fields { display: grid; gap: 12px; }
+.field { display: grid; gap: 4px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lbl { font-size: 14px; font-weight: 600; }
+.req { font-size: 11px; color: var(--late); font-weight: 600; margin-left: 4px; }
+.help { font-size: 12px; color: var(--muted); }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); font-size: 16px; min-height: 44px;
+}
+.field textarea { resize: vertical; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.check input { width: 20px; height: 20px; }
+.sheet-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.preview { background: var(--bg); border-radius: 10px; padding: 8px 12px; }
+.preview ol { margin: 4px 0; padding-left: 1.4em; }
+.notice p { margin: 8px 0; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(80px + env(safe-area-inset-bottom)); z-index: 30;
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; max-width: calc(100% - 32px); box-shadow: 0 4px 16px rgba(0,0,0,.2);
+}
+.boot { max-width: 480px; margin: 20vh auto; padding: 16px; text-align: center; }
+.spinner { width: 32px; height: 32px; margin: 0 auto 12px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 印刷用の書類 */
+.print-bar { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; align-items: center; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.print-hint { max-width: 800px; margin: 8px auto 0; padding: 0 16px; font-size: 13px; color: var(--muted); }
+.doc { max-width: 800px; margin: 12px auto 40px; padding: 24px 20px; background: #fff; color: #111; border: 1px solid var(--line); border-radius: 8px; font-size: 15px; }
+.doc h1 { font-size: 22px; margin: 0 0 4px; }
+.doc h2 { font-size: 17px; border-bottom: 2px solid #333; padding-bottom: 2px; margin: 20px 0 8px; }
+.doc h3 { font-size: 15px; margin: 14px 0 4px; }
+.doc .doc-sub { font-size: 16px; }
+.doc-meta { color: #555; font-size: 13px; margin: 0 0 10px; }
+.doc-table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 14px; }
+.doc-table th, .doc-table td { border: 1px solid #999; padding: 5px 8px; text-align: left; vertical-align: top; }
+.doc-table th { background: #f1f1f1; width: 28%; font-weight: 600; }
+.doc ol { padding-left: 1.5em; }
+.doc li { margin: 4px 0; }
+.doc-criteria { color: #444; font-size: 13px; }
+.doc-foot { margin-top: 24px; font-size: 12px; color: #555; }
+.doc-block { break-inside: avoid-page; }
+
+@media print {
+  body { background: #fff; }
+  .no-print, .top, .tabs, .toast { display: none !important; }
+  .doc { border: 0; margin: 0; padding: 0; max-width: none; }
+  .doc h2, .doc h3 { break-after: avoid; }
+  .doc-table tr, .doc li { break-inside: avoid; }
+}
+
+</style>
+</head>
+<body>
+<div id="app"><noscript>このアプリを使うには、JavaScriptを有効にしてください。</noscript></div>
+<script>
+window.__SCHEMA__={"name":"tasuka-remind","title":"たすかReマインド データ定義書","schemaVersion":1,"description":"子どもの情報を「1つの事実は1か所だけ」に保存するためのデータの形。ブラウザ保存・スプレッドシート・将来のデータベースのどれでも、この定義に従う。","commonFields":[{"key":"id","label":"ID","type":"string","help":"記録ごとの固有の番号（自動）。変更しない。"},{"key":"createdAt","label":"作成日時","type":"datetime","help":"自動"},{"key":"updatedAt","label":"更新日時","type":"datetime","help":"自動。移行・同期のとき、新しい方を判断するのに使う。"},{"key":"deleted","label":"削除済み","type":"bool","help":"削除しても記録は残し、この印を付ける（同期のため）。"}],"options":{"visibility":[{"value":"all","label":"誰に見せてもよい"},{"value":"supporter","label":"支援者まで"},{"value":"family","label":"家族のみ"}]},"collections":{"children":{"label":"子ども","sheet":"子ども","display":"nickname","fields":[{"key":"nickname","label":"呼び名","type":"string","required":true,"help":"通知にも表示されます。本名でなくてかまいません。"},{"key":"birthDate","label":"生年月日","type":"date"},{"key":"prefecture","label":"都道府県","type":"string"},{"key":"municipality","label":"市区町村","type":"string"},{"key":"note","label":"メモ","type":"text"}]},"profile":{"label":"子どもの情報","sheet":"子どもの情報","display":"label","description":"1項目1行。内容が変わったら古い行に「いつまで」を入れて残し、新しい行を追加する（履歴）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"category","label":"分類","type":"select","required":true,"default":"基本情報","options":["基本情報","家族・緊急連絡先","医療・服薬","身体・アレルギー","性格・特性・関わり方","生活リズム・食事","発達・できること","本人・家族の意向","その他"]},{"key":"label","label":"項目名","type":"string","required":true,"help":"例：アレルギー、好きなこと、落ち着く方法"},{"key":"value","label":"内容","type":"text","required":true},{"key":"validFrom","label":"いつから","type":"date"},{"key":"validTo","label":"いつまで","type":"date","help":"空欄＝今の情報。過去の情報になったら日付を入れる。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"contacts":{"label":"関係機関","sheet":"関係機関","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"病院","options":["病院","療育","福祉サービス","相談支援","保育園・学校","役所","訪問看護","医療機器業者","その他"]},{"key":"name","label":"名前","type":"string","required":true,"help":"例：○○こども病院 小児科"},{"key":"person","label":"担当者","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"hours","label":"受付時間","type":"string","help":"例：平日 9:00〜17:00"},{"key":"note","label":"メモ","type":"text"}]},"certificates":{"label":"受給者証・手帳・医療証","sheet":"受給者証・手帳","display":"kind","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"療育手帳","options":["療育手帳","身体障害者手帳","障害児通所受給者証","障害福祉サービス受給者証","小児慢性特定疾病医療受給者証","重度障害者医療証","特別児童扶養手当","その他"]},{"key":"name","label":"自治体での呼び名","type":"string","help":"例：愛の手帳（東京都）"},{"key":"number","label":"番号","type":"string"},{"key":"grade","label":"区分・等級","type":"string"},{"key":"validUntil","label":"有効期限","type":"date","help":"ここから更新の手続きを知らせます。"},{"key":"templateId","label":"更新に使う手続きの型","type":"template"},{"key":"note","label":"メモ","type":"text"}]},"careProcedures":{"label":"医療的ケア手順書","sheet":"医療的ケア手順書","display":"title","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"ケアの名前","type":"string","required":true,"help":"例：経管栄養（注入）"},{"key":"status","label":"状態","type":"select","options":["実施中","終了"],"default":"実施中"},{"key":"startedOn","label":"開始日","type":"date"},{"key":"endedOn","label":"終了日","type":"date"},{"key":"reason","label":"開始の理由","type":"text"},{"key":"equipment","label":"使う器具・規格","type":"text","help":"例：チューブのサイズ・長さ"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careSteps":{"label":"手順書の手順","sheet":"手順書の手順","display":"text","fields":[{"key":"procedureId","label":"手順書","type":"ref","ref":"careProcedures","hidden":true},{"key":"section","label":"項目","type":"select","required":true,"options":["いつ・どれだけ","準備","実施前の確認","実施","中断の判断","実施後","いつもと違う時","緊急時と連絡先"]},{"key":"order","label":"順番","type":"number","hidden":true},{"key":"text","label":"やること","type":"text","required":true},{"key":"criteria","label":"判断の目安","type":"text","help":"例：咳き込んだら一度止め、落ち着いてから再開"},{"key":"photoUrl","label":"写真・動画のリンク","type":"url","help":"Googleドライブなどの共有リンク"}]},"visits":{"label":"受診・入院の記録","sheet":"受診・入院の記録","display":"summary","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","default":"受診","options":["受診","入院","検査","手術","発達の記録","その他"]},{"key":"date","label":"日付","type":"date","required":true},{"key":"endDate","label":"終了日（入院など）","type":"date"},{"key":"facility","label":"病院・機関","type":"string"},{"key":"department","label":"診療科","type":"string"},{"key":"summary","label":"内容","type":"text","required":true,"help":"音声入力で話したままでもかまいません。"},{"key":"note","label":"メモ","type":"text"}]},"tasks":{"label":"タスク","sheet":"タスク","display":"title","description":"手続きは工程ごとのタスクに分け、「前の工程」が終わると次が出てくる。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"やること","type":"string","required":true},{"key":"processId","label":"手続きのまとまりID","type":"string","hidden":true},{"key":"processName","label":"手続き名","type":"string","hidden":true},{"key":"templateId","label":"手続きの型","type":"string","hidden":true},{"key":"stepNo","label":"工程番号","type":"number","hidden":true},{"key":"dependsOn","label":"前の工程","type":"refs","ref":"tasks","hidden":true},{"key":"dueDate","label":"目安の期限","type":"date"},{"key":"window","label":"いつできるか","type":"select","default":"night","options":[{"value":"night","label":"夜でもできる（書類・ネット）"},{"value":"day","label":"昼しかできない（電話・窓口）"}]},{"key":"scheduledDate","label":"昼にやる日","type":"date","help":"昼しかできないタスクを、この日の昼に1回だけ知らせます。"},{"key":"contactId","label":"連絡先","type":"ref","ref":"contacts"},{"key":"script","label":"伝えること・持ち物","type":"text"},{"key":"assignee","label":"担当","type":"string","help":"例：父、母"},{"key":"status","label":"状態","type":"select","default":"todo","options":[{"value":"todo","label":"未完了"},{"value":"done","label":"完了"},{"value":"skipped","label":"対象外"}]},{"key":"doneAt","label":"完了日","type":"date","hidden":true},{"key":"certificateId","label":"関係する受給者証・手帳","type":"ref","ref":"certificates"},{"key":"note","label":"メモ","type":"text"}]}}};
+window.__TEMPLATES__={"version":1,"caution":"これはサンプルの流れです。実際の手順・必要書類・かかる期間は、自治体や制度によって異なります。必ずお住まいの自治体の案内で確認し、必要に応じて工程を直してください。","templates":[{"id":"ryouiku-renew","name":"療育手帳の更新","certificateKinds":["療育手帳"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90,"script":"期限・必要なもの・判定（発達検査）の予約先を確認する"},{"title":"判定（発達検査）の予約を電話でとる","window":"day","daysBefore":85,"contactKind":"療育","script":"「療育手帳の更新の判定を予約したい」と伝える。子どもの名前・生年月日・手帳番号を手元に用意する"},{"title":"判定（発達検査）を受ける","window":"day","daysBefore":60,"script":"予約した日時・持ち物を確認する"},{"title":"判定の結果を受け取る","window":"day","daysBefore":30},{"title":"役所で更新を申請する","window":"day","daysBefore":21,"contactKind":"役所","script":"判定結果・今の手帳・写真など（自治体の案内で確認）。期限に間に合わない場合は、窓口で相談する"},{"title":"関係する医療証・受給者証の期限も確認する","window":"night","daysBefore":14,"script":"手帳の更新が遅れると切れてしまう証明書がないか確認する"},{"title":"新しい手帳を受け取り、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"tsusho-renew","name":"障害児通所受給者証の更新","certificateKinds":["障害児通所受給者証","障害福祉サービス受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":60},{"title":"相談支援専門員に連絡し、利用計画案の作成を依頼する","window":"day","daysBefore":55,"contactKind":"相談支援","script":"受給者証の更新時期と、今後使いたいサービス・日数を伝える"},{"title":"申請書類を記入する","window":"night","daysBefore":45},{"title":"役所に申請する（窓口・郵送など自治体の方法で）","window":"day","daysBefore":40,"contactKind":"役所"},{"title":"新しい受給者証を事業所に見せ、アプリの有効期限を直す","window":"night","daysBefore":0,"script":"コピーを渡す・写真を送るなど、事業所の方法で"}]},{"id":"shoman-renew","name":"小児慢性特定疾病医療受給者証の更新","certificateKinds":["小児慢性特定疾病医療受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90},{"title":"主治医に意見書（診断書）を依頼する","window":"day","daysBefore":75,"contactKind":"病院","script":"更新用の医療意見書が必要なことと、提出の期限を伝える"},{"title":"意見書を受け取る","window":"day","daysBefore":45},{"title":"申請書類をそろえる","window":"night","daysBefore":40},{"title":"申請する","window":"day","daysBefore":30,"contactKind":"役所"},{"title":"新しい受給者証を病院・薬局に見せ、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"generic","name":"期限のある手続き（汎用）","certificateKinds":[],"steps":[{"title":"必要なものを確認する","window":"night","daysBefore":30},{"title":"申請・提出する","window":"day","daysBefore":14},{"title":"完了を確認し、アプリの情報を直す","window":"night","daysBefore":0}]}]};
+window.__BUILD__={"version":"0.1.0"};
+</script>
+<script>
+/*
+ * たすかReマインド 共通ロジック
+ * ブラウザ版（GitHub Pages / GASのWebアプリ）とGAS（サーバー側）の両方で使う。
+ * 画面（DOM）や保存先に依存しない処理だけをここに置く。
+ * 将来スマホアプリ・独自サーバーへ移行するときも、このファイルはそのまま使える想定。
+ */
+var Logic = (function () {
+  'use strict';
+
+  var CURRENT_SCHEMA_VERSION = 1;
+  var EXPORT_FORMAT = 'tasuka-remind-export';
+
+  // ---------- 日付（すべて 'YYYY-MM-DD' の文字列で扱う） ----------
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function parseYmd(s) {
+    if (!s) return null;
+    var m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(s));
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3]);
+  }
+  function addDays(s, n) {
+    var d = parseYmd(s);
+    if (!d) return '';
+    d.setDate(d.getDate() + n);
+    return ymd(d);
+  }
+  /** b - a の日数 */
+  function diffDays(a, b) {
+    var da = parseYmd(a), db = parseYmd(b);
+    if (!da || !db) return null;
+    return Math.round((db.getTime() - da.getTime()) / 86400000);
+  }
+  function fmtMD(s) {
+    var d = parseYmd(s);
+    return d ? (d.getMonth() + 1) + '/' + d.getDate() : '';
+  }
+  function fmtDate(s) {
+    var d = parseYmd(s);
+    return d ? d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日' : '';
+  }
+  function nowIso() { return new Date().toISOString(); }
+
+  function uuid() {
+    if (typeof crypto !== 'undefined' && crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    if (typeof Utilities !== 'undefined' && Utilities.getUuid) return Utilities.getUuid();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 3 | 8)).toString(16);
+    });
+  }
+
+  // ---------- 記録の扱い ----------
+  function alive(list) { return (list || []).filter(function (r) { return r && !r.deleted; }); }
+  function indexById(list) {
+    var m = {};
+    (list || []).forEach(function (r) { if (r && r.id) m[r.id] = r; });
+    return m;
+  }
+
+  // ---------- タスク ----------
+  /** 未完了で、前の工程がすべて終わっているタスクだけが「今やれる」 */
+  function isActionable(task, byId) {
+    if (!task || task.deleted || task.status !== 'todo') return false;
+    var deps = task.dependsOn || [];
+    for (var i = 0; i < deps.length; i++) {
+      var d = byId[deps[i]];
+      if (d && !d.deleted && d.status === 'todo') return false;
+    }
+    return true;
+  }
+
+  function dueLabel(task, today) {
+    if (!task.dueDate) return '';
+    var d = diffDays(today, task.dueDate);
+    if (d === null) return '';
+    if (d < 0) return '目安を' + (-d) + '日過ぎています';
+    if (d === 0) return '今日が目安';
+    return 'あと' + d + '日';
+  }
+
+  function findTemplate(templates, id) {
+    var list = (templates && templates.templates) || templates || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+
+  /**
+   * 手続きの型と期限から、工程ごとのタスクを作る。
+   * 期限から逆算した目安日が今日より前になる場合は、今日以降に詰めて「追い詰めない」。
+   */
+  function planProcess(template, deadline, opts) {
+    opts = opts || {};
+    var today = opts.today || ymd();
+    var processId = uuid();
+    var now = nowIso();
+    var byKind = opts.contactIdsByKind || {};
+    var prev = null;
+    var out = [];
+    template.steps.forEach(function (st, i) {
+      var due = deadline ? addDays(deadline, -(st.daysBefore || 0)) : '';
+      if (due && due < today) due = today;
+      var t = {
+        id: uuid(), createdAt: now, updatedAt: now, deleted: false,
+        childId: opts.childId || '',
+        title: st.title,
+        processId: processId,
+        processName: opts.processName || template.name,
+        templateId: template.id,
+        stepNo: i + 1,
+        dependsOn: prev ? [prev.id] : [],
+        dueDate: due,
+        window: st.window || 'night',
+        scheduledDate: '',
+        contactId: (st.contactKind && byKind[st.contactKind]) || '',
+        script: st.script || '',
+        assignee: '',
+        status: 'todo',
+        doneAt: '',
+        certificateId: opts.certificateId || '',
+        note: ''
+      };
+      out.push(t);
+      prev = t;
+    });
+    return out;
+  }
+
+  /** 期限が近いのに、更新の手続きをまだ始めていない受給者証・手帳 */
+  function certificateAlerts(db, today, childId, days) {
+    var tasks = alive(db.tasks);
+    return alive(db.certificates).filter(function (c) {
+      if (childId && c.childId !== childId) return false;
+      if (!c.validUntil) return false;
+      var d = diffDays(today, c.validUntil);
+      if (d === null || d > days) return false;
+      return !tasks.some(function (t) { return t.certificateId === c.id && t.status === 'todo'; });
+    }).map(function (c) {
+      return { cert: c, daysLeft: diffDays(today, c.validUntil) };
+    }).sort(function (a, b) { return a.daysLeft - b.daysLeft; });
+  }
+
+  /** 今日の画面・夜のまとめ通知の元になる集計 */
+  function summarize(db, today, opts) {
+    opts = opts || {};
+    var childId = opts.childId;
+    var byId = indexById(db.tasks);
+    var tomorrow = addDays(today, 1);
+    var r = { night: [], dayToday: [], dayTomorrow: [], dayUnscheduled: [], dayLater: [] };
+    alive(db.tasks).forEach(function (t) {
+      if (childId && t.childId !== childId) return;
+      if (!isActionable(t, byId)) return;
+      if (t.window === 'day') {
+        if (!t.scheduledDate) r.dayUnscheduled.push(t);
+        else if (t.scheduledDate <= today) r.dayToday.push(t);
+        else if (t.scheduledDate === tomorrow) r.dayTomorrow.push(t);
+        else r.dayLater.push(t);
+      } else {
+        r.night.push(t);
+      }
+    });
+    var byDue = function (a, b) { return (a.dueDate || '9999').localeCompare(b.dueDate || '9999'); };
+    Object.keys(r).forEach(function (k) { r[k].sort(byDue); });
+    r.certs = certificateAlerts(db, today, childId, opts.certDays || 120);
+    return r;
+  }
+
+  // ---------- 通知の文面（病名など医療の情報は載せない） ----------
+  function contactLine(t, contactsById) {
+    var c = t.contactId && contactsById[t.contactId];
+    if (!c || c.deleted) return '';
+    var s = c.name;
+    if (c.phone) s += ' ☎ ' + c.phone;
+    if (c.hours) s += '（' + c.hours + '）';
+    return s;
+  }
+  function childTag(t, childrenById, multi) {
+    if (!multi) return '';
+    var c = childrenById[t.childId];
+    return c ? '〔' + c.nickname + '〕' : '';
+  }
+
+  function buildDigestText(db, today, opts) {
+    opts = opts || {};
+    var s = summarize(db, today, { certDays: opts.certDays });
+    var children = indexById(alive(db.children));
+    var multi = alive(db.children).length > 1;
+    var contacts = indexById(db.contacts);
+    var lines = [];
+    function item(t, extra) {
+      var line = '・' + childTag(t, children, multi) + t.title;
+      var due = dueLabel(t, today);
+      if (due) line += '（' + due + '）';
+      if (t.assignee) line += ' 担当：' + t.assignee;
+      lines.push(line);
+      if (extra) lines.push('　' + extra);
+    }
+    if (s.night.length) {
+      lines.push('【今夜できること】');
+      s.night.slice(0, 10).forEach(function (t) { item(t); });
+      if (s.night.length > 10) lines.push('　ほか' + (s.night.length - 10) + '件');
+    }
+    if (s.dayTomorrow.length) {
+      lines.push('【明日の昼にやること】');
+      s.dayTomorrow.forEach(function (t) { item(t, contactLine(t, contacts)); });
+    }
+    if (s.dayUnscheduled.length) {
+      lines.push('【昼にやる日を決めましょう】');
+      s.dayUnscheduled.forEach(function (t) { item(t); });
+    }
+    if (s.certs.length) {
+      lines.push('【期限が近い受給者証・手帳】');
+      s.certs.forEach(function (a) {
+        var c = a.cert;
+        var name = (c.name || c.kind);
+        var tag = multi && children[c.childId] ? '〔' + children[c.childId].nickname + '〕' : '';
+        lines.push('・' + tag + name + '：' + (a.daysLeft < 0 ? '有効期限を' + (-a.daysLeft) + '日過ぎています' : '有効期限まであと' + a.daysLeft + '日') + '（更新の手続きをまだ始めていません）');
+      });
+    }
+    if (!lines.length) return '';
+    var head = '📋 たすかReマインド｜今夜のまとめ（' + fmtMD(today) + '）';
+    var tail = opts.appUrl ? '\n▶ アプリを開く：' + opts.appUrl : '';
+    return head + '\n' + lines.join('\n') + tail;
+  }
+
+  function buildDayText(db, today, opts) {
+    opts = opts || {};
+    var s = summarize(db, today, {});
+    if (!s.dayToday.length) return '';
+    var children = indexById(alive(db.children));
+    var multi = alive(db.children).length > 1;
+    var contacts = indexById(db.contacts);
+    var lines = ['☀️ たすかReマインド｜今日の昼にやること（' + fmtMD(today) + '）'];
+    s.dayToday.forEach(function (t) {
+      lines.push('・' + childTag(t, children, multi) + t.title + (t.assignee ? ' 担当：' + t.assignee : ''));
+      var c = contactLine(t, contacts);
+      if (c) lines.push('　' + c);
+      if (t.script) lines.push('　伝えること：' + t.script);
+    });
+    if (opts.appUrl) lines.push('▶ 終わったらアプリで完了に：' + opts.appUrl);
+    return lines.join('\n');
+  }
+
+  // ---------- カレンダー（.ics）書き出し ----------
+  function icsEscape(s) {
+    return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  }
+  function toIcs(tasks, opts) {
+    opts = opts || {};
+    var stamp = nowIso().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    var out = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//tasuka-remind//JP', 'CALSCALE:GREGORIAN',
+      'X-WR-CALNAME:' + icsEscape(opts.calName || 'たすかReマインド')];
+    alive(tasks).forEach(function (t) {
+      if (t.status !== 'todo') return;
+      var date = (t.window === 'day' && t.scheduledDate) ? t.scheduledDate : t.dueDate;
+      if (!date) return;
+      var d = date.replace(/-/g, '');
+      var end = addDays(date, 1).replace(/-/g, '');
+      out.push('BEGIN:VEVENT', 'UID:' + t.id + '@tasuka-remind', 'DTSTAMP:' + stamp,
+        'DTSTART;VALUE=DATE:' + d, 'DTEND;VALUE=DATE:' + end,
+        'SUMMARY:' + icsEscape((t.window === 'day' ? '【昼】' : '') + t.title),
+        'DESCRIPTION:' + icsEscape((t.processName ? t.processName + '\n' : '') + (t.script || '')),
+        'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEscape(t.title),
+        // 終日予定の前日22時に知らせる
+        'TRIGGER:-PT2H', 'END:VALARM', 'END:VEVENT');
+    });
+    out.push('END:VCALENDAR');
+    return out.join('\r\n');
+  }
+
+  // ---------- 書き出し・読み込み（移行の道具） ----------
+  function makeExport(db, meta) {
+    var collections = {};
+    Object.keys(db).forEach(function (k) { collections[k] = db[k] || []; });
+    return {
+      format: EXPORT_FORMAT,
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      exportedAt: nowIso(),
+      app: meta || {},
+      collections: collections
+    };
+  }
+
+  /** 古い形式のデータを今の形に直す。定義を変えたらここに変換を足す。 */
+  function migrate(data) {
+    if (!data || data.format !== EXPORT_FORMAT || !data.collections) {
+      throw new Error('たすかReマインドの書き出しファイルではありません');
+    }
+    var v = Number(data.schemaVersion || 1);
+    if (v > CURRENT_SCHEMA_VERSION) {
+      throw new Error('新しいバージョンのアプリで書き出されたデータです。アプリを更新してください');
+    }
+    // 例： if (v < 2) { ...v1→v2の変換...; v = 2; }
+    data.schemaVersion = CURRENT_SCHEMA_VERSION;
+    return data;
+  }
+
+  /** IDが同じなら更新日時が新しい方を残す */
+  function mergeImport(current, incoming) {
+    var changed = [];
+    Object.keys(incoming || {}).forEach(function (col) {
+      if (!current[col]) return; // 定義にないデータ種別は無視
+      var byId = indexById(current[col]);
+      (incoming[col] || []).forEach(function (rec) {
+        if (!rec || !rec.id) return;
+        var cur = byId[rec.id];
+        if (!cur || String(rec.updatedAt || '') > String(cur.updatedAt || '')) changed.push({ col: col, rec: rec });
+      });
+    });
+    return changed;
+  }
+
+  // ---------- サンプルデータ（架空） ----------
+  function buildSample(today, templates) {
+    today = today || ymd();
+    var now = nowIso();
+    function rec(o) { o.id = uuid(); o.createdAt = now; o.updatedAt = now; o.deleted = false; return o; }
+    var child = rec({ nickname: 'さくら（サンプル）', birthDate: addDays(today, -1650), prefecture: '東京都', municipality: '○○市', note: 'これは架空のサンプルです' });
+    var cid = child.id;
+    function p(category, label, value, extra) {
+      return rec(Object.assign({ childId: cid, category: category, label: label, value: value, validFrom: '', validTo: '', visibility: 'supporter', note: '' }, extra || {}));
+    }
+    var profile = [
+      p('基本情報', '呼ばれ方', 'さくちゃん'),
+      p('家族・緊急連絡先', '緊急連絡先', '母：090-0000-0000／父：090-0000-1111', { visibility: 'supporter' }),
+      p('医療・服薬', '主な診断名', '（架空）○○症候群', { visibility: 'family' }),
+      p('医療・服薬', '服薬', '（架空）お薬A　朝・夕', { visibility: 'supporter' }),
+      p('医療・服薬', '在宅酸素', '夜間のみ使用', { validFrom: addDays(today, -1500), validTo: addDays(today, -400) }),
+      p('医療・服薬', '在宅酸素', '終了（手術のため）', { validFrom: addDays(today, -400) }),
+      p('身体・アレルギー', 'アレルギー', 'なし（食物・薬とも）', { visibility: 'all' }),
+      p('性格・特性・関わり方', '好きなこと', '音の出るおもちゃ、手遊び歌', { visibility: 'all' }),
+      p('性格・特性・関わり方', '苦手なこと', '大きな音、急に触られること', { visibility: 'all' }),
+      p('性格・特性・関わり方', '落ち着く方法', '抱っこして背中をトントンする', { visibility: 'all' }),
+      p('生活リズム・食事', '食事', '経管栄養（注入）＋口から少量', { visibility: 'supporter' })
+    ];
+    function c(kind, name, phone, hours, person) {
+      return rec({ childId: cid, kind: kind, name: name, person: person || '', phone: phone || '', hours: hours || '', note: '' });
+    }
+    var contacts = [
+      c('病院', '○○こども病院 小児科', '03-0000-0000', '平日 9:00〜17:00'),
+      c('療育', '○○療育センター', '03-0000-1111', '平日 9:00〜16:00'),
+      c('相談支援', '○○相談支援センター', '03-0000-2222', '平日 9:00〜17:00', '△△さん'),
+      c('役所', '○○市役所 障害福祉課', '03-0000-3333', '平日 8:30〜17:15'),
+      c('医療機器業者', '○○メディカル', '0120-000-000', '24時間')
+    ];
+    var byKind = {};
+    contacts.forEach(function (x) { if (!byKind[x.kind]) byKind[x.kind] = x.id; });
+    function cert(kind, days, templateId, extra) {
+      return rec(Object.assign({ childId: cid, kind: kind, name: '', number: '（架空）000000', grade: '', validUntil: addDays(today, days), templateId: templateId, note: '' }, extra || {}));
+    }
+    var certs = [
+      cert('療育手帳', 85, 'ryouiku-renew', { grade: '（架空）B' }),
+      cert('障害児通所受給者証', 200, 'tsusho-renew'),
+      cert('小児慢性特定疾病医療受給者証', 70, 'shoman-renew')
+    ];
+    var tasks = [];
+    var tpl = findTemplate(templates, 'shoman-renew');
+    if (tpl) {
+      tasks = planProcess(tpl, certs[2].validUntil, { childId: cid, certificateId: certs[2].id, processName: '小児慢性の受給者証の更新', today: today, contactIdsByKind: byKind });
+      tasks[0].status = 'done';
+      tasks[0].doneAt = today;
+    }
+    tasks.push(rec({ childId: cid, title: '保育園に来月の注入時間の変更を伝える', processId: '', processName: '', templateId: '', stepNo: '', dependsOn: [], dueDate: addDays(today, 3), window: 'night', scheduledDate: '', contactId: '', script: '連絡帳に書く', assignee: '母', status: 'todo', doneAt: '', certificateId: '', note: '' }));
+
+    var proc = rec({ childId: cid, title: '経管栄養（注入）', status: '実施中', startedOn: addDays(today, -1600), endedOn: '', reason: '（架空）口からの食事だけでは栄養が足りないため', equipment: '（例）経鼻胃管 ○Fr・○cm', visibility: 'supporter', note: '' });
+    var order = 0;
+    function st(section, text, criteria) {
+      order += 1;
+      return rec({ procedureId: proc.id, section: section, order: order, text: text, criteria: criteria || '', photoUrl: '' });
+    }
+    var steps = [
+      st('いつ・どれだけ', '（例）主治医の指示どおり：1日○回、1回○ml', '食事が取れなかった時の追加は、家族に確認する'),
+      st('準備', '石けんで手を洗う'),
+      st('準備', '栄養剤・シリンジ・白湯を用意する'),
+      st('実施前の確認', '（例）チューブの印の位置がずれていないか見る', 'ずれている・確認できない時は注入せず家族に連絡'),
+      st('実施', '（例）ゆっくり○分以上かけて入れる'),
+      st('中断の判断', '咳き込んだ・泣いた時は一度止める', '落ち着いてから再開する。止まらない時は家族に連絡'),
+      st('実施後', '白湯○mlでチューブ内を流す', 'チューブが詰まるのを防ぐため'),
+      st('いつもと違う時', 'チューブが抜けた時は入れ直さず、家族に連絡する'),
+      st('緊急時と連絡先', '顔色が悪い・呼吸が苦しそうな時はすぐ救急車（119）', '搬送の希望先：○○こども病院')
+    ];
+    function v(kind, date, facility, department, summary, endDate) {
+      return rec({ childId: cid, kind: kind, date: date, endDate: endDate || '', facility: facility, department: department || '', summary: summary, note: '' });
+    }
+    var visits = [
+      v('受診', addDays(today, -14), '○○こども病院', '小児科', '（架空）定期受診。体重が増えている。次回は3か月後'),
+      v('入院', addDays(today, -410), '○○こども病院', '小児外科', '（架空）手術のため入院', addDays(today, -398)),
+      v('発達の記録', addDays(today, -60), '', '', 'つかまり立ちができた！')
+    ];
+    return {
+      childId: cid,
+      collections: {
+        children: [child], profile: profile, contacts: contacts, certificates: certs,
+        careProcedures: [proc], careSteps: steps, visits: visits, tasks: tasks
+      }
+    };
+  }
+
+  return {
+    CURRENT_SCHEMA_VERSION: CURRENT_SCHEMA_VERSION,
+    EXPORT_FORMAT: EXPORT_FORMAT,
+    ymd: ymd, parseYmd: parseYmd, addDays: addDays, diffDays: diffDays, fmtMD: fmtMD, fmtDate: fmtDate,
+    nowIso: nowIso, uuid: uuid, alive: alive, indexById: indexById,
+    isActionable: isActionable, dueLabel: dueLabel, findTemplate: findTemplate, planProcess: planProcess,
+    certificateAlerts: certificateAlerts, summarize: summarize,
+    buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,
+    makeExport: makeExport, migrate: migrate, mergeImport: mergeImport, buildSample: buildSample
+  };
+})();
+
+</script>
+<script>
+/*
+ * たすかReマインド 画面
+ * 同じこのファイルが、GitHub Pages版（端末に保存）とGAS版（スプレッドシートに保存）の両方で動く。
+ * 保存先の違いは「保存アダプタ」（createLocalStore / createGasStore）だけに閉じ込めている。
+ * 将来は createApiStore（独自サーバー用）を足せば、画面はそのまま使える。
+ */
+(function () {
+  'use strict';
+
+  var SCHEMA = window.__SCHEMA__;
+  var TEMPLATES = window.__TEMPLATES__;
+  var BUILD = window.__BUILD__ || {};
+  var COLS = Object.keys(SCHEMA.collections);
+  var L = Logic;
+  var IS_GAS = typeof google !== 'undefined' && google && google.script && google.script.run;
+
+  // =====================================================================
+  // 保存アダプタ（ここだけが保存先を知っている）
+  //   loadAll()            -> { collectionName: [records] }
+  //   putMany([{col,rec}]) -> 保存
+  //   getSettings() / saveSettings(obj)
+  //   任意: saveFile(name, content, mime), savePdf(html, name), testNotify()
+  // =====================================================================
+  function createLocalStore() {
+    var KEY = 'tasuka-remind/v1/data';
+    var mem = null;
+    function load() {
+      if (mem) return mem;
+      var raw = null;
+      try { raw = window.localStorage.getItem(KEY); } catch (e) { raw = null; }
+      try { mem = raw ? JSON.parse(raw) : null; } catch (e) { mem = null; }
+      if (!mem || typeof mem !== 'object') mem = {};
+      mem.collections = mem.collections || {};
+      mem.settings = mem.settings || {};
+      COLS.forEach(function (c) { if (!Array.isArray(mem.collections[c])) mem.collections[c] = []; });
+      return mem;
+    }
+    function persist() {
+      try { window.localStorage.setItem(KEY, JSON.stringify(mem)); }
+      catch (e) { throw new Error('この端末に保存できませんでした。ブラウザの設定（プライベートモードなど）や空き容量を確認してください'); }
+    }
+    return {
+      kind: 'local',
+      label: 'この端末に保存',
+      loadAll: function () { return Promise.resolve(JSON.parse(JSON.stringify(load().collections))); },
+      putMany: function (items) {
+        return new Promise(function (resolve) {
+          var d = load();
+          items.forEach(function (it) {
+            var list = d.collections[it.col];
+            var i = list.findIndex(function (r) { return r.id === it.rec.id; });
+            if (i >= 0) list[i] = it.rec; else list.push(it.rec);
+          });
+          persist();
+          resolve(true);
+        });
+      },
+      getSettings: function () { return Promise.resolve(Object.assign({}, load().settings)); },
+      saveSettings: function (s) {
+        return new Promise(function (resolve) {
+          var d = load();
+          d.settings = Object.assign(d.settings, s);
+          persist();
+          resolve(d.settings);
+        });
+      }
+    };
+  }
+
+  function gasCall(name) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (resolve, reject) {
+      var runner = google.script.run.withSuccessHandler(resolve).withFailureHandler(function (e) {
+        reject(e instanceof Error ? e : new Error(String((e && e.message) || e)));
+      });
+      runner[name].apply(runner, args);
+    });
+  }
+
+  function createGasStore() {
+    return {
+      kind: 'gas',
+      label: 'スプレッドシートに保存',
+      loadAll: function () { return gasCall('api_loadAll'); },
+      putMany: function (items) { return gasCall('api_putMany', items); },
+      getSettings: function () { return gasCall('api_getSettings'); },
+      saveSettings: function (s) { return gasCall('api_saveSettings', s); },
+      saveFile: function (name, content, mime) { return gasCall('api_saveFile', name, content, mime); },
+      savePdf: function (html, name) { return gasCall('api_savePdf', html, name); },
+      testNotify: function () { return gasCall('api_testDiscord'); },
+      sendDigestNow: function () { return gasCall('api_sendDigestNow'); }
+    };
+  }
+
+  // =====================================================================
+  // 状態
+  // =====================================================================
+  var S = {
+    store: null, db: {}, settings: {}, ready: false, error: '',
+    childId: null, tab: 'today', infoTab: 'profile', careId: null,
+    openProcess: {}, showHistory: {}, showDone: false,
+    form: null, print: null, toast: '', notice: null, busy: false
+  };
+  var UI_KEY = 'tasuka-remind/v1/ui';
+  function loadUi() { try { return JSON.parse(window.localStorage.getItem(UI_KEY)) || {}; } catch (e) { return {}; } }
+  function saveUi() { try { window.localStorage.setItem(UI_KEY, JSON.stringify({ childId: S.childId, tab: S.tab })); } catch (e) { /* 保存できなくても動く */ } }
+
+  // =====================================================================
+  // データ操作
+  // =====================================================================
+  function all(col) { return L.alive(S.db[col]); }
+  function mine(col) { return all(col).filter(function (r) { return r.childId === S.childId; }); }
+  function get(col, id) { return (S.db[col] || []).find(function (r) { return r.id === id; }); }
+  function today() { return L.ymd(); }
+  function stamp(rec) {
+    var now = L.nowIso();
+    if (!rec.id) { rec.id = L.uuid(); rec.createdAt = now; }
+    rec.updatedAt = now;
+    if (rec.deleted === undefined) rec.deleted = false;
+    return rec;
+  }
+  function saveMany(items, opts) {
+    opts = opts || {};
+    items.forEach(function (it) {
+      if (!opts.keepStamp) stamp(it.rec);
+      var list = S.db[it.col];
+      var i = list.findIndex(function (r) { return r.id === it.rec.id; });
+      if (i >= 0) list[i] = it.rec; else list.push(it.rec);
+    });
+    render();
+    return S.store.putMany(items.map(function (it) { return { col: it.col, rec: it.rec }; }))
+      .catch(function (e) { showNotice('保存に失敗しました', errMsg(e) + '\n画面を再読み込みして、もう一度お試しください。'); throw e; });
+  }
+  function save(col, rec) { return saveMany([{ col: col, rec: rec }]); }
+  function softDelete(col, rec) { return save(col, Object.assign({}, rec, { deleted: true })); }
+  function errMsg(e) { return (e && e.message) || String(e); }
+
+  // =====================================================================
+  // 表示の部品
+  // =====================================================================
+  function h(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function br(s) { return h(s).replace(/\n/g, '<br>'); }
+  function btn(label, act, data, cls, aria) {
+    var attrs = aria ? ' aria-label="' + h(aria) + '"' : '';
+    Object.keys(data || {}).forEach(function (k) { attrs += ' data-' + k + '="' + h(data[k]) + '"'; });
+    return '<button type="button" class="btn ' + (cls || '') + '" data-act="' + act + '"' + attrs + '>' + label + '</button>';
+  }
+  function optLabel(field, value) {
+    var opts = fieldOptions(field);
+    for (var i = 0; i < opts.length; i++) if (opts[i].value === value) return opts[i].label;
+    return value || '';
+  }
+  function fieldOptions(field) {
+    var src = field.optionsRef ? SCHEMA.options[field.optionsRef] : (field.options || []);
+    return src.map(function (o) { return typeof o === 'string' ? { value: o, label: o } : o; });
+  }
+  function fieldDef(col, key) {
+    return SCHEMA.collections[col].fields.find(function (f) { return f.key === key; });
+  }
+  function visBadge(v) {
+    if (!v) return '';
+    var cls = v === 'family' ? 'vis-family' : v === 'all' ? 'vis-all' : 'vis-supporter';
+    return '<span class="pill ' + cls + '">' + h(optLabel(fieldDef('profile', 'visibility'), v)) + '</span>';
+  }
+  function duePill(t) {
+    var label = L.dueLabel(t, today());
+    if (!label) return '';
+    var d = L.diffDays(today(), t.dueDate);
+    var cls = d < 0 ? 'pill-late' : d <= 7 ? 'pill-soon' : '';
+    return '<span class="pill ' + cls + '">' + h(label) + '</span>';
+  }
+  function empty(text) { return '<p class="empty">' + text + '</p>'; }
+  function card(title, body, extra) {
+    return '<section class="card">' + (title ? '<div class="card-head"><h2>' + title + '</h2>' + (extra || '') + '</div>' : '') + body + '</section>';
+  }
+
+  // =====================================================================
+  // 画面の組み立て
+  // =====================================================================
+  var TABS = [
+    { id: 'today', label: '今日', icon: '☀' },
+    { id: 'process', label: '手続き', icon: '✓' },
+    { id: 'info', label: '子どもの情報', icon: '♡' },
+    { id: 'care', label: '手順書', icon: '✎' },
+    { id: 'settings', label: '設定', icon: '⚙' }
+  ];
+
+  function render() {
+    var root = document.getElementById('app');
+    if (!root) return;
+    if (!S.ready) {
+      root.innerHTML = S.error
+        ? '<div class="boot"><h1>読み込めませんでした</h1><p>' + br(S.error) + '</p>' + btn('もう一度読み込む', 'reload', {}, 'primary') + '</div>'
+        : '<div class="boot"><div class="spinner"></div><p>読み込み中…</p></div>';
+      return;
+    }
+    var overlays = (S.notice ? noticeView() : '') + (S.toast ? '<div class="toast" role="status">' + h(S.toast) + '</div>' : '');
+    if (S.print) { root.innerHTML = printView() + overlays; return; }
+
+    var children = all('children');
+    var main;
+    if (!children.length && S.tab !== 'settings') {
+      main = onboardingView();
+    } else {
+      if (children.length && !children.some(function (c) { return c.id === S.childId; })) S.childId = children[0].id;
+      main = ({ today: viewToday, process: viewProcess, info: viewInfo, care: viewCare, settings: viewSettings })[S.tab]();
+    }
+    root.innerHTML = headerView(children) + '<main class="main">' + main + '</main>' + navView() +
+      (S.form ? formView() : '') + overlays;
+  }
+
+  function headerView(children) {
+    var who = '';
+    if (children.length > 1) {
+      who = '<select class="child-select" data-change="child" aria-label="子どもを切り替え">' +
+        children.map(function (c) { return '<option value="' + h(c.id) + '"' + (c.id === S.childId ? ' selected' : '') + '>' + h(c.nickname) + '</option>'; }).join('') + '</select>';
+    } else if (children.length === 1) {
+      who = '<span class="child-name">' + h(children[0].nickname) + '</span>';
+    }
+    return '<header class="top"><div class="brand">たすか<span>Re</span>マインド</div><div class="top-right">' + who +
+      '<span class="store-badge" title="データの保存先">' + (S.store.kind === 'gas' ? 'Google' : 'この端末') + '</span></div></header>';
+  }
+
+  function navView() {
+    return '<nav class="tabs" aria-label="メニュー">' + TABS.map(function (t) {
+      return '<button type="button" data-act="tab" data-tab="' + t.id + '" class="' + (S.tab === t.id ? 'on' : '') + '"' +
+        (S.tab === t.id ? ' aria-current="page"' : '') + '><span class="ico" aria-hidden="true">' + t.icon + '</span>' + t.label + '</button>';
+    }).join('') + '</nav>';
+  }
+
+  function onboardingView() {
+    return card('はじめに',
+      '<p>「たすかReマインド」は、子どもの情報を1か所にまとめて、<b>手順書・サポートブック</b>と<b>手続きのToDo</b>を作るアプリです。</p>' +
+      '<p class="muted">データの保存先：' + h(S.store.label) + (S.store.kind === 'local' ? '（外部には送信されません）' : '') + '</p>' +
+      '<div class="stack">' +
+      btn('子どもを登録して始める', 'newRec', { col: 'children' }, 'primary block') +
+      btn('サンプル（架空のデータ）で試す', 'loadSample', {}, 'block') +
+      '<label class="btn block file-btn">書き出したデータを読み込む<input type="file" accept=".json,application/json" data-change="import" hidden></label>' +
+      '</div>');
+  }
+
+  // ---------------------------------------------------------------- 今日
+  function viewToday() {
+    var t0 = today();
+    var s = L.summarize(S.db, t0, { childId: S.childId, certDays: Number(S.settings.certAlertDays) || 120 });
+    var html = '<p class="date-line">' + h(L.fmtDate(t0)) + '</p>';
+
+    html += card('今夜できること',
+      s.night.length ? s.night.map(taskItem).join('') : empty('いまは、夜にやることはありません。'));
+
+    var day = s.dayToday.concat(s.dayTomorrow, s.dayLater);
+    var dayBody = '';
+    if (s.dayUnscheduled.length) {
+      dayBody += '<p class="sub-head">昼にやる日を決めましょう</p>' + s.dayUnscheduled.map(taskItem).join('');
+    }
+    if (day.length) dayBody += '<p class="sub-head">予定</p>' + day.map(taskItem).join('');
+    html += card('昼にやること（電話・窓口）', dayBody || empty('いまは、昼にやることはありません。'));
+
+    if (s.certs.length) {
+      html += card('期限が近い受給者証・手帳', s.certs.map(function (a) {
+        var c = a.cert;
+        return '<div class="item"><div class="item-main"><div class="item-title">' + h(c.name || c.kind) + '</div>' +
+          '<div class="item-sub">有効期限 ' + h(L.fmtDate(c.validUntil)) + '　' +
+          '<span class="pill ' + (a.daysLeft < 30 ? 'pill-late' : 'pill-soon') + '">' + (a.daysLeft < 0 ? (-a.daysLeft) + '日過ぎています' : 'あと' + a.daysLeft + '日') + '</span></div></div>' +
+          '<div class="item-actions">' + btn('更新の手続きを始める', 'startProcess', { cert: c.id }, 'primary sm') + '</div></div>';
+      }).join(''));
+    }
+    return html;
+  }
+
+  function processSteps(t) {
+    if (!t.processId) return [];
+    return all('tasks').filter(function (x) { return x.processId === t.processId; });
+  }
+
+  function taskItem(t) {
+    var t0 = today();
+    var steps = processSteps(t);
+    var sub = [];
+    if (t.processName) sub.push(h(t.processName) + (steps.length ? '（' + t.stepNo + '/' + steps.length + '）' : ''));
+    if (t.assignee) sub.push('担当：' + h(t.assignee));
+    var c = t.contactId && get('contacts', t.contactId);
+    var contact = '';
+    if (c && !c.deleted) {
+      contact = '<div class="item-contact">' + h(c.name) +
+        (c.phone ? ' <a href="tel:' + h(c.phone.replace(/[^0-9+]/g, '')) + '">☎ ' + h(c.phone) + '</a>' : '') +
+        (c.hours ? ' <span class="muted">（' + h(c.hours) + '）</span>' : '') + '</div>';
+    }
+    var actions = '';
+    if (t.window === 'day') {
+      if (!t.scheduledDate) {
+        actions += btn('明日の昼にやる', 'schedule', { id: t.id }, 'sm');
+      } else {
+        var when = t.scheduledDate <= t0 ? '今日の昼' : L.fmtMD(t.scheduledDate) + 'の昼';
+        sub.push('<b>' + when + 'にやる</b>');
+        actions += btn('日を変える', 'editRec', { col: 'tasks', id: t.id }, 'sm ghost');
+      }
+    }
+    actions += btn('完了', 'done', { id: t.id }, 'primary sm');
+    return '<div class="item task">' +
+      '<div class="item-main"><button type="button" class="linklike item-title" data-act="editRec" data-col="tasks" data-id="' + h(t.id) + '">' + h(t.title) + '</button>' +
+      '<div class="item-sub">' + sub.join('　') + ' ' + duePill(t) + '</div>' + contact +
+      (t.script ? '<div class="item-note">' + br(t.script) + '</div>' : '') + '</div>' +
+      '<div class="item-actions">' + actions + '</div></div>';
+  }
+
+  function completeTask(id) {
+    var t = get('tasks', id);
+    if (!t) return;
+    var rec = Object.assign({}, t, { status: 'done', doneAt: today() });
+    saveMany([{ col: 'tasks', rec: rec }]).then(function () {
+      var byId = L.indexById(S.db.tasks);
+      var next = all('tasks').find(function (x) { return (x.dependsOn || []).indexOf(id) >= 0 && L.isActionable(x, byId); });
+      toast(next ? '完了！次は「' + next.title + '」です' : '完了しました');
+      var restTodo = t.processId && all('tasks').some(function (x) { return x.processId === t.processId && x.status === 'todo'; });
+      if (t.certificateId && t.processId && !restTodo) {
+        var c = get('certificates', t.certificateId);
+        if (c && !c.deleted) openForm('certificates', c, { hint: '手続きが終わりました。新しい有効期限に直しておくと、次の更新もお知らせできます。' });
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------- 手続き
+  function processGroups() {
+    var groups = {};
+    var order = [];
+    mine('tasks').forEach(function (t) {
+      var k = t.processId || ('single:' + t.id);
+      if (!groups[k]) { groups[k] = { key: k, name: t.processName || t.title, single: !t.processId, tasks: [] }; order.push(k); }
+      groups[k].tasks.push(t);
+    });
+    return order.map(function (k) {
+      var g = groups[k];
+      g.tasks.sort(function (a, b) { return (Number(a.stepNo) || 0) - (Number(b.stepNo) || 0); });
+      g.done = g.tasks.filter(function (t) { return t.status !== 'todo'; }).length;
+      g.active = g.done < g.tasks.length;
+      g.due = g.tasks.reduce(function (m, t) { return t.dueDate && t.dueDate > m ? t.dueDate : m; }, '');
+      return g;
+    });
+  }
+
+  function viewProcess() {
+    var groups = processGroups();
+    var active = groups.filter(function (g) { return g.active; }).sort(function (a, b) { return (a.due || '9').localeCompare(b.due || '9'); });
+    var done = groups.filter(function (g) { return !g.active; });
+    var byId = L.indexById(S.db.tasks);
+    var html = '<div class="toolbar">' + btn('＋ 手続きを始める', 'startProcess', {}, 'primary') + btn('＋ タスクを1つ追加', 'newRec', { col: 'tasks' }) + '</div>';
+    html += card('進行中の手続き', active.length ? active.map(function (g) { return processCard(g, byId); }).join('') :
+      empty('進行中の手続きはありません。受給者証・手帳を登録すると、期限が近づいたときに「今日」の画面でお知らせします。'));
+    if (done.length) {
+      html += card('終わった手続き（' + done.length + '）', S.showDone ? done.map(function (g) { return processCard(g, byId); }).join('') : '',
+        btn(S.showDone ? '閉じる' : '表示する', 'toggleDone', {}, 'sm ghost'));
+    }
+    html += '<p class="muted small">' + h(TEMPLATES.caution) + '</p>';
+    return html;
+  }
+
+  function processCard(g, byId) {
+    var open = !!S.openProcess[g.key];
+    var pct = Math.round(g.done / g.tasks.length * 100);
+    var next = g.tasks.find(function (t) { return L.isActionable(t, byId); });
+    var html = '<div class="proc">' +
+      '<button type="button" class="proc-head" data-act="toggleProcess" data-key="' + h(g.key) + '" aria-expanded="' + open + '">' +
+      '<span class="proc-name">' + h(g.name) + '</span><span class="muted">' + g.done + '/' + g.tasks.length + '</span></button>' +
+      '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
+      (next && !open ? '<div class="item-sub">次：' + h(next.title) + ' ' + duePill(next) + '</div>' : '');
+    if (open) {
+      html += '<ol class="steps">' + g.tasks.map(function (t) {
+        var st = t.status === 'done' ? 'done' : t.status === 'skipped' ? 'skip' : L.isActionable(t, byId) ? 'now' : 'wait';
+        var mark = { done: '✓', skip: '－', now: '●', wait: '○' }[st];
+        return '<li class="step ' + st + '"><span class="mark" aria-hidden="true">' + mark + '</span>' +
+          '<button type="button" class="linklike" data-act="editRec" data-col="tasks" data-id="' + h(t.id) + '">' + h(t.title) + '</button>' +
+          '<span class="step-meta">' + (t.window === 'day' ? '<span class="pill">昼</span>' : '') +
+          (t.status === 'done' ? '<span class="muted small">' + h(L.fmtMD(t.doneAt)) + ' 完了</span>' : (t.dueDate ? '<span class="muted small">目安 ' + h(L.fmtMD(t.dueDate)) + '</span>' : '')) +
+          '</span>' + (st === 'now' ? btn('完了', 'done', { id: t.id }, 'primary sm') : '') + '</li>';
+      }).join('') + '</ol>';
+      html += '<div class="row-end">' + btn('この手続きを削除', 'deleteProcess', { key: g.key }, 'sm ghost danger') + '</div>';
+    }
+    return html + '</div>';
+  }
+
+  function startProcessForm(f) {
+    var certs = mine('certificates');
+    var tplOpts = TEMPLATES.templates.map(function (t) {
+      return '<option value="' + h(t.id) + '"' + (t.id === f.templateId ? ' selected' : '') + '>' + h(t.name) + '</option>';
+    }).join('');
+    var certOpts = '<option value="">（なし）</option>' + certs.map(function (c) {
+      return '<option value="' + h(c.id) + '"' + (c.id === f.certificateId ? ' selected' : '') + '>' + h((c.name || c.kind) + (c.validUntil ? '（期限 ' + L.fmtMD(c.validUntil) + '）' : '')) + '</option>';
+    }).join('');
+    var tpl = L.findTemplate(TEMPLATES, f.templateId) || TEMPLATES.templates[0];
+    return sheet('手続きを始める',
+      '<form data-form="startProcess" class="fields">' +
+      '<label class="field"><span class="lbl">手続きの型 <b class="req">必須</b></span><select name="templateId" data-change="tplPreview">' + tplOpts + '</select></label>' +
+      '<div class="preview"><p class="small muted">この型の工程：</p><ol class="small">' + tpl.steps.map(function (s) {
+        return '<li>' + h(s.title) + (s.window === 'day' ? ' <span class="pill">昼</span>' : '') + '</li>';
+      }).join('') + '</ol></div>' +
+      '<label class="field"><span class="lbl">関係する受給者証・手帳</span><select name="certificateId">' + certOpts + '</select></label>' +
+      '<label class="field"><span class="lbl">期限（有効期限など） <b class="req">必須</b></span><input type="date" name="deadline" required value="' + h(f.deadline || '') + '">' +
+      '<span class="help">この日から逆算して、工程ごとの目安日を決めます。</span></label>' +
+      '<label class="field"><span class="lbl">手続きの名前</span><input type="text" name="name" placeholder="' + h(tpl.name) + '" value="' + h(f.name || '') + '"></label>' +
+      '<p class="small muted">' + h(TEMPLATES.caution) + '</p>' +
+      '<div class="sheet-actions"><span class="spacer"></span>' + btn('やめる', 'closeForm', {}, 'ghost') + '<button type="submit" class="btn primary">始める</button></div>' +
+      '</form>');
+  }
+
+  function submitStartProcess(form) {
+    var fd = new FormData(form);
+    var tpl = L.findTemplate(TEMPLATES, fd.get('templateId'));
+    var deadline = fd.get('deadline');
+    if (!tpl || !deadline) return;
+    var certId = fd.get('certificateId') || '';
+    var cert = certId && get('certificates', certId);
+    var byKind = {};
+    mine('contacts').forEach(function (c) { if (!byKind[c.kind]) byKind[c.kind] = c.id; });
+    var tasks = L.planProcess(tpl, deadline, {
+      childId: S.childId, certificateId: certId, today: today(), contactIdsByKind: byKind,
+      processName: String(fd.get('name') || '').trim() || (cert ? (cert.name || cert.kind) + 'の更新' : tpl.name)
+    });
+    S.form = null;
+    S.tab = 'process';
+    S.openProcess[tasks[0].processId] = true;
+    saveMany(tasks.map(function (t) { return { col: 'tasks', rec: t }; })).then(function () { toast('手続きを登録しました。今やれる工程は「今日」に出ます'); });
+  }
+
+  // ---------------------------------------------------------------- 子どもの情報
+  var INFO_TABS = [
+    { id: 'profile', label: '基本情報' }, { id: 'contacts', label: '関係機関' },
+    { id: 'certificates', label: '受給者証・手帳' }, { id: 'visits', label: '受診・入院' }
+  ];
+  function viewInfo() {
+    var seg = '<div class="seg" role="tablist">' + INFO_TABS.map(function (t) {
+      return '<button type="button" role="tab" data-act="infoTab" data-tab="' + t.id + '" class="' + (S.infoTab === t.id ? 'on' : '') + '" aria-selected="' + (S.infoTab === t.id) + '">' + t.label + '</button>';
+    }).join('') + '</div>';
+    var body = ({ profile: infoProfile, contacts: infoContacts, certificates: infoCerts, visits: infoVisits })[S.infoTab]();
+    return seg + body;
+  }
+
+  function infoProfile() {
+    var items = mine('profile');
+    var cats = fieldOptions(fieldDef('profile', 'category')).map(function (o) { return o.value; });
+    var html = '<div class="toolbar">' + btn('＋ 項目を追加', 'newRec', { col: 'profile' }, 'primary') + btn('サポートブックを印刷', 'print', { type: 'book', audience: 'supporter' }) + '</div>';
+    var any = false;
+    cats.forEach(function (cat) {
+      var inCat = items.filter(function (p) { return p.category === cat; });
+      if (!inCat.length) return;
+      any = true;
+      var current = inCat.filter(function (p) { return !p.validTo; });
+      var labels = [];
+      inCat.forEach(function (p) { if (labels.indexOf(p.label) < 0) labels.push(p.label); });
+      var body = labels.map(function (lb) {
+        var cur = current.filter(function (p) { return p.label === lb; });
+        var past = inCat.filter(function (p) { return p.label === lb && p.validTo; }).sort(function (a, b) { return String(b.validTo).localeCompare(String(a.validTo)); });
+        var key = cat + '/' + lb;
+        var html2 = cur.map(function (p) {
+          return '<button type="button" class="kv" data-act="editRec" data-col="profile" data-id="' + h(p.id) + '"><span class="k">' + h(p.label) + '</span><span class="v">' + br(p.value) + '</span>' + visBadge(p.visibility) + '</button>';
+        }).join('');
+        if (!cur.length) html2 += '<div class="kv past-only"><span class="k">' + h(lb) + '</span><span class="v muted">（今の情報はありません）</span></div>';
+        if (past.length) {
+          html2 += '<button type="button" class="history-toggle" data-act="toggleHistory" data-key="' + h(key) + '">' + (S.showHistory[key] ? '履歴を閉じる' : '履歴 ' + past.length + '件') + '</button>';
+          if (S.showHistory[key]) {
+            html2 += past.map(function (p) {
+              return '<button type="button" class="kv past" data-act="editRec" data-col="profile" data-id="' + h(p.id) + '"><span class="k">' + h((p.validFrom ? L.fmtMD(p.validFrom) : '') + '〜' + L.fmtMD(p.validTo)) + '</span><span class="v">' + br(p.value) + '</span></button>';
+            }).join('');
+          }
+        }
+        return html2;
+      }).join('');
+      html += card(h(cat), body, btn('＋', 'newRec', { col: 'profile', category: cat }, 'sm ghost icon-btn'));
+    });
+    if (!any) html += card('', empty('まだ項目がありません。「＋ 項目を追加」から、アレルギー・好きなこと・落ち着く方法などを登録しましょう。'));
+    return html;
+  }
+
+  function infoContacts() {
+    var list = mine('contacts');
+    var kinds = fieldOptions(fieldDef('contacts', 'kind')).map(function (o) { return o.value; });
+    list.sort(function (a, b) { return kinds.indexOf(a.kind) - kinds.indexOf(b.kind); });
+    return '<div class="toolbar">' + btn('＋ 関係機関を追加', 'newRec', { col: 'contacts' }, 'primary') + '</div>' +
+      card('', list.length ? list.map(function (c) {
+        return '<div class="item"><div class="item-main"><button type="button" class="linklike item-title" data-act="editRec" data-col="contacts" data-id="' + h(c.id) + '">' + h(c.name) + '</button>' +
+          '<div class="item-sub"><span class="pill">' + h(c.kind) + '</span> ' + (c.person ? h(c.person) + '　' : '') + (c.hours ? '<span class="muted">' + h(c.hours) + '</span>' : '') + '</div></div>' +
+          (c.phone ? '<div class="item-actions"><a class="btn sm" href="tel:' + h(c.phone.replace(/[^0-9+]/g, '')) + '">☎ ' + h(c.phone) + '</a></div>' : '') + '</div>';
+      }).join('') : empty('病院・療育・相談支援・役所などを登録すると、手続きのタスクに電話番号が表示されます。'));
+  }
+
+  function infoCerts() {
+    var list = mine('certificates').sort(function (a, b) { return (a.validUntil || '9').localeCompare(b.validUntil || '9'); });
+    var t0 = today();
+    return '<div class="toolbar">' + btn('＋ 受給者証・手帳を追加', 'newRec', { col: 'certificates' }, 'primary') + '</div>' +
+      card('', list.length ? list.map(function (c) {
+        var d = c.validUntil ? L.diffDays(t0, c.validUntil) : null;
+        var pill = d === null ? '' : '<span class="pill ' + (d < 30 ? 'pill-late' : d < 120 ? 'pill-soon' : '') + '">' + (d < 0 ? (-d) + '日過ぎ' : 'あと' + d + '日') + '</span>';
+        var running = all('tasks').some(function (t) { return t.certificateId === c.id && t.status === 'todo'; });
+        return '<div class="item"><div class="item-main"><button type="button" class="linklike item-title" data-act="editRec" data-col="certificates" data-id="' + h(c.id) + '">' + h(c.name || c.kind) + '</button>' +
+          '<div class="item-sub">' + (c.name ? h(c.kind) + '　' : '') + (c.grade ? h(c.grade) + '　' : '') + (c.validUntil ? '有効期限 ' + h(L.fmtDate(c.validUntil)) + ' ' + pill : '有効期限：未入力') + '</div></div>' +
+          '<div class="item-actions">' + (running ? '<span class="pill">更新手続き中</span>' : btn('更新の手続き', 'startProcess', { cert: c.id }, 'sm')) + '</div></div>';
+      }).join('') : empty('受給者証・手帳・医療証と有効期限を登録すると、期限が近づいたときにお知らせします。'));
+  }
+
+  function infoVisits() {
+    var list = mine('visits').sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    return '<div class="toolbar">' + btn('＋ 記録を追加', 'newRec', { col: 'visits' }, 'primary') + '</div>' +
+      card('', list.length ? '<ol class="timeline">' + list.map(function (v) {
+        var days = v.endDate ? L.diffDays(v.date, v.endDate) + 1 : 0;
+        return '<li><button type="button" class="tl" data-act="editRec" data-col="visits" data-id="' + h(v.id) + '">' +
+          '<span class="tl-date">' + h(L.fmtDate(v.date)) + (v.endDate ? '〜' + h(L.fmtMD(v.endDate)) + '（' + days + '日間）' : '') + '</span>' +
+          '<span class="tl-body"><span class="pill">' + h(v.kind) + '</span> ' + h([v.facility, v.department].filter(Boolean).join(' ')) + '<br>' + br(v.summary) + '</span></button></li>';
+      }).join('') + '</ol>' : empty('受診のあとに、スマホの音声入力で「今日どうだったか」を話して記録できます。'));
+  }
+
+  // ---------------------------------------------------------------- 手順書
+  var SECTION_GUIDE = {
+    'いつ・どれだけ': '実施する時間、1回の量、食事が取れなかった時の追加のルールは？',
+    '準備': '手洗い、使う物、先にしておくことは？',
+    '実施前の確認': '正しくできる状態かを、どう確かめますか？ 確かめられない時は？',
+    '実施': '速さ・間隔・分け方は？',
+    '中断の判断': 'どんな時に止めますか？ 再開の目安は？',
+    '実施後': '片付け・洗浄と、その理由は？',
+    'いつもと違う時': '体調が悪い時、吐いた時、抜けた時はどうしていますか？',
+    '緊急時と連絡先': '家族に連絡する目安、救急車を呼ぶ目安、搬送先の希望、業者の連絡先は？'
+  };
+  function sections() { return fieldOptions(fieldDef('careSteps', 'section')).map(function (o) { return o.value; }); }
+  function stepsOf(pid) {
+    return all('careSteps').filter(function (s) { return s.procedureId === pid; }).sort(function (a, b) { return (Number(a.order) || 0) - (Number(b.order) || 0); });
+  }
+
+  function viewCare() {
+    if (S.careId) {
+      var p = get('careProcedures', S.careId);
+      if (p && !p.deleted) return careDetail(p);
+      S.careId = null;
+    }
+    var list = mine('careProcedures').sort(function (a, b) { return (a.status === '終了') - (b.status === '終了'); });
+    var html = '<div class="toolbar">' + btn('＋ 手順書を作る', 'newRec', { col: 'careProcedures' }, 'primary') + '</div>';
+    html += card('医療的ケア手順書', list.length ? list.map(function (p) {
+      var steps = stepsOf(p.id);
+      var filled = sections().filter(function (sec) { return steps.some(function (s) { return s.section === sec; }); }).length;
+      return '<button type="button" class="item item-btn" data-act="openCare" data-id="' + h(p.id) + '"><div class="item-main"><div class="item-title">' + h(p.title) + '</div>' +
+        '<div class="item-sub"><span class="pill ' + (p.status === '終了' ? '' : 'pill-ok') + '">' + h(p.status || '実施中') + '</span> 手順 ' + steps.length + '件・項目 ' + filled + '/' + sections().length + '</div></div><span class="chev" aria-hidden="true">›</span></button>';
+    }).join('') : empty('保育園・祖父母・ヘルパーさんに渡す「ケアのやり方」を、決まった型に沿って作れます。'));
+    return html;
+  }
+
+  function careDetail(p) {
+    var steps = stepsOf(p.id);
+    var html = '<div class="toolbar">' + btn('‹ 一覧へ', 'closeCare', {}, 'ghost') + '<span class="spacer"></span>' + btn('印刷・PDF', 'print', { type: 'care', id: p.id }) + '</div>';
+    html += card(h(p.title),
+      '<dl class="dl">' +
+      '<dt>状態</dt><dd>' + h(p.status || '実施中') + (p.endedOn ? '（' + h(L.fmtDate(p.endedOn)) + ' 終了）' : '') + '</dd>' +
+      (p.startedOn ? '<dt>開始日</dt><dd>' + h(L.fmtDate(p.startedOn)) + '</dd>' : '') +
+      (p.reason ? '<dt>開始の理由</dt><dd>' + br(p.reason) + '</dd>' : '') +
+      (p.equipment ? '<dt>使う器具</dt><dd>' + br(p.equipment) + '</dd>' : '') +
+      '<dt>見せてよい範囲</dt><dd>' + visBadge(p.visibility) + '</dd></dl>',
+      btn('編集', 'editRec', { col: 'careProcedures', id: p.id }, 'sm ghost'));
+    sections().forEach(function (sec) {
+      var list = steps.filter(function (s) { return s.section === sec; });
+      var body = list.length ? '<ol class="care-steps">' + list.map(function (s, i) {
+        return '<li><button type="button" class="care-step" data-act="editRec" data-col="careSteps" data-id="' + h(s.id) + '">' +
+          '<span class="care-text">' + br(s.text) + '</span>' +
+          (s.criteria ? '<span class="care-criteria">判断の目安：' + br(s.criteria) + '</span>' : '') + '</button>' +
+          (s.photoUrl ? '<a class="small" href="' + h(s.photoUrl) + '" target="_blank" rel="noopener">写真・動画を見る</a>' : '') +
+          '<span class="mover">' + (i > 0 ? btn('↑', 'moveStep', { id: s.id, dir: -1 }, 'sm ghost', '上へ') : '') + (i < list.length - 1 ? btn('↓', 'moveStep', { id: s.id, dir: 1 }, 'sm ghost', '下へ') : '') + '</span></li>';
+      }).join('') + '</ol>' : '<div class="guide-q">まだありません。<br><b>' + h(SECTION_GUIDE[sec] || '') + '</b></div>';
+      html += card(h(sec), body, btn('＋ 追加', 'newStep', { pid: p.id, section: sec }, 'sm ghost'));
+    });
+    html += '<p class="muted small">手順書は、主治医の指示にもとづいて家族が書いた内容を整理して表示するものです。アプリが医療的な判断をすることはありません。</p>';
+    return html;
+  }
+
+  function moveStep(id, dir) {
+    var s = get('careSteps', id);
+    if (!s) return;
+    var list = stepsOf(s.procedureId).filter(function (x) { return x.section === s.section; });
+    var i = list.findIndex(function (x) { return x.id === id; });
+    var j = i + dir;
+    if (j < 0 || j >= list.length) return;
+    // 並び順を振り直してから入れ替える（順番の重複を防ぐ）
+    var base = Math.min.apply(null, list.map(function (x) { return Number(x.order) || 0; }));
+    var arr = list.slice();
+    var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    var items = [];
+    arr.forEach(function (x, k) {
+      var o = base + k;
+      if (Number(x.order) !== o) items.push({ col: 'careSteps', rec: Object.assign({}, x, { order: o }) });
+    });
+    if (items.length) saveMany(items);
+  }
+
+  function nextStepOrder(pid, section) {
+    var secIdx = sections().indexOf(section);
+    var list = stepsOf(pid).filter(function (s) { return s.section === section; });
+    var max = list.reduce(function (m, s) { return Math.max(m, Number(s.order) || 0); }, (secIdx + 1) * 100);
+    return max + 1;
+  }
+
+  // ---------------------------------------------------------------- 設定・データ
+  function viewSettings() {
+    var html = '';
+    var children = all('children');
+    html += card('子ども', (children.length ? children.map(function (c) {
+      return '<div class="item"><div class="item-main"><div class="item-title">' + h(c.nickname) + (c.id === S.childId ? ' <span class="pill pill-ok">表示中</span>' : '') + '</div>' +
+        '<div class="item-sub">' + h([c.prefecture, c.municipality].filter(Boolean).join(' ')) + '</div></div><div class="item-actions">' +
+        (c.id !== S.childId ? btn('切り替え', 'switchChild', { id: c.id }, 'sm') : '') + btn('編集', 'editRec', { col: 'children', id: c.id }, 'sm ghost') + '</div></div>';
+    }).join('') : empty('まだ登録されていません。')) + '<div class="row-end">' + btn('＋ 子どもを追加', 'newRec', { col: 'children' }, 'sm') + '</div>');
+
+    if (S.store.kind === 'gas') {
+      var st = S.settings;
+      var hours = function (name, v) {
+        var o = '';
+        for (var i = 0; i < 24; i++) o += '<option value="' + i + '"' + (String(v) === String(i) ? ' selected' : '') + '>' + i + '時</option>';
+        return '<select name="' + name + '">' + o + '</select>';
+      };
+      html += card('Discordへの通知',
+        '<form data-form="settings" class="fields">' +
+        '<label class="field"><span class="lbl">DiscordのWebhook URL</span><input type="url" name="discordWebhookUrl" value="' + h(st.discordWebhookUrl || '') + '" placeholder="https://discord.com/api/webhooks/..." autocomplete="off">' +
+        '<span class="help">Discordのチャンネル設定 →「連携サービス」→「ウェブフック」で作ったURLを貼り付けます。</span></label>' +
+        '<div class="field-row"><label class="field"><span class="lbl">夜のまとめ</span>' + hours('digestHour', st.digestHour) + '</label>' +
+        '<label class="field"><span class="lbl">昼タスクの通知</span>' + hours('dayHour', st.dayHour) + '</label></div>' +
+        '<label class="field"><span class="lbl">期限を何日前から知らせるか</span><input type="number" name="certAlertDays" min="7" max="365" value="' + h(st.certAlertDays || 120) + '"></label>' +
+        '<label class="field"><span class="lbl">通知に載せるアプリのURL</span><input type="url" name="appUrl" value="' + h(st.appUrl || '') + '"><span class="help">空欄なら、このWebアプリのURLを自動で使います。</span></label>' +
+        '<p class="small muted">通知には、手続き名・期限・連絡先だけを載せ、病名や医療の内容は載せません。</p>' +
+        '<div class="sheet-actions">' + btn('テスト送信', 'testNotify', {}, 'ghost') + btn('今夜のまとめを今すぐ送る', 'sendDigestNow', {}, 'ghost') + '<span class="spacer"></span><button type="submit" class="btn primary">保存</button></div></form>');
+    } else {
+      html += card('通知（この端末版）',
+        '<p>この版には通知を送るしくみがありません。代わりに、ToDoを<b>カレンダー用ファイル</b>で書き出せます。iPhoneやGoogleのカレンダーに取り込むと、前日の22時に通知されます。</p>' +
+        '<p class="small muted">Discordへの毎晩の通知や家族との共有を使うには、Googleスプレッドシート版に移ります（データを書き出して読み込むだけで移れます）。</p>' +
+        btn('カレンダー用ファイル（.ics）を書き出す', 'exportIcs', {}, 'block'));
+    }
+
+    html += card('印刷・PDF',
+      '<div class="stack">' + btn('サポートブック（支援者向け）', 'print', { type: 'book', audience: 'supporter' }, 'block') +
+      btn('サポートブック（家族用・すべて）', 'print', { type: 'book', audience: 'family' }, 'block') + '</div>' +
+      '<p class="small muted">支援者向けには、「家族のみ」にした情報と、受給者証の番号・受診の記録は載りません。</p>');
+
+    var last = S.settings.lastExportAt;
+    html += card('データ',
+      (S.store.kind === 'local' ? '<p class="warn">データはこの端末のブラウザの中だけにあります。iPhoneでは「ホーム画面に追加」して使い、<b>ときどき書き出してバックアップ</b>してください。</p>' : '') +
+      '<p class="small muted">最後に書き出した日時：' + (last ? h(new Date(last).toLocaleString('ja-JP')) : 'まだありません') + '</p>' +
+      '<div class="stack">' + btn('データを書き出す（バックアップ・移行用）', 'exportJson', {}, 'block') +
+      '<label class="btn block file-btn">書き出したデータを読み込む<input type="file" accept=".json,application/json" data-change="import" hidden></label>' +
+      btn('サンプル（架空のデータ）を追加する', 'loadSample', {}, 'block ghost') + '</div>');
+
+    html += card('このアプリについて',
+      '<dl class="dl"><dt>保存先</dt><dd>' + h(S.store.label) + '</dd><dt>アプリ</dt><dd>' + h(BUILD.version || '') + '</dd><dt>データ定義</dt><dd>第' + h(SCHEMA.schemaVersion) + '版</dd></dl>' +
+      '<p class="small muted">手続きの型はサンプルです。実際の手順は自治体の案内で確認してください。このアプリは医療的な判断や助言を行いません。</p>');
+    return html;
+  }
+
+  // =====================================================================
+  // 入力フォーム（データ定義から自動で作る）
+  // =====================================================================
+  function openForm(col, rec, opts) {
+    opts = opts || {};
+    S.form = { kind: 'record', col: col, rec: Object.assign({}, rec || {}), isNew: !(rec && rec.id), hint: opts.hint || '', title: opts.title };
+    render();
+    var first = document.querySelector('.sheet input:not([type=hidden]), .sheet textarea, .sheet select');
+    if (first && S.form.isNew) { try { first.focus({ preventScroll: true }); } catch (e) { /* 無視 */ } }
+  }
+  function newRecord(col, extra) {
+    var rec = {};
+    SCHEMA.collections[col].fields.forEach(function (f) { if (f.default !== undefined) rec[f.key] = f.default; });
+    if (col !== 'children' && col !== 'careSteps') rec.childId = S.childId;
+    return Object.assign(rec, extra || {});
+  }
+
+  function sheet(title, inner) {
+    return '<div class="backdrop" data-act="closeForm"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="' + h(title) + '">' +
+      '<div class="sheet-head"><h2>' + h(title) + '</h2>' + btn('×', 'closeForm', {}, 'ghost icon-btn', '閉じる') + '</div>' + inner + '</div>';
+  }
+
+  function formView() {
+    var f = S.form;
+    if (f.kind === 'startProcess') return startProcessForm(f);
+    var def = SCHEMA.collections[f.col];
+    var rec = f.rec;
+    var title = f.title || (def.label + (f.isNew ? 'を追加' : 'を編集'));
+    var fields = def.fields.filter(function (fd) { return !fd.hidden; });
+    var inner = '<form data-form="record" class="fields">' + (f.hint ? '<p class="hint">' + h(f.hint) + '</p>' : '') +
+      fields.map(function (fd) { return fieldInput(fd, rec[fd.key], f.col); }).join('');
+    if (f.col === 'profile' && !f.isNew && !rec.validTo) {
+      inner += '<label class="check"><input type="checkbox" name="__asHistory" checked> 内容を変えたときは、前の内容を履歴として残す</label>';
+    }
+    inner += '<div class="sheet-actions">' + (!f.isNew ? btn('削除', 'deleteRec', {}, 'ghost danger') : '') +
+      '<span class="spacer"></span>' + btn('やめる', 'closeForm', {}, 'ghost') + '<button type="submit" class="btn primary">保存</button></div></form>';
+    return sheet(title, inner);
+  }
+
+  function fieldInput(fd, v, col) {
+    var val = v == null ? '' : v;
+    var req = fd.required ? ' required' : '';
+    var name = ' name="' + h(fd.key) + '"';
+    var input;
+    switch (fd.type) {
+      case 'text':
+        input = '<textarea' + name + req + ' rows="3">' + h(val) + '</textarea>';
+        break;
+      case 'date':
+        input = '<input type="date"' + name + req + ' value="' + h(val) + '">';
+        break;
+      case 'number':
+        input = '<input type="number" inputmode="numeric"' + name + req + ' value="' + h(val) + '">';
+        break;
+      case 'tel':
+        input = '<input type="tel"' + name + req + ' value="' + h(val) + '">';
+        break;
+      case 'url':
+        input = '<input type="url"' + name + req + ' value="' + h(val) + '" placeholder="https://">';
+        break;
+      case 'select':
+        input = '<select' + name + req + '>' + (fd.required ? '' : '<option value="">（未選択）</option>') +
+          fieldOptions(fd).map(function (o) { return '<option value="' + h(o.value) + '"' + (o.value === val ? ' selected' : '') + '>' + h(o.label) + '</option>'; }).join('') + '</select>';
+        break;
+      case 'ref':
+        var target = SCHEMA.collections[fd.ref];
+        var list = fd.ref === 'children' ? all('children') : mine(fd.ref);
+        input = '<select' + name + '><option value="">（なし）</option>' + list.map(function (r) {
+          return '<option value="' + h(r.id) + '"' + (r.id === val ? ' selected' : '') + '>' + h(r[target.display] || r.kind || r.id) + '</option>';
+        }).join('') + '</select>';
+        break;
+      case 'template':
+        input = '<select' + name + '><option value="">（なし）</option>' + TEMPLATES.templates.map(function (t) {
+          return '<option value="' + h(t.id) + '"' + (t.id === val ? ' selected' : '') + '>' + h(t.name) + '</option>';
+        }).join('') + '</select>';
+        break;
+      default:
+        input = '<input type="text"' + name + req + ' value="' + h(val) + '">';
+    }
+    return '<label class="field"><span class="lbl">' + h(fd.label) + (fd.required ? ' <b class="req">必須</b>' : '') + '</span>' + input +
+      (fd.help ? '<span class="help">' + h(fd.help) + '</span>' : '') + '</label>';
+  }
+
+  function submitRecord(form) {
+    var f = S.form;
+    var def = SCHEMA.collections[f.col];
+    var fd = new FormData(form);
+    var rec = Object.assign({}, f.rec);
+    def.fields.forEach(function (field) {
+      if (field.hidden || !fd.has(field.key)) return;
+      var v = String(fd.get(field.key) || '').trim();
+      rec[field.key] = field.type === 'number' ? (v === '' ? '' : Number(v)) : v;
+    });
+    var items = [];
+    if (f.col === 'profile' && !f.isNew && fd.get('__asHistory') && rec.value !== f.rec.value && !f.rec.validTo) {
+      // 前の内容は「いつまで」を入れて残し、新しい行を作る（1つの事実の履歴）
+      var t0 = today();
+      var old = Object.assign({}, f.rec, { validTo: t0 });
+      var fresh = Object.assign({}, rec, { validFrom: (rec.validFrom && rec.validFrom !== f.rec.validFrom) ? rec.validFrom : t0, validTo: '' });
+      delete fresh.id; delete fresh.createdAt;
+      items.push({ col: 'profile', rec: old }, { col: 'profile', rec: fresh });
+    } else {
+      items.push({ col: f.col, rec: rec });
+    }
+    if (f.col === 'tasks' && rec.status === 'done' && !rec.doneAt) rec.doneAt = today();
+    if (f.col === 'tasks' && rec.status === 'todo') rec.doneAt = '';
+    S.form = null;
+    saveMany(items).then(function () {
+      toast('保存しました');
+    });
+    var saved = items[items.length - 1].rec;
+    if (f.isNew && f.col === 'children') { S.childId = saved.id; saveUi(); }
+    if (f.isNew && f.col === 'careProcedures') { S.careId = saved.id; S.tab = 'care'; }
+    render();
+  }
+
+  function deleteCurrent() {
+    var f = S.form;
+    if (!f || f.isNew) return;
+    var def = SCHEMA.collections[f.col];
+    if (!window.confirm('この' + def.label + 'を削除しますか？')) return;
+    var items = [{ col: f.col, rec: Object.assign({}, f.rec, { deleted: true }) }];
+    if (f.col === 'careProcedures') {
+      stepsOf(f.rec.id).forEach(function (s) { items.push({ col: 'careSteps', rec: Object.assign({}, s, { deleted: true }) }); });
+      S.careId = null;
+    }
+    if (f.col === 'children') {
+      COLS.forEach(function (c) {
+        if (c === 'children' || c === 'careSteps') return;
+        all(c).filter(function (r) { return r.childId === f.rec.id; }).forEach(function (r) { items.push({ col: c, rec: Object.assign({}, r, { deleted: true }) }); });
+      });
+      if (S.childId === f.rec.id) S.childId = null;
+    }
+    S.form = null;
+    saveMany(items).then(function () { toast('削除しました'); });
+  }
+
+  // =====================================================================
+  // 印刷・PDF
+  // =====================================================================
+  function printView() {
+    var p = S.print;
+    var doc = p.type === 'care' ? careDoc(get('careProcedures', p.id)) : bookDoc(p.audience);
+    return '<div class="print-bar no-print">' + btn('‹ 戻る', 'closePrint', {}, 'ghost') + '<span class="spacer"></span>' +
+      (S.store.savePdf ? btn('PDFをドライブに保存', 'savePdf', {}, '') : '') + btn('印刷する', 'doPrint', {}, 'primary') + '</div>' +
+      '<div class="print-hint no-print">「印刷する」→ 送信先で「PDFに保存」を選ぶと、PDFにできます。</div>' +
+      '<article class="doc" id="doc">' + doc + '</article>';
+  }
+
+  function allowed(v, audience) {
+    if (audience === 'family') return true;
+    return v !== 'family';
+  }
+
+  function contactsTable(list) {
+    if (!list.length) return '';
+    return '<table class="doc-table"><tr><th>種類</th><th>名前</th><th>電話</th><th>受付時間</th></tr>' + list.map(function (c) {
+      return '<tr><td>' + h(c.kind) + '</td><td>' + h(c.name) + (c.person ? '<br>' + h(c.person) : '') + '</td><td>' + h(c.phone) + '</td><td>' + h(c.hours) + '</td></tr>';
+    }).join('') + '</table>';
+  }
+
+  function careBody(p) {
+    var steps = stepsOf(p.id);
+    var html = '<table class="doc-table">' +
+      '<tr><th>ケア</th><td>' + h(p.title) + '（' + h(p.status || '実施中') + '）</td></tr>' +
+      (p.startedOn ? '<tr><th>開始日</th><td>' + h(L.fmtDate(p.startedOn)) + '</td></tr>' : '') +
+      (p.reason ? '<tr><th>開始の理由</th><td>' + br(p.reason) + '</td></tr>' : '') +
+      (p.equipment ? '<tr><th>使う器具・規格</th><td>' + br(p.equipment) + '</td></tr>' : '') + '</table>';
+    sections().forEach(function (sec) {
+      var list = steps.filter(function (s) { return s.section === sec; });
+      if (!list.length) return;
+      html += '<h3>' + h(sec) + '</h3><ol>' + list.map(function (s) {
+        return '<li>' + br(s.text) + (s.criteria ? '<div class="doc-criteria">判断の目安：' + br(s.criteria) + '</div>' : '') + '</li>';
+      }).join('') + '</ol>';
+    });
+    return html;
+  }
+
+  function childOf(id) { return get('children', id) || {}; }
+
+  function careDoc(p) {
+    if (!p) return '<p>手順書が見つかりません。</p>';
+    var child = childOf(p.childId);
+    var steps = stepsOf(p.id);
+    var updated = steps.concat([p]).reduce(function (m, s) { return String(s.updatedAt || '') > m ? String(s.updatedAt) : m; }, '');
+    var emergency = mine('contacts').filter(function (c) { return ['病院', '訪問看護', '医療機器業者'].indexOf(c.kind) >= 0; });
+    return '<h1>' + h(child.nickname || '') + '　' + h(p.title) + ' の手順書</h1>' +
+      '<p class="doc-meta">最終更新：' + h(updated ? L.fmtDate(L.ymd(new Date(updated))) : '') + '　作成：家族</p>' +
+      careBody(p) +
+      (emergency.length ? '<h3>連絡先</h3>' + contactsTable(emergency) : '') +
+      '<p class="doc-foot">この手順書は、主治医の指示にもとづいて家族が作成したものです。判断に迷うときは、家族または主治医に連絡してください。</p>';
+  }
+
+  function bookDoc(audience) {
+    var child = childOf(S.childId);
+    var t0 = today();
+    var html = '<h1>' + h(child.nickname || '') + ' のサポートブック</h1>' +
+      '<p class="doc-meta">' + h(L.fmtDate(t0)) + ' 作成　' + (audience === 'family' ? '家族用（すべての情報）' : '支援者向け') + '</p>';
+    var items = mine('profile').filter(function (p) { return !p.validTo && allowed(p.visibility, audience); });
+    fieldOptions(fieldDef('profile', 'category')).forEach(function (o) {
+      var list = items.filter(function (p) { return p.category === o.value; });
+      if (!list.length) return;
+      html += '<h2>' + h(o.value) + '</h2><table class="doc-table">' + list.map(function (p) {
+        return '<tr><th>' + h(p.label) + '</th><td>' + br(p.value) + '</td></tr>';
+      }).join('') + '</table>';
+    });
+    var procs = mine('careProcedures').filter(function (p) { return p.status !== '終了' && allowed(p.visibility, audience); });
+    if (procs.length) {
+      html += '<h2>医療的ケア</h2>' + procs.map(function (p) { return '<div class="doc-block"><h3 class="doc-sub">' + h(p.title) + '</h3>' + careBody(p) + '</div>'; }).join('');
+    }
+    var contacts = mine('contacts');
+    if (contacts.length) html += '<h2>関係機関</h2>' + contactsTable(contacts);
+    if (audience === 'family') {
+      var certs = mine('certificates');
+      if (certs.length) {
+        html += '<h2>受給者証・手帳・医療証</h2><table class="doc-table"><tr><th>種類</th><th>番号</th><th>区分・等級</th><th>有効期限</th></tr>' + certs.map(function (c) {
+          return '<tr><td>' + h(c.name || c.kind) + '</td><td>' + h(c.number) + '</td><td>' + h(c.grade) + '</td><td>' + h(L.fmtDate(c.validUntil)) + '</td></tr>';
+        }).join('') + '</table>';
+      }
+      var visits = mine('visits').sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+      if (visits.length) {
+        html += '<h2>受診・入院の記録</h2><table class="doc-table"><tr><th>日付</th><th>種類</th><th>病院・機関</th><th>内容</th></tr>' + visits.map(function (v) {
+          return '<tr><td>' + h(L.fmtDate(v.date)) + (v.endDate ? '〜' + h(L.fmtMD(v.endDate)) : '') + '</td><td>' + h(v.kind) + '</td><td>' + h([v.facility, v.department].filter(Boolean).join(' ')) + '</td><td>' + br(v.summary) + '</td></tr>';
+        }).join('') + '</table>';
+      }
+    }
+    html += '<p class="doc-foot">このサポートブックは家族が作成したものです。内容について分からないことは、家族にお問い合わせください。</p>';
+    return html;
+  }
+
+  function printFileName() {
+    var p = S.print;
+    var child = childOf(S.childId);
+    if (p.type === 'care') { var pr = get('careProcedures', p.id); return (child.nickname || '') + '_' + (pr ? pr.title : '手順書') + '_手順書_' + today(); }
+    return (child.nickname || '') + '_サポートブック_' + (p.audience === 'family' ? '家族用' : '支援者向け') + '_' + today();
+  }
+
+  // =====================================================================
+  // 書き出し・読み込み
+  // =====================================================================
+  function download(name, content, mime) {
+    var blob = new Blob([content], { type: mime });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  function saveOut(name, content, mime) {
+    if (S.store.saveFile) {
+      return S.store.saveFile(name, content, mime).then(function (r) {
+        showNotice('Googleドライブに保存しました', 'フォルダ「たすかReマインド」に「' + r.name + '」を保存しました。', r.url);
+      });
+    }
+    download(name, content, mime);
+    return Promise.resolve();
+  }
+
+  function exportJson() {
+    var data = L.makeExport(S.db, { name: 'tasuka-remind', version: BUILD.version || '', from: S.store.kind });
+    saveOut('たすかReマインド_データ_' + today() + '.json', JSON.stringify(data, null, 1), 'application/json').then(function () {
+      S.settings.lastExportAt = L.nowIso();
+      S.store.saveSettings({ lastExportAt: S.settings.lastExportAt }).catch(function () { /* 記録できなくても問題なし */ });
+      render();
+    }).catch(function (e) { showNotice('書き出せませんでした', errMsg(e)); });
+  }
+
+  function importFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = L.migrate(JSON.parse(String(reader.result)));
+        var changed = L.mergeImport(S.db, data.collections);
+        if (!changed.length) { toast('新しいデータはありませんでした'); return; }
+        saveMany(changed, { keepStamp: true }).then(function () { toast(changed.length + '件を読み込みました'); });
+      } catch (e) {
+        showNotice('読み込めませんでした', errMsg(e));
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function loadSample() {
+    var s = L.buildSample(today(), TEMPLATES);
+    var items = [];
+    Object.keys(s.collections).forEach(function (col) { s.collections[col].forEach(function (rec) { items.push({ col: col, rec: rec }); }); });
+    S.childId = s.childId;
+    S.tab = 'today';
+    saveUi();
+    saveMany(items, { keepStamp: true }).then(function () { toast('サンプルを追加しました（架空のデータです）'); });
+  }
+
+  // =====================================================================
+  // 小さな表示
+  // =====================================================================
+  var toastTimer = null;
+  function toast(msg) {
+    S.toast = msg;
+    render();
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { S.toast = ''; render(); }, 3200);
+  }
+  function showNotice(title, body, url) { S.notice = { title: title, body: body, url: url }; render(); }
+  function noticeView() {
+    var n = S.notice;
+    return '<div class="backdrop" data-act="closeNotice"></div><div class="sheet notice" role="alertdialog" aria-label="' + h(n.title) + '"><div class="sheet-head"><h2>' + h(n.title) + '</h2></div>' +
+      '<p>' + br(n.body) + '</p>' + (n.url ? '<p><a class="btn primary block" href="' + h(n.url) + '" target="_blank" rel="noopener">開く</a></p>' : '') +
+      '<div class="sheet-actions"><span class="spacer"></span>' + btn('閉じる', 'closeNotice', {}, '') + '</div></div>';
+  }
+
+  // =====================================================================
+  // 操作
+  // =====================================================================
+  var ACTIONS = {
+    reload: function () { window.location.reload(); },
+    tab: function (d) { S.tab = d.tab; S.form = null; if (d.tab !== 'care') S.careId = null; saveUi(); render(); window.scrollTo(0, 0); },
+    infoTab: function (d) { S.infoTab = d.tab; render(); },
+    newRec: function (d) { openForm(d.col, newRecord(d.col, d.category ? { category: d.category } : null)); },
+    editRec: function (d) { var r = get(d.col, d.id); if (r) openForm(d.col, r); },
+    closeForm: function () { S.form = null; render(); },
+    deleteRec: deleteCurrent,
+    done: function (d) { completeTask(d.id); },
+    schedule: function (d) {
+      var t = get('tasks', d.id);
+      if (!t) return;
+      save('tasks', Object.assign({}, t, { scheduledDate: L.addDays(today(), 1) })).then(function () { toast('明日の昼にお知らせします'); });
+    },
+    startProcess: function (d) {
+      var cert = d.cert && get('certificates', d.cert);
+      var tplId = (cert && cert.templateId) || '';
+      if (!tplId && cert) {
+        var match = TEMPLATES.templates.find(function (t) { return (t.certificateKinds || []).indexOf(cert.kind) >= 0; });
+        tplId = match ? match.id : 'generic';
+      }
+      S.form = { kind: 'startProcess', templateId: tplId || TEMPLATES.templates[0].id, certificateId: cert ? cert.id : '', deadline: cert ? cert.validUntil : '' };
+      render();
+    },
+    toggleProcess: function (d) { S.openProcess[d.key] = !S.openProcess[d.key]; render(); },
+    toggleDone: function () { S.showDone = !S.showDone; render(); },
+    deleteProcess: function (d) {
+      var g = processGroups().find(function (x) { return x.key === d.key; });
+      if (!g || !window.confirm('「' + g.name + '」の工程をすべて削除しますか？')) return;
+      saveMany(g.tasks.map(function (t) { return { col: 'tasks', rec: Object.assign({}, t, { deleted: true }) }; })).then(function () { toast('削除しました'); });
+    },
+    toggleHistory: function (d) { S.showHistory[d.key] = !S.showHistory[d.key]; render(); },
+    openCare: function (d) { S.careId = d.id; render(); window.scrollTo(0, 0); },
+    closeCare: function () { S.careId = null; render(); },
+    newStep: function (d) { openForm('careSteps', { procedureId: d.pid, section: d.section, order: nextStepOrder(d.pid, d.section) }); },
+    moveStep: function (d) { moveStep(d.id, Number(d.dir)); },
+    switchChild: function (d) { S.childId = d.id; S.careId = null; saveUi(); render(); },
+    print: function (d) { S.print = { type: d.type, id: d.id, audience: d.audience || 'supporter' }; render(); window.scrollTo(0, 0); },
+    closePrint: function () { S.print = null; render(); },
+    doPrint: function () { window.print(); },
+    savePdf: function () {
+      var html = '<!doctype html><html><head><meta charset="utf-8"><style>' + PDF_CSS + '</style></head><body>' + document.getElementById('doc').innerHTML + '</body></html>';
+      toast('PDFを作っています…');
+      S.store.savePdf(html, printFileName()).then(function (r) {
+        showNotice('PDFを保存しました', 'Googleドライブのフォルダ「たすかReマインド」に保存しました。支援者に渡すときは、ドライブで「共有」→「リンクを知っている全員（閲覧者）」にします。', r.url);
+      }).catch(function (e) { showNotice('PDFを作れませんでした', errMsg(e)); });
+    },
+    exportJson: exportJson,
+    exportIcs: function () {
+      var ics = L.toIcs(mine('tasks'), { calName: 'たすかReマインド' });
+      saveOut('たすかReマインド_ToDo.ics', ics, 'text/calendar');
+    },
+    loadSample: function () {
+      if (all('children').length && !window.confirm('今のデータに、架空のサンプルを追加します。よろしいですか？')) return;
+      loadSample();
+    },
+    testNotify: function () {
+      S.store.testNotify().then(function () { toast('テスト通知を送りました。Discordを確認してください'); })
+        .catch(function (e) { showNotice('送れませんでした', errMsg(e)); });
+    },
+    sendDigestNow: function () {
+      S.store.sendDigestNow().then(function (r) { toast(r && r.sent ? 'まとめを送りました' : '送る内容がありませんでした'); })
+        .catch(function (e) { showNotice('送れませんでした', errMsg(e)); });
+    },
+    closeNotice: function () { S.notice = null; render(); }
+  };
+
+  var PDF_CSS = 'body{font-family:sans-serif;font-size:11pt;line-height:1.6;color:#111}h1{font-size:17pt;margin:0 0 4pt}h2{font-size:13pt;border-bottom:1.5pt solid #333;margin:14pt 0 6pt;padding-bottom:2pt}h3{font-size:11.5pt;margin:10pt 0 4pt}' +
+    '.doc-meta{color:#555;font-size:9.5pt}table{border-collapse:collapse;width:100%;margin:4pt 0}th,td{border:0.75pt solid #999;padding:4pt 6pt;text-align:left;vertical-align:top}th{background:#f1f1f1;width:28%}' +
+    '.doc-criteria{color:#444;font-size:10pt;margin-top:2pt}.doc-foot{margin-top:16pt;font-size:9pt;color:#555}ol{padding-left:18pt}li{margin:3pt 0}';
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-act]');
+    if (!el) return;
+    var fn = ACTIONS[el.dataset.act];
+    if (fn) { e.preventDefault(); fn(el.dataset, el); }
+  });
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    var kind = form.getAttribute('data-form');
+    if (!kind) return;
+    e.preventDefault();
+    if (kind === 'record') submitRecord(form);
+    else if (kind === 'startProcess') submitStartProcess(form);
+    else if (kind === 'settings') {
+      var fd = new FormData(form);
+      var s = {};
+      ['discordWebhookUrl', 'digestHour', 'dayHour', 'certAlertDays', 'appUrl'].forEach(function (k) { if (fd.has(k)) s[k] = String(fd.get(k)).trim(); });
+      S.store.saveSettings(s).then(function (res) { S.settings = Object.assign(S.settings, res || s); toast('設定を保存しました'); })
+        .catch(function (err) { showNotice('保存できませんでした', errMsg(err)); });
+    }
+  });
+  document.addEventListener('change', function (e) {
+    var el = e.target;
+    var kind = el.getAttribute && el.getAttribute('data-change');
+    if (kind === 'child') { S.childId = el.value; S.careId = null; saveUi(); render(); }
+    else if (kind === 'import') { importFile(el.files && el.files[0]); el.value = ''; }
+    else if (kind === 'tplPreview') {
+      var form = el.form;
+      var fd = new FormData(form);
+      S.form = { kind: 'startProcess', templateId: fd.get('templateId'), certificateId: fd.get('certificateId'), deadline: fd.get('deadline'), name: fd.get('name') };
+      render();
+    }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && (S.form || S.notice)) { S.form = null; S.notice = null; render(); }
+  });
+
+  // =====================================================================
+  // 起動
+  // =====================================================================
+  function init() {
+    S.store = IS_GAS ? createGasStore() : createLocalStore();
+    var ui = loadUi();
+    S.childId = ui.childId || null;
+    S.tab = ui.tab || 'today';
+    render();
+    Promise.all([S.store.loadAll(), S.store.getSettings()]).then(function (res) {
+      var db = res[0] || {};
+      COLS.forEach(function (c) { if (!Array.isArray(db[c])) db[c] = []; });
+      S.db = db;
+      S.settings = res[1] || {};
+      S.ready = true;
+      render();
+    }).catch(function (e) {
+      S.error = errMsg(e);
+      render();
+    });
+  }
+
+  // GitHub Pages版だけ：オフラインでも開けるようにする（GAS版では使わない）
+  function registerServiceWorker() {
+    if (IS_GAS || !('serviceWorker' in navigator)) return;
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function () { /* 使えなくてもアプリは動く */ });
+    });
+  }
+
+  // テスト用に一部を公開
+  window.TasukaApp = { state: S, actions: ACTIONS };
+  registerServiceWorker();
+  init();
+})();
+
+</script>
+</body>
+</html>

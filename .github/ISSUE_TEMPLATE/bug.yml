@@ -1,0 +1,32 @@
+name: 不具合の報告
+description: うまく動かないところを知らせる
+labels: [不具合]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **お子さんの名前・病名・受給者証の番号など、実在の個人情報は書かないでください。** このページは誰でも見られます。画面写真を貼るときは、サンプルデータで再現したものにしてください。
+  - type: dropdown
+    id: edition
+    attributes:
+      label: どの版ですか
+      options: [かんたん版（Web）, Google版（スプレッドシート）, 両方]
+    validations: { required: true }
+  - type: input
+    id: device
+    attributes:
+      label: 使っている機械とブラウザ
+      placeholder: 例）iPhone 15 / Safari、Windows / Chrome
+  - type: textarea
+    id: what
+    attributes:
+      label: 何をしたら、どうなりましたか
+      placeholder: |
+        1. 「手続き」を開いた
+        2. 「手続きを始める」を押した
+        3. 期限を入れて「始める」を押したら、何も起きなかった
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes:
+      label: 本当はどうなってほしかったですか

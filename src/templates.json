@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "caution": "これはサンプルの流れです。実際の手順・必要書類・かかる期間は、自治体や制度によって異なります。必ずお住まいの自治体の案内で確認し、必要に応じて工程を直してください。",
+  "templates": [
+    {
+      "id": "ryouiku-renew",
+      "name": "療育手帳の更新",
+      "certificateKinds": ["療育手帳"],
+      "steps": [
+        { "title": "更新の案内と必要書類を確認する", "window": "night", "daysBefore": 90, "script": "期限・必要なもの・判定（発達検査）の予約先を確認する" },
+        { "title": "判定（発達検査）の予約を電話でとる", "window": "day", "daysBefore": 85, "contactKind": "療育", "script": "「療育手帳の更新の判定を予約したい」と伝える。子どもの名前・生年月日・手帳番号を手元に用意する" },
+        { "title": "判定（発達検査）を受ける", "window": "day", "daysBefore": 60, "script": "予約した日時・持ち物を確認する" },
+        { "title": "判定の結果を受け取る", "window": "day", "daysBefore": 30 },
+        { "title": "役所で更新を申請する", "window": "day", "daysBefore": 21, "contactKind": "役所", "script": "判定結果・今の手帳・写真など（自治体の案内で確認）。期限に間に合わない場合は、窓口で相談する" },
+        { "title": "関係する医療証・受給者証の期限も確認する", "window": "night", "daysBefore": 14, "script": "手帳の更新が遅れると切れてしまう証明書がないか確認する" },
+        { "title": "新しい手帳を受け取り、アプリの有効期限を直す", "window": "night", "daysBefore": 0 }
+      ]
+    },
+    {
+      "id": "tsusho-renew",
+      "name": "障害児通所受給者証の更新",
+      "certificateKinds": ["障害児通所受給者証", "障害福祉サービス受給者証"],
+      "steps": [
+        { "title": "更新の案内と必要書類を確認する", "window": "night", "daysBefore": 60 },
+        { "title": "相談支援専門員に連絡し、利用計画案の作成を依頼する", "window": "day", "daysBefore": 55, "contactKind": "相談支援", "script": "受給者証の更新時期と、今後使いたいサービス・日数を伝える" },
+        { "title": "申請書類を記入する", "window": "night", "daysBefore": 45 },
+        { "title": "役所に申請する（窓口・郵送など自治体の方法で）", "window": "day", "daysBefore": 40, "contactKind": "役所" },
+        { "title": "新しい受給者証を事業所に見せ、アプリの有効期限を直す", "window": "night", "daysBefore": 0, "script": "コピーを渡す・写真を送るなど、事業所の方法で" }
+      ]
+    },
+    {
+      "id": "shoman-renew",
+      "name": "小児慢性特定疾病医療受給者証の更新",
+      "certificateKinds": ["小児慢性特定疾病医療受給者証"],
+      "steps": [
+        { "title": "更新の案内と必要書類を確認する", "window": "night", "daysBefore": 90 },
+        { "title": "主治医に意見書（診断書）を依頼する", "window": "day", "daysBefore": 75, "contactKind": "病院", "script": "更新用の医療意見書が必要なことと、提出の期限を伝える" },
+        { "title": "意見書を受け取る", "window": "day", "daysBefore": 45 },
+        { "title": "申請書類をそろえる", "window": "night", "daysBefore": 40 },
+        { "title": "申請する", "window": "day", "daysBefore": 30, "contactKind": "役所" },
+        { "title": "新しい受給者証を病院・薬局に見せ、アプリの有効期限を直す", "window": "night", "daysBefore": 0 }
+      ]
+    },
+    {
+      "id": "generic",
+      "name": "期限のある手続き（汎用）",
+      "certificateKinds": [],
+      "steps": [
+        { "title": "必要なものを確認する", "window": "night", "daysBefore": 30 },
+        { "title": "申請・提出する", "window": "day", "daysBefore": 14 },
+        { "title": "完了を確認し、アプリの情報を直す", "window": "night", "daysBefore": 0 }
+      ]
+    }
+  ]
+}

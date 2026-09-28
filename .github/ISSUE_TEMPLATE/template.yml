@@ -1,0 +1,33 @@
+name: 手続きの型の追加・修正
+description: 自治体の実際の流れに合わせた手続きの型を提案する
+labels: [手続きの型]
+body:
+  - type: markdown
+    attributes:
+      value: ⚠️ 個人情報は書かないでください。自治体の公式ページなど、出典のリンクを付けてください。
+  - type: input
+    id: area
+    attributes:
+      label: 自治体
+      placeholder: 例）東京都○○市
+    validations: { required: true }
+  - type: input
+    id: name
+    attributes:
+      label: 手続きの名前
+      placeholder: 例）愛の手帳（療育手帳）の更新
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: 工程（順番に）
+      description: 夜でもできるか、昼（電話・窓口）しかできないか、期限の何日前が目安かも書いてください
+      placeholder: |
+        1. 更新の案内を確認する（夜／90日前）
+        2. 児童相談所に電話して判定を予約する（昼／85日前）
+    validations: { required: true }
+  - type: input
+    id: source
+    attributes:
+      label: 出典（自治体のページのURL）
+    validations: { required: true }

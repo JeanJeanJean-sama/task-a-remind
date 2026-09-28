@@ -1,0 +1,17 @@
+name: こうなったらいいな
+description: 機能の要望やアイデア
+labels: [要望]
+body:
+  - type: markdown
+    attributes:
+      value: ⚠️ 個人情報は書かないでください。
+  - type: textarea
+    id: trouble
+    attributes:
+      label: 困っていること
+      description: どんな場面で、何に困っているか
+    validations: { required: true }
+  - type: textarea
+    id: idea
+    attributes:
+      label: こうなったらいい

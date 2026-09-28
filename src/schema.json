@@ -1,0 +1,153 @@
+{
+  "name": "tasuka-remind",
+  "title": "たすかReマインド データ定義書",
+  "schemaVersion": 1,
+  "description": "子どもの情報を「1つの事実は1か所だけ」に保存するためのデータの形。ブラウザ保存・スプレッドシート・将来のデータベースのどれでも、この定義に従う。",
+  "commonFields": [
+    { "key": "id", "label": "ID", "type": "string", "help": "記録ごとの固有の番号（自動）。変更しない。" },
+    { "key": "createdAt", "label": "作成日時", "type": "datetime", "help": "自動" },
+    { "key": "updatedAt", "label": "更新日時", "type": "datetime", "help": "自動。移行・同期のとき、新しい方を判断するのに使う。" },
+    { "key": "deleted", "label": "削除済み", "type": "bool", "help": "削除しても記録は残し、この印を付ける（同期のため）。" }
+  ],
+  "options": {
+    "visibility": [
+      { "value": "all", "label": "誰に見せてもよい" },
+      { "value": "supporter", "label": "支援者まで" },
+      { "value": "family", "label": "家族のみ" }
+    ]
+  },
+  "collections": {
+    "children": {
+      "label": "子ども",
+      "sheet": "子ども",
+      "display": "nickname",
+      "fields": [
+        { "key": "nickname", "label": "呼び名", "type": "string", "required": true, "help": "通知にも表示されます。本名でなくてかまいません。" },
+        { "key": "birthDate", "label": "生年月日", "type": "date" },
+        { "key": "prefecture", "label": "都道府県", "type": "string" },
+        { "key": "municipality", "label": "市区町村", "type": "string" },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "profile": {
+      "label": "子どもの情報",
+      "sheet": "子どもの情報",
+      "display": "label",
+      "description": "1項目1行。内容が変わったら古い行に「いつまで」を入れて残し、新しい行を追加する（履歴）。",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "category", "label": "分類", "type": "select", "required": true, "default": "基本情報",
+          "options": ["基本情報", "家族・緊急連絡先", "医療・服薬", "身体・アレルギー", "性格・特性・関わり方", "生活リズム・食事", "発達・できること", "本人・家族の意向", "その他"] },
+        { "key": "label", "label": "項目名", "type": "string", "required": true, "help": "例：アレルギー、好きなこと、落ち着く方法" },
+        { "key": "value", "label": "内容", "type": "text", "required": true },
+        { "key": "validFrom", "label": "いつから", "type": "date" },
+        { "key": "validTo", "label": "いつまで", "type": "date", "help": "空欄＝今の情報。過去の情報になったら日付を入れる。" },
+        { "key": "visibility", "label": "見せてよい範囲", "type": "select", "optionsRef": "visibility", "default": "supporter" },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "contacts": {
+      "label": "関係機関",
+      "sheet": "関係機関",
+      "display": "name",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "kind", "label": "種類", "type": "select", "required": true, "default": "病院",
+          "options": ["病院", "療育", "福祉サービス", "相談支援", "保育園・学校", "役所", "訪問看護", "医療機器業者", "その他"] },
+        { "key": "name", "label": "名前", "type": "string", "required": true, "help": "例：○○こども病院 小児科" },
+        { "key": "person", "label": "担当者", "type": "string" },
+        { "key": "phone", "label": "電話番号", "type": "tel" },
+        { "key": "hours", "label": "受付時間", "type": "string", "help": "例：平日 9:00〜17:00" },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "certificates": {
+      "label": "受給者証・手帳・医療証",
+      "sheet": "受給者証・手帳",
+      "display": "kind",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "kind", "label": "種類", "type": "select", "required": true, "default": "療育手帳",
+          "options": ["療育手帳", "身体障害者手帳", "障害児通所受給者証", "障害福祉サービス受給者証", "小児慢性特定疾病医療受給者証", "重度障害者医療証", "特別児童扶養手当", "その他"] },
+        { "key": "name", "label": "自治体での呼び名", "type": "string", "help": "例：愛の手帳（東京都）" },
+        { "key": "number", "label": "番号", "type": "string" },
+        { "key": "grade", "label": "区分・等級", "type": "string" },
+        { "key": "validUntil", "label": "有効期限", "type": "date", "help": "ここから更新の手続きを知らせます。" },
+        { "key": "templateId", "label": "更新に使う手続きの型", "type": "template" },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "careProcedures": {
+      "label": "医療的ケア手順書",
+      "sheet": "医療的ケア手順書",
+      "display": "title",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "title", "label": "ケアの名前", "type": "string", "required": true, "help": "例：経管栄養（注入）" },
+        { "key": "status", "label": "状態", "type": "select", "options": ["実施中", "終了"], "default": "実施中" },
+        { "key": "startedOn", "label": "開始日", "type": "date" },
+        { "key": "endedOn", "label": "終了日", "type": "date" },
+        { "key": "reason", "label": "開始の理由", "type": "text" },
+        { "key": "equipment", "label": "使う器具・規格", "type": "text", "help": "例：チューブのサイズ・長さ" },
+        { "key": "visibility", "label": "見せてよい範囲", "type": "select", "optionsRef": "visibility", "default": "supporter" },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "careSteps": {
+      "label": "手順書の手順",
+      "sheet": "手順書の手順",
+      "display": "text",
+      "fields": [
+        { "key": "procedureId", "label": "手順書", "type": "ref", "ref": "careProcedures", "hidden": true },
+        { "key": "section", "label": "項目", "type": "select", "required": true,
+          "options": ["いつ・どれだけ", "準備", "実施前の確認", "実施", "中断の判断", "実施後", "いつもと違う時", "緊急時と連絡先"] },
+        { "key": "order", "label": "順番", "type": "number", "hidden": true },
+        { "key": "text", "label": "やること", "type": "text", "required": true },
+        { "key": "criteria", "label": "判断の目安", "type": "text", "help": "例：咳き込んだら一度止め、落ち着いてから再開" },
+        { "key": "photoUrl", "label": "写真・動画のリンク", "type": "url", "help": "Googleドライブなどの共有リンク" }
+      ]
+    },
+    "visits": {
+      "label": "受診・入院の記録",
+      "sheet": "受診・入院の記録",
+      "display": "summary",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "kind", "label": "種類", "type": "select", "default": "受診", "options": ["受診", "入院", "検査", "手術", "発達の記録", "その他"] },
+        { "key": "date", "label": "日付", "type": "date", "required": true },
+        { "key": "endDate", "label": "終了日（入院など）", "type": "date" },
+        { "key": "facility", "label": "病院・機関", "type": "string" },
+        { "key": "department", "label": "診療科", "type": "string" },
+        { "key": "summary", "label": "内容", "type": "text", "required": true, "help": "音声入力で話したままでもかまいません。" },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "tasks": {
+      "label": "タスク",
+      "sheet": "タスク",
+      "display": "title",
+      "description": "手続きは工程ごとのタスクに分け、「前の工程」が終わると次が出てくる。",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "title", "label": "やること", "type": "string", "required": true },
+        { "key": "processId", "label": "手続きのまとまりID", "type": "string", "hidden": true },
+        { "key": "processName", "label": "手続き名", "type": "string", "hidden": true },
+        { "key": "templateId", "label": "手続きの型", "type": "string", "hidden": true },
+        { "key": "stepNo", "label": "工程番号", "type": "number", "hidden": true },
+        { "key": "dependsOn", "label": "前の工程", "type": "refs", "ref": "tasks", "hidden": true },
+        { "key": "dueDate", "label": "目安の期限", "type": "date" },
+        { "key": "window", "label": "いつできるか", "type": "select", "default": "night",
+          "options": [ { "value": "night", "label": "夜でもできる（書類・ネット）" }, { "value": "day", "label": "昼しかできない（電話・窓口）" } ] },
+        { "key": "scheduledDate", "label": "昼にやる日", "type": "date", "help": "昼しかできないタスクを、この日の昼に1回だけ知らせます。" },
+        { "key": "contactId", "label": "連絡先", "type": "ref", "ref": "contacts" },
+        { "key": "script", "label": "伝えること・持ち物", "type": "text" },
+        { "key": "assignee", "label": "担当", "type": "string", "help": "例：父、母" },
+        { "key": "status", "label": "状態", "type": "select", "default": "todo",
+          "options": [ { "value": "todo", "label": "未完了" }, { "value": "done", "label": "完了" }, { "value": "skipped", "label": "対象外" } ] },
+        { "key": "doneAt", "label": "完了日", "type": "date", "hidden": true },
+        { "key": "certificateId", "label": "関係する受給者証・手帳", "type": "ref", "ref": "certificates" },
+        { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    }
+  }
+}
