@@ -4,7 +4,7 @@
  * つながらないときだけ、前に保存した画面を表示する。
  * 子どものデータはここでは扱わない（データはブラウザの localStorage にある）。
  */
-var CACHE = 'tasuka-remind-__VERSION__';
+var CACHE = 'task-a-remind-__VERSION__';
 var FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon.png'];
 
 self.addEventListener('install', function (e) {

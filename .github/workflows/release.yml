@@ -32,8 +32,8 @@ jobs:
       - name: 配布用の zip を作る
         run: |
           mkdir -p dist
-          (cd gas && zip -q ../dist/tasuka-remind-gas-${GITHUB_REF_NAME}.zip Code.gs Shared.gs Index.html appsscript.json)
-          (cd docs && zip -qr ../dist/tasuka-remind-web-${GITHUB_REF_NAME}.zip .)
+          (cd gas && zip -q ../dist/task-a-remind-gas-${GITHUB_REF_NAME}.zip Code.gs Shared.gs Index.html appsscript.json)
+          (cd docs && zip -qr ../dist/task-a-remind-web-${GITHUB_REF_NAME}.zip .)
 
       - name: Releases に置く
         env:
@@ -41,4 +41,4 @@ jobs:
         run: |
           gh release create "${GITHUB_REF_NAME}" dist/*.zip \
             --title "たすかReマインド ${GITHUB_REF_NAME}" \
-            --notes "変更点は CHANGELOG.md を見てください。GAS版は tasuka-remind-gas-*.zip の4ファイルを Apps Script に貼り付けます。"
+            --notes "変更点は CHANGELOG.md を見てください。GAS版は task-a-remind-gas-*.zip の4ファイルを Apps Script に貼り付けます。"

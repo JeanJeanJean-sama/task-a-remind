@@ -92,7 +92,7 @@ for (const [key, c] of Object.entries(schema.collections)) {
     '| キー | 項目名 | 種類 | 必須 | 選択肢・つながり | 説明 |\n|---|---|---|---|---|---|\n' +
     c.fields.map((f) => `| \`${f.key}\` | ${f.label} | ${typeLabel[f.type] || f.type} | ${f.required ? '○' : ''} | ${f.ref ? '→ ' + schema.collections[f.ref].label : opts(f)} | ${(f.help || '') + (f.hidden ? '（画面には出さず自動で入る）' : '')} |`).join('\n') + '\n\n';
 }
-md += '## 書き出しファイルの形\n\n```json\n{\n  "format": "tasuka-remind-export",\n  "schemaVersion": ' + schema.schemaVersion +
+md += '## 書き出しファイルの形\n\n```json\n{\n  "format": "task-a-remind-export",\n  "schemaVersion": ' + schema.schemaVersion +
   ',\n  "exportedAt": "2026-09-28T13:00:00.000Z",\n  "collections": {\n    "children": [ { "id": "…", "nickname": "…" } ],\n    "tasks": [ … ]\n  }\n}\n```\n\n' +
   '## 定義を変えるときの決まり\n\n' +
   '1. 項目を**足す**のは自由（スプレッドシートは次の保存時に右端へ列が足されます）。\n' +
@@ -110,7 +110,7 @@ const SAMPLE_DATE = '2026-10-01';
 const STAMP = '2026-10-01T00:00:00.000Z';
 const sample = ctx.Logic.buildSample(SAMPLE_DATE, templates);
 for (const list of Object.values(sample.collections)) for (const r of list) { r.createdAt = STAMP; r.updatedAt = STAMP; }
-const exp = ctx.Logic.makeExport(sample.collections, { name: 'tasuka-remind', version: build.version, from: 'sample', sampleDate: SAMPLE_DATE });
+const exp = ctx.Logic.makeExport(sample.collections, { name: 'task-a-remind', version: build.version, from: 'sample', sampleDate: SAMPLE_DATE });
 exp.exportedAt = STAMP;
 write('sample/sample-data.json', JSON.stringify(exp, null, 1) + '\n');
 console.log('完了');

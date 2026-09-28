@@ -1,5 +1,5 @@
 {
-  "name": "tasuka-remind",
+  "name": "task-a-remind",
   "title": "たすかReマインド データ定義書",
   "schemaVersion": 2,
   "description": "子どもの情報を「1つの事実は1か所だけ」に保存するためのデータの形。ブラウザ保存・スプレッドシート・将来のデータベースのどれでも、この定義に従う。",

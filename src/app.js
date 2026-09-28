@@ -23,12 +23,16 @@
   //   任意: saveFile(name, content, mime), savePdf(html, name), testNotify()
   // =====================================================================
   function createLocalStore() {
-    var KEY = 'tasuka-remind/v1/data';
+    var KEY = 'task-a-remind/v1/data';
     var mem = null;
     function load() {
       if (mem) return mem;
       var raw = null;
-      try { raw = window.localStorage.getItem(KEY); } catch (e) { raw = null; }
+      try {
+        raw = window.localStorage.getItem(KEY);
+        // 名前をそろえる前（v0.3.0まで）の保存場所にデータがあれば、そちらを読む（次の保存で新しい場所に移る）
+        if (!raw) raw = window.localStorage.getItem('tasuka-remind/v1/data');
+      } catch (e) { raw = null; }
       try { mem = raw ? JSON.parse(raw) : null; } catch (e) { mem = null; }
       if (!mem || typeof mem !== 'object') mem = {};
       mem.collections = mem.collections || {};
@@ -103,8 +107,8 @@
     form: null, print: null, toast: '', notice: null, busy: false,
     sync: null
   };
-  var UI_KEY = 'tasuka-remind/v1/ui';
-  function loadUi() { try { return JSON.parse(window.localStorage.getItem(UI_KEY)) || {}; } catch (e) { return {}; } }
+  var UI_KEY = 'task-a-remind/v1/ui';
+  function loadUi() { try { return JSON.parse(window.localStorage.getItem(UI_KEY) || window.localStorage.getItem('tasuka-remind/v1/ui')) || {}; } catch (e) { return {}; } }
   function saveUi() { try { window.localStorage.setItem(UI_KEY, JSON.stringify({ childId: S.childId, tab: S.tab })); } catch (e) { /* 保存できなくても動く */ } }
 
   // =====================================================================
@@ -1234,7 +1238,7 @@
   }
 
   function exportJson() {
-    var data = L.makeExport(S.db, { name: 'tasuka-remind', version: BUILD.version || '', from: S.store.kind });
+    var data = L.makeExport(S.db, { name: 'task-a-remind', version: BUILD.version || '', from: S.store.kind });
     saveOut('たすかReマインド_データ_' + today() + '.json', JSON.stringify(data, null, 1), 'application/json').then(function () {
       S.settings.lastExportAt = L.nowIso();
       S.store.saveSettings({ lastExportAt: S.settings.lastExportAt }).catch(function () { /* 記録できなくても問題なし */ });
@@ -1436,12 +1440,12 @@
     if (IS_GAS || typeof DriveSync === 'undefined') return;
     S.sync = DriveSync.create({
       clientId: CONFIG.googleClientId || '',
-      fileName: 'tasuka-remind-data.json',
+      fileName: 'task-a-remind-data.json',
       collections: COLS,
       getDb: function () { return S.db; },
       applyRemote: function (changed) { return saveMany(changed, { keepStamp: true, noSync: true }); },
       onChange: function () { render(); },
-      meta: { name: 'tasuka-remind', version: BUILD.version || '', from: 'drive-sync' }
+      meta: { name: 'task-a-remind', version: BUILD.version || '', from: 'drive-sync' }
     });
     window.addEventListener('online', function () {
       if (S.ready && S.sync.enabled() && S.sync.tokenValid()) S.sync.syncNow();
@@ -1485,7 +1489,7 @@
   }
 
   // テスト用に一部を公開
-  window.TasukaApp = { state: S, actions: ACTIONS };
+  window.TaskARemindApp = { state: S, actions: ACTIONS };
   registerServiceWorker();
   init();
 })();

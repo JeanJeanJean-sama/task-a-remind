@@ -92,7 +92,8 @@ test('書き出し→読み込み（新しい方を残す）', () => {
   const changed = L.mergeImport(cur, data.collections);
   assert.deepEqual([...changed.map((c) => c.rec.id)].sort(), ['1', '3']);
   assert.throws(() => L.migrate({ format: 'other' }));
-  assert.throws(() => L.migrate({ format: 'tasuka-remind-export', schemaVersion: 99, collections: {} }));
+  assert.equal(L.migrate({ format: 'tasuka-remind-export', schemaVersion: 2, collections: {} }).format, 'task-a-remind-export', '旧名の書き出しファイルも読める');
+  assert.throws(() => L.migrate({ format: 'task-a-remind-export', schemaVersion: 99, collections: {} }));
 });
 
 test('サンプルデータがデータ定義に合っている', () => {
@@ -122,7 +123,7 @@ test('年齢の表示（○歳○ヶ月）', () => {
 
 test('第1版のデータを第2版に直す（何度やっても同じ）', () => {
   const v1 = {
-    format: 'tasuka-remind-export', schemaVersion: 1,
+    format: 'task-a-remind-export', schemaVersion: 1,
     collections: {
       profile: [{ id: 'a', category: '性格・特性・関わり方', label: '好き', value: 'x' }, { id: 'b', category: '生活リズム・食事', label: '食事', value: 'y' }, { id: 'c', category: '基本情報', label: 'z', value: 'z' }],
       certificates: [{ id: 'k', kind: '療育手帳' }]

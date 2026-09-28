@@ -1,9 +1,9 @@
 # たすかReマインド（試作版 v0.3）
 
-[![テスト](https://github.com/OWNER/tasuka-remind/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/tasuka-remind/actions/workflows/ci.yml)
-[![Web版を公開](https://github.com/OWNER/tasuka-remind/actions/workflows/pages.yml/badge.svg)](https://github.com/OWNER/tasuka-remind/actions/workflows/pages.yml)
+[![テスト](https://github.com/OWNER/task-a-remind/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/task-a-remind/actions/workflows/ci.yml)
+[![Web版を公開](https://github.com/OWNER/task-a-remind/actions/workflows/pages.yml/badge.svg)](https://github.com/OWNER/task-a-remind/actions/workflows/pages.yml)
 
-**▶ Web版を開く：https://OWNER.github.io/tasuka-remind/**
+**▶ Web版を開く：https://OWNER.github.io/task-a-remind/**
 <!-- ↑ OWNER を GitHub のユーザー名（または Organization 名）に置き換えてください -->
 
 障害児・医療的ケア児の家庭のための、**子どもの情報まとめ**と**手続きリマインド**の試作版です。

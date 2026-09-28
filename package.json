@@ -1,6 +1,6 @@
 {
-  "name": "tasuka-remind",
-  "version": "0.3.0",
+  "name": "task-a-remind",
+  "version": "0.3.1",
   "private": true,
   "description": "たすかReマインド：障害児・医療的ケア児家庭のための、情報まとめと手続きリマインドの試作版",
   "type": "module",

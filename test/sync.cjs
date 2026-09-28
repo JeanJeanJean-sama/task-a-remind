@@ -46,7 +46,7 @@ async function mockGoogle(context) {
     }
     if (u.pathname === '/upload/drive/v3/files' && req.method() === 'POST') {
       const body = req.postData();
-      const parts = body.split(/--tasuka\d+/);
+      const parts = body.split(/--taskaremind\d+/);
       const metaJson = JSON.parse(parts[1].split('\r\n\r\n')[1]);
       if (JSON.stringify(metaJson.parents) !== '["appDataFolder"]') return route.fulfill({ status: 400, body: '' });
       const content = parts[2].split('\r\n\r\n').slice(1).join('\r\n\r\n').replace(/\r\n$/, '');
@@ -78,7 +78,7 @@ const driveData = () => { const f = Object.values(drive.files)[0]; return f ? JS
     return { ctx, page };
   };
   const waitSynced = (page) => page.waitForFunction(() => {
-    const s = window.TasukaApp.state.sync; return s && s.state() === 'idle' && s.lastSyncAt();
+    const s = window.TaskARemindApp.state.sync; return s && s.state() === 'idle' && s.lastSyncAt();
   }, null, { timeout: 10000 });
 
   // ---- パソコン：サンプルを入れて同期を始める ----
@@ -94,7 +94,7 @@ const driveData = () => { const f = Object.values(drive.files)[0]; return f ? JS
   ok(await pc.page.isVisible('text=family@example.com'), '同期しているGoogleアカウントが表示される');
   ok(await pc.page.isVisible('.store-badge:has-text("同期済み")'), 'ヘッダーに「同期済み」が出る');
   const d1 = driveData();
-  ok(d1 && d1.format === 'tasuka-remind-export' && d1.collections.children.length === 1, 'ドライブ（アプリ専用フォルダ）にデータが保存される');
+  ok(d1 && d1.format === 'task-a-remind-export' && d1.collections.children.length === 1, 'ドライブ（アプリ専用フォルダ）にデータが保存される');
 
   // ---- スマホ：まっさらな端末で同期を始めると、パソコンのデータが届く ----
   const phone = await device('スマホ', { width: 390, height: 844 });
@@ -140,7 +140,7 @@ const driveData = () => { const f = Object.values(drive.files)[0]; return f ? JS
   ok(!(await phone.page.isVisible('.rhythm-row:has-text("お風呂")')), 'パソコンで消した記録はスマホでも消える');
 
   // ---- ログインが切れたとき ----
-  await phone.page.evaluate(() => { sessionStorage.removeItem('tasuka-remind/v1/sync-token'); });
+  await phone.page.evaluate(() => { sessionStorage.removeItem('task-a-remind/v1/sync-token'); });
   await phone.page.reload();
   await phone.page.waitForSelector('.sync-banner');
   ok(await phone.page.isVisible('text=Googleにもう一度ログインしてください'), 'ログインが切れると、案内と「同期する」ボタンが出る');

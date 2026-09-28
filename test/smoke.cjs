@@ -138,7 +138,7 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   const file = path.join(out, 'export.json');
   await dl.saveAs(file);
   const exp = JSON.parse(fs.readFileSync(file, 'utf8'));
-  ok(exp.format === 'tasuka-remind-export' && exp.collections.tasks.length > 5, 'データを書き出せる');
+  ok(exp.format === 'task-a-remind-export' && exp.collections.tasks.length > 5, 'データを書き出せる');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.waitForSelector('text=はじめに');

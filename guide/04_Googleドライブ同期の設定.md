@@ -17,7 +17,7 @@
 ## 1. Google Cloud でプロジェクトを作る
 
 1. 管理用のGoogleアカウントで [Google Cloud Console](https://console.cloud.google.com/) を開く
-2. 上部のプロジェクト選択 →「新しいプロジェクト」→ 名前：`tasuka-remind` →「作成」
+2. 上部のプロジェクト選択 →「新しいプロジェクト」→ 名前：`task-a-remind` →「作成」
 
 ## 2. Google Drive API を有効にする
 
@@ -35,7 +35,7 @@
 5. 「データアクセス」→「スコープを追加または削除」で、次の2つを追加して保存
    - `.../auth/drive.appdata`
    - `.../auth/userinfo.email`（または `email`）
-6. 「ブランディング」で、アプリのホームページに公開先のURL（例：`https://〇〇.github.io/tasuka-remind/`）、プライバシーポリシーのURL（下の「プライバシーポリシー」参照）を入れる
+6. 「ブランディング」で、アプリのホームページに公開先のURL（例：`https://〇〇.github.io/task-a-remind/`）、プライバシーポリシーのURL（下の「プライバシーポリシー」参照）を入れる
 
 ### 公開ステータスについて
 
@@ -45,9 +45,9 @@
 ## 4. OAuthクライアントIDを作る
 
 1. 「APIとサービス」→「認証情報」→「認証情報を作成」→「OAuth クライアント ID」
-2. アプリケーションの種類：**ウェブ アプリケーション**、名前：`tasuka-remind web`
+2. アプリケーションの種類：**ウェブ アプリケーション**、名前：`task-a-remind web`
 3. **承認済みの JavaScript 生成元**に次を追加
-   - `https://〇〇.github.io`（GitHub Pagesの公開先。末尾の `/tasuka-remind/` は付けない）
+   - `https://〇〇.github.io`（GitHub Pagesの公開先。末尾の `/task-a-remind/` は付けない）
    - `http://localhost:8080`（手元で `npm run serve` して試す場合）
 4. 「承認済みのリダイレクト URI」は空のままでかまいません
 5. 「作成」→ 表示された **クライアントID**（`〜.apps.googleusercontent.com`）をコピー

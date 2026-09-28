@@ -17,8 +17,8 @@ var DriveSync = (function () {
   var API = 'https://www.googleapis.com/drive/v3/files';
   var UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
   var SCOPE = 'https://www.googleapis.com/auth/drive.appdata email';
-  var META_KEY = 'tasuka-remind/v1/sync';
-  var TOKEN_KEY = 'tasuka-remind/v1/sync-token';
+  var META_KEY = 'task-a-remind/v1/sync';
+  var TOKEN_KEY = 'task-a-remind/v1/sync-token';
 
   function readJson(storage, key) {
     try { return JSON.parse(storage.getItem(key)) || null; } catch (e) { return null; }
@@ -106,7 +106,7 @@ var DriveSync = (function () {
         .then(function (t) { return t ? JSON.parse(t) : null; });
     }
     function createFile(content) {
-      var boundary = 'tasuka' + Date.now();
+      var boundary = 'taskaremind' + Date.now();
       var body = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' +
         JSON.stringify({ name: opts.fileName, parents: ['appDataFolder'], mimeType: 'application/json' }) +
         '\r\n--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + content + '\r\n--' + boundary + '--';

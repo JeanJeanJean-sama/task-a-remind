@@ -8,7 +8,9 @@ var Logic = (function () {
   'use strict';
 
   var CURRENT_SCHEMA_VERSION = 2;
-  var EXPORT_FORMAT = 'tasuka-remind-export';
+  var EXPORT_FORMAT = 'task-a-remind-export';
+  // 名前を「task-a-remind」にそろえる前（v0.3.0まで）の書き出しファイルも読み込めるようにする
+  var LEGACY_FORMATS = ['tasuka-remind-export'];
 
   // ---------- 日付（すべて 'YYYY-MM-DD' の文字列で扱う） ----------
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -266,7 +268,7 @@ var Logic = (function () {
   function toIcs(tasks, opts) {
     opts = opts || {};
     var stamp = nowIso().replace(/[-:]/g, '').replace(/\.\d+/, '');
-    var out = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//tasuka-remind//JP', 'CALSCALE:GREGORIAN',
+    var out = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//task-a-remind//JP', 'CALSCALE:GREGORIAN',
       'X-WR-CALNAME:' + icsEscape(opts.calName || 'たすかReマインド')];
     alive(tasks).forEach(function (t) {
       if (t.status !== 'todo') return;
@@ -274,7 +276,7 @@ var Logic = (function () {
       if (!date) return;
       var d = date.replace(/-/g, '');
       var end = addDays(date, 1).replace(/-/g, '');
-      out.push('BEGIN:VEVENT', 'UID:' + t.id + '@tasuka-remind', 'DTSTAMP:' + stamp,
+      out.push('BEGIN:VEVENT', 'UID:' + t.id + '@task-a-remind', 'DTSTAMP:' + stamp,
         'DTSTART;VALUE=DATE:' + d, 'DTEND;VALUE=DATE:' + end,
         'SUMMARY:' + icsEscape((t.window === 'day' ? '【昼】' : '') + t.title),
         'DESCRIPTION:' + icsEscape((t.processName ? t.processName + '\n' : '') + (t.script || '')),
@@ -324,6 +326,7 @@ var Logic = (function () {
 
   /** 書き出しファイルを今の形に直す。定義を変えたらここ（と upgradeCollections）に変換を足す。 */
   function migrate(data) {
+    if (data && LEGACY_FORMATS.indexOf(data.format) >= 0) data.format = EXPORT_FORMAT;
     if (!data || data.format !== EXPORT_FORMAT || !data.collections) {
       throw new Error('たすかReマインドの書き出しファイルではありません');
     }
