@@ -28,6 +28,10 @@ const sync = read('src/drive-sync.js');
 // GoogleのクライアントID：環境変数 GOOGLE_CLIENT_ID があればそれを使う（GitHub Actions の変数から渡す）
 const config = JSON.parse(read('src/config.json'));
 if (process.env.GOOGLE_CLIENT_ID) config.googleClientId = process.env.GOOGLE_CLIENT_ID.trim();
+// 問い合わせ先のメールアドレス（プライバシーポリシーに載せる）：環境変数 CONTACT_EMAIL があればそれを使う
+const contactEmail = String(process.env.CONTACT_EMAIL || config.contactEmail || '').trim();
+delete config.contactEmail; // 画面のプログラムには入れない
+if (contactEmail && !/^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/.test(contactEmail)) throw new Error('CONTACT_EMAIL の形が正しくありません: ' + contactEmail);
 const css = read('src/style.css');
 const tpl = read('src/index.template.html');
 const build = { version: pkg.version };
@@ -39,13 +43,19 @@ for (const [name, s] of [['logic.js', logic], ['app.js', app], ['drive-sync.js',
 const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
 const data = `window.__CONFIG__=${json(config)};\nwindow.__SCHEMA__=${json(schema)};\nwindow.__TEMPLATES__=${json(templates)};\nwindow.__BUILD__=${json(build)};`;
 
+// GitHub Pages版だけ：画面のいちばん下に、アプリの説明とプライバシーポリシーへのリンクを置く
+// （JavaScriptを使わずに読めるように、HTMLにそのまま書く。Googleの審査でホームページに必要）
+const PAGES_FOOT = '<footer class="site-foot no-print"><p>たすかReマインド（task-a-remind）は、障害のある子どもや医療的ケアが必要な子どもの情報を1か所にまとめ、' +
+  '医療的ケアの手順書・サポートブックと、手続きのToDo・期限のお知らせを作る無料のアプリです。</p>' +
+  '<p><a href="privacy.html">プライバシーポリシー</a>　・　<a href="https://github.com/jeanjeanjean-sama/task-a-remind">ソースコード（GitHub）</a></p></footer>';
 const PAGES_HEAD = [
   '<link rel="manifest" href="manifest.webmanifest">',
   '<link rel="icon" type="image/png" href="favicon.png">',
   '<link rel="apple-touch-icon" href="apple-touch-icon.png">'
 ].join('\n');
-const page = (head) => tpl
+const page = (head, foot) => tpl
   .replace('<!--HEAD-->', () => head)
+  .replace('<!--FOOT-->', () => foot)
   .replace('/*STYLE*/', () => css)
   .replace('/*DATA*/', () => data)
   .replace('/*LOGIC*/', () => logic)
@@ -53,8 +63,14 @@ const page = (head) => tpl
   .replace('/*APP*/', () => app);
 
 console.log('ビルド中… v' + build.version);
-write('docs/index.html', page(PAGES_HEAD));
-write('gas/Index.html', page(''));
+write('docs/index.html', page(PAGES_HEAD, PAGES_FOOT));
+write('gas/Index.html', page('', ''));
+// プライバシーポリシー（Google Cloud の同意画面に登録するページ）
+const contactLine = contactEmail
+  ? `<li>メール：<a href="mailto:${contactEmail}">${contactEmail}</a></li>`
+  : '';
+if (!contactEmail) console.log('  ※ CONTACT_EMAIL が未設定のため、プライバシーポリシーの問い合わせ先はIssueだけになります');
+write('docs/privacy.html', read('src/privacy.html').replace('<!--CONTACT-->', () => contactLine));
 write('docs/.nojekyll', '');
 write('docs/manifest.webmanifest', read('src/manifest.webmanifest'));
 write('docs/sw.js', read('src/sw.js').replace('__VERSION__', build.version));

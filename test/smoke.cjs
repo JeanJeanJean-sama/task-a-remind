@@ -19,6 +19,7 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   await page.goto(url);
   await page.waitForSelector('text=はじめに');
   ok(true, '初回は「はじめに」が出る');
+  ok(await page.isVisible('.site-foot a[href="privacy.html"]'), '画面の下にプライバシーポリシーへのリンクがある');
   await shot('01_はじめに');
 
   // 子どもを登録
@@ -158,6 +159,15 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   await shot('10_PC_ダーク');
 
   ok(errors.length === 0, 'JavaScriptのエラーなし' + (errors.length ? '：' + errors.join(' / ') : ''));
+  // プライバシーポリシーのページが開ける
+  const pp = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  pp.on('pageerror', (e) => errors.push(e.message));
+  await pp.goto('file://' + path.join(__dirname, '..', 'docs', 'privacy.html'));
+  ok((await pp.title()).startsWith('プライバシーポリシー'), 'プライバシーポリシーのページが開ける');
+  ok(await pp.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'スマホの幅で横にはみ出さない');
+  await pp.screenshot({ path: path.join(out, '11_プライバシーポリシー.png'), fullPage: true });
+  await pp.close();
+
   await browser.close();
   console.log('画面の動作確認：すべて成功');
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -15,7 +15,9 @@ google.accounts = { oauth2: {
     window.__gisScope = cfg.scope;
     return { callback: cfg.callback, requestAccessToken: function (o) {
       window.__gisPrompts = (window.__gisPrompts || []).concat([o && o.prompt]);
-      var self = this; setTimeout(function () { self.callback({ access_token: 'token-' + Math.random(), expires_in: 3600 }); }, 20);
+      // window.__grantScope：ログイン画面で利用者が許可した項目（チェックを外した場合の確認用）
+      var scope = window.__grantScope || 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email';
+      var self = this; setTimeout(function () { self.callback({ access_token: 'token-' + Math.random(), expires_in: 3600, scope: scope }); }, 20);
     } };
   },
   revoke: function (t, cb) { window.__revoked = true; cb && cb(); }
@@ -31,6 +33,9 @@ async function mockGoogle(context) {
     drive.requests.push(req.method() + ' ' + u.pathname);
     if (drive.offline) return route.abort('internetdisconnected');
     if (!auth.startsWith('Bearer token-')) return route.fulfill({ status: 401, body: '' });
+    // 本物のGoogleと同じ形の 403 を返す
+    if (drive.fail === 'scope' && /^\/(upload\/)?drive\//.test(u.pathname)) return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: { code: 403, message: 'Request had insufficient authentication scopes.', errors: [{ message: 'Insufficient Permission', domain: 'global', reason: 'insufficientPermissions' }], status: 'PERMISSION_DENIED', details: [{ '@type': 'type.googleapis.com/google.rpc.ErrorInfo', reason: 'ACCESS_TOKEN_SCOPE_INSUFFICIENT' }] } }) });
+    if (drive.fail === 'disabled' && /^\/(upload\/)?drive\//.test(u.pathname)) return route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ error: { code: 403, message: 'Google Drive API has not been used in project 123 before or it is disabled.', errors: [{ reason: 'accessNotConfigured' }], status: 'PERMISSION_DENIED' } }) });
     if (u.pathname === '/oauth2/v3/userinfo') return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ email: 'family@example.com' }) });
     if (u.pathname === '/drive/v3/files' && req.method() === 'GET') {
       if (u.searchParams.get('spaces') !== 'appDataFolder') return route.fulfill({ status: 400, body: 'appDataFolder以外は見ない' });
@@ -171,6 +176,42 @@ const driveData = () => { const f = Object.values(drive.files)[0]; return f ? JS
   await waitSynced(phone.page);
   ok(!(await phone.page.isVisible('.sync-banner-error')), '電波が戻ると自動で同期し直す');
   ok(driveData().collections.schedule.some((r) => r.activity === '電波がないときの予定'), '電波が戻ってから同期すると、ドライブに送られる');
+
+  // ---- 403：ログイン画面でドライブのチェックを外した ----
+  const fam = await device('家族のスマホ', { width: 390, height: 844 });
+  await fam.page.evaluate(() => { window.__grantScope = 'https://www.googleapis.com/auth/userinfo.email'; });
+  await fam.page.waitForSelector('text=はじめに');
+  await fam.page.click('button[data-tab=settings]');
+  await fam.page.click('text=Googleでログインして同期を始める');
+  await fam.page.waitForSelector('text=同期を始められませんでした');
+  ok(await fam.page.isVisible('text=チェックを入れてから'), 'ドライブのチェックを外してログインすると、チェックを入れるよう案内する');
+  ok(!(await fam.page.evaluate(() => window.TaskARemindApp.state.sync.enabled())), 'チェックがないまま同期は始めない');
+  await fam.page.click('.notice button[data-act=closeNotice]');
+  await fam.page.evaluate(() => { window.__grantScope = ''; });
+  await fam.page.click('text=Googleでログインして同期を始める');
+  await waitSynced(fam.page);
+  ok(true, 'チェックを入れてログインし直すと同期が始まる');
+
+  // ---- 403：同期の途中でドライブの許可が足りないと言われた ----
+  drive.fail = 'scope';
+  await phone.page.click('button[data-tab=settings]');
+  await phone.page.click('text=今すぐ同期する');
+  await phone.page.waitForSelector('.sync-banner');
+  ok(await phone.page.isVisible('.sync-banner >> text=チェックを入れてください'), '403（許可が足りない）のときは、チェックを入れて再ログインするよう案内する');
+  drive.fail = null;
+  await phone.page.click('.sync-banner button:has-text("同期する")');
+  await waitSynced(phone.page);
+  ok((await phone.page.evaluate(() => window.__gisPrompts)).slice(-1)[0] === 'consent', '再ログインでは、許可の画面をもう一度出す');
+  ok(!(await phone.page.isVisible('.sync-banner')), '許可し直すと同期が再開する');
+
+  // ---- 403：Google Cloud で Drive API が有効になっていない ----
+  drive.fail = 'disabled';
+  await phone.page.click('text=今すぐ同期する');
+  await phone.page.waitForSelector('.sync-banner-error');
+  ok(await phone.page.isVisible('text=Google Drive API を有効にしてください'), '403（Drive APIが無効）のときは、管理する人がすることを表示する');
+  drive.fail = null;
+  await phone.page.click('.sync-banner-error button');
+  await waitSynced(phone.page);
 
   // ---- 同期をやめる・ドライブのデータを消す ----
   await pc.page.click('button[data-tab=settings]');

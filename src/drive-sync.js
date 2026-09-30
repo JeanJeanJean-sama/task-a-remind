@@ -16,7 +16,11 @@ var DriveSync = (function () {
   var GIS_SRC = 'https://accounts.google.com/gsi/client';
   var API = 'https://www.googleapis.com/drive/v3/files';
   var UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files';
-  var SCOPE = 'https://www.googleapis.com/auth/drive.appdata email';
+  var DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+  var SCOPE = DRIVE_SCOPE + ' email';
+  // ログイン画面で「アプリ専用のデータ」のチェックが外されたとき
+  var MSG_SCOPE = 'Googleドライブへの保存が許可されていません。もう一度ログインし、' +
+    'ログインの画面で「Googleドライブのアプリ専用データ」の項目にチェックを入れてから「続行」を押してください';
   var META_KEY = 'task-a-remind/v1/sync';
   var TOKEN_KEY = 'task-a-remind/v1/sync-token';
 
@@ -72,6 +76,12 @@ var DriveSync = (function () {
           }
           tokenClient.callback = function (res) {
             if (!res || res.error || !res.access_token) { reject(new Error(res && res.error === 'access_denied' ? 'Googleへのログインが許可されませんでした' : 'Googleにログインできませんでした')); return; }
+            // ログイン画面では、許可する項目のチェックを外せる。ドライブのチェックが外されていたら、同期はできない
+            if (res.scope && String(res.scope).split(' ').indexOf(DRIVE_SCOPE) < 0) {
+              meta.needConsent = true; saveMeta();
+              var se = new Error(MSG_SCOPE); se.needScope = true; reject(se); return;
+            }
+            if (meta.needConsent) { meta.needConsent = false; saveMeta(); }
             tok = { access_token: res.access_token, exp: Date.now() + (Number(res.expires_in) || 3600) * 1000 };
             writeJson(sessionStorage, TOKEN_KEY, tok);
             resolve();
@@ -91,9 +101,38 @@ var DriveSync = (function () {
         throw new Error('ネットにつながっていないため同期できませんでした。データはこの端末に保存されています。電波が戻ると自動で同期します');
       }).then(function (res) {
         if (res.status === 401) { tok = null; writeJson(sessionStorage, TOKEN_KEY, null); var e = new Error('login'); e.needLogin = true; throw e; }
-        if (!res.ok) throw new Error('Googleドライブとの通信に失敗しました（' + res.status + '）。しばらくしてからもう一度お試しください');
+        if (!res.ok) return res.text().catch(function () { return ''; }).then(function (body) { throw apiError(res.status, body); });
         return res;
       });
+    }
+
+    /** Googleから返ってきたエラーの理由を、わかりやすい言葉にする */
+    function apiError(status, body) {
+      var reason = '', detail = '';
+      try {
+        var j = JSON.parse(body).error || {};
+        detail = j.message || '';
+        reason = (j.errors && j.errors[0] && j.errors[0].reason) || '';
+        (j.details || []).forEach(function (d) { if (!reason && d && d.reason) reason = d.reason; });
+        if (!reason) reason = j.status || '';
+      } catch (x) { /* 本文がJSONでないときは理由なし */ }
+      var e;
+      if (/insufficientPermissions|SCOPE_INSUFFICIENT|insufficient authentication scopes/i.test(reason + ' ' + detail)) {
+        tok = null; writeJson(sessionStorage, TOKEN_KEY, null);
+        meta.needConsent = true; saveMeta();
+        e = new Error(MSG_SCOPE); e.needScope = true; e.needLogin = true;
+      } else if (/accessNotConfigured|SERVICE_DISABLED|has not been used|is disabled/i.test(reason + ' ' + detail)) {
+        e = new Error('Googleドライブを使う設定が、まだ有効になっていません。アプリを管理する人に「Google Cloud で Google Drive API を有効にしてください」と伝えてください（' + status + '）');
+      } else if (/rateLimitExceeded|userRateLimitExceeded|RATE_LIMIT|quotaExceeded/i.test(reason) && !/storageQuota/i.test(reason)) {
+        e = new Error('Googleドライブが混み合っています。数分待ってから、もう一度お試しください（' + status + '）');
+      } else if (/storageQuotaExceeded/i.test(reason)) {
+        e = new Error('Googleドライブの保存容量がいっぱいです。ドライブの不要なファイルを消してから、もう一度お試しください');
+      } else {
+        e = new Error('Googleドライブとの通信に失敗しました（' + status + (reason ? '・' + reason : '') + '）。しばらくしてからもう一度お試しください');
+      }
+      e.status = status; e.reason = reason; e.detail = detail;
+      if (typeof console !== 'undefined') console.warn('[task-a-remind] Googleドライブ', status, reason, detail);
+      return e;
     }
 
     function findFile() {
@@ -132,7 +171,7 @@ var DriveSync = (function () {
       return (meta.fileId ? Promise.resolve(meta.fileId) : findFile()).then(function (id) {
         meta.fileId = id;
         return id ? download(id).catch(function (e) {
-          if (e.needLogin) throw e;
+          if (e.needLogin || e.status !== 404) throw e; // 通信の失敗で、ファイルを作り直さない
           meta.fileId = ''; return null; // ファイルが消されていたら作り直す
         }) : null;
       }).then(function (remote) {
@@ -163,7 +202,7 @@ var DriveSync = (function () {
         st.syncing = false;
         st.again = false;
         saveMeta();
-        if (e && e.needLogin) set('needLogin'); else set('error', (e && e.message) || String(e));
+        if (e && e.needLogin) set('needLogin', e.needScope ? e.message : ''); else set('error', (e && e.message) || String(e));
         return false;
       });
     }
@@ -172,6 +211,8 @@ var DriveSync = (function () {
       available: function () { return !!opts.clientId; },
       enabled: function () { return !!meta.enabled; },
       state: function () { return st.state; },
+      /** ドライブの許可が足りない（ログイン画面でチェックが外された） */
+      needConsent: function () { return !!meta.needConsent; },
       error: function () { return st.error; },
       email: function () { return meta.email; },
       lastSyncAt: function () { return meta.lastSyncAt; },
@@ -182,11 +223,12 @@ var DriveSync = (function () {
         return requestToken('consent').then(function () {
           meta.enabled = true; meta.fileId = ''; saveMeta();
           return fetchEmail();
-        }).then(syncNow).catch(function (e) { set(meta.enabled ? 'needLogin' : 'off'); throw e; });
+        }).then(syncNow).catch(function (e) { set(meta.enabled ? 'needLogin' : 'off', e.needScope ? e.message : ''); throw e; });
       },
       /** ログインが切れたあとに、もう一度つなぐ（ボタンを押したときに呼ぶ） */
       resume: function () {
-        return requestToken('').then(syncNow).catch(function (e) { set('needLogin', e.message); throw e; });
+        // ドライブの許可が足りなかったときは、許可の画面をもう一度出す
+        return requestToken(meta.needConsent ? 'consent' : '').then(syncNow).catch(function (e) { set('needLogin', e.message); throw e; });
       },
       syncNow: syncNow,
       /** 保存のたびに呼ぶ。少し待ってまとめて同期する */

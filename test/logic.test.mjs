@@ -138,4 +138,22 @@ test('第1版のデータを第2版に直す（何度やっても同じ）', () 
   assert.equal(L.upgradeCollections(d.collections).length, 0, '2回目は何も変わらない');
 });
 
+test('プライバシーポリシーのページ（Google Cloud の同意画面に登録する）', () => {
+  const pp = fs.readFileSync(root + 'docs/privacy.html', 'utf8');
+  assert.ok(!pp.includes('<!--CONTACT-->'), '問い合わせ先の置き場所が残っていない');
+  assert.ok(pp.includes('auth/drive.appdata'), '使う権限（drive.appdata）を説明している');
+  assert.ok(pp.includes('api-services-user-data-policy'), 'Googleのユーザーデータのポリシー（限定使用）に触れている');
+  assert.ok(pp.includes('task-a-remind') && !pp.includes('tasuka-remind'), '英字表記は task-a-remind');
+  const index = fs.readFileSync(root + 'docs/index.html', 'utf8');
+  assert.match(index, /<footer class="site-foot[^>]*>[\s\S]*href="privacy\.html"/, 'Web版のHTMLに、JavaScriptなしでも読めるポリシーへのリンクがある');
+  const gas = fs.readFileSync(root + 'gas/Index.html', 'utf8');
+  assert.ok(!gas.includes('<footer class="site-foot'), 'GAS版の画面には下の説明を入れない');
+  // drive-sync.js の SCOPE を実際に組み立てて、使う権限をすべて取り出す
+  const syncSrc = fs.readFileSync(root + 'src/drive-sync.js', 'utf8');
+  const decl = syncSrc.match(/var DRIVE_SCOPE = [^;]+;\s*var SCOPE = [^;]+;/)[0];
+  const scope = vm.runInNewContext(decl + ' SCOPE').split(' ');
+  assert.ok(scope.length >= 2);
+  for (const sc of scope) assert.ok(pp.includes(sc.replace('https://www.googleapis.com/', '')), '同期で使う権限はすべてポリシーに書いてある：' + sc);
+});
+
 console.log(`ロジックのテスト：${n}件すべて成功`);

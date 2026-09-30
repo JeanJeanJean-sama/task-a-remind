@@ -244,7 +244,10 @@
     if (!S.sync || !S.sync.enabled()) return '';
     var stt = S.sync.state();
     if (stt === 'needLogin') {
-      return '<div class="sync-banner" role="status"><span>ほかの端末と同期するには、Googleにもう一度ログインしてください。</span>' + btn('同期する', 'syncResume', {}, 'sm primary') + '</div>';
+      var why = S.sync.needConsent && S.sync.needConsent()
+        ? 'Googleドライブへの保存が許可されていません。「同期する」を押し、ログインの画面で「Googleドライブのアプリ専用データ」にチェックを入れてください。'
+        : 'ほかの端末と同期するには、Googleにもう一度ログインしてください。';
+      return '<div class="sync-banner" role="status"><span>' + h(why) + '</span>' + btn('同期する', 'syncResume', {}, 'sm primary') + '</div>';
     }
     if (stt === 'error') {
       return '<div class="sync-banner sync-banner-error" role="alert"><span>同期できませんでした：' + h(S.sync.error()) + '</span>' + btn('もう一度', 'syncNow', {}, 'sm') + '</div>';
@@ -821,13 +824,19 @@
 
     html += card('このアプリについて',
       '<dl class="dl"><dt>保存先</dt><dd>' + h(S.store.label) + '</dd><dt>アプリ</dt><dd>' + h(BUILD.version || '') + '</dd><dt>データ定義</dt><dd>第' + h(SCHEMA.schemaVersion) + '版</dd></dl>' +
-      '<p class="small muted">手続きの型はサンプルです。実際の手順は自治体の案内で確認してください。このアプリは医療的な判断や助言を行いません。</p>');
+      '<p class="small muted">手続きの型はサンプルです。実際の手順は自治体の案内で確認してください。このアプリは医療的な判断や助言を行いません。</p>' +
+      '<p class="small"><a href="' + PRIVACY_URL() + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>');
     return html;
+  }
+
+  // プライバシーポリシーのページ（GitHub Pages版は同じ場所、GAS版は公開先のURL）
+  function PRIVACY_URL() {
+    return S.store.kind === 'gas' ? 'https://jeanjeanjean-sama.github.io/task-a-remind/privacy.html' : 'privacy.html';
   }
 
   function syncCard() {
     var intro = '<p>Googleドライブに保存しておくと、<b>パソコンとスマホ</b>など、ほかの端末でも同じデータを見られます。家族と同じGoogleアカウントでログインすれば、家族とも共有できます。</p>';
-    var privacy = '<p class="small muted">保存先は、あなたのGoogleドライブの「このアプリ専用の見えない場所」です。アプリがドライブのほかのファイルを見ることはありません。開発・運営する人にデータが送られることもありません。</p>';
+    var privacy = '<p class="small muted">保存先は、あなたのGoogleドライブの「このアプリ専用の見えない場所」です。アプリがドライブのほかのファイルを見ることはありません。開発・運営する人にデータが送られることもありません。<a href="' + PRIVACY_URL() + '" target="_blank" rel="noopener">プライバシーポリシー</a></p>';
     if (!S.sync || !S.sync.available()) {
       return card('Googleドライブで同期', intro + '<p class="warn">この公開先では、まだ同期が使えるように設定されていません（管理する人がGoogle CloudのクライアントIDを設定すると使えるようになります）。</p>');
     }
@@ -839,7 +848,7 @@
     var stt = S.sync.state();
     return card('Googleドライブで同期',
       '<dl class="dl"><dt>アカウント</dt><dd>' + h(S.sync.email() || '（不明）') + '</dd>' +
-      '<dt>状態</dt><dd>' + h(SYNC_LABEL[stt] || stt) + (stt === 'error' ? '<br><span class="small">' + h(S.sync.error()) + '</span>' : '') + '</dd>' +
+      '<dt>状態</dt><dd>' + h(SYNC_LABEL[stt] || stt) + ((stt === 'error' || stt === 'needLogin') && S.sync.error() ? '<br><span class="small">' + h(S.sync.error()) + '</span>' : '') + '</dd>' +
       '<dt>最後に同期</dt><dd>' + (last ? h(new Date(last).toLocaleString('ja-JP')) : 'まだありません') + '</dd></dl>' +
       '<p class="small muted">入力するたびに自動で同期します。ほかの端末で直した内容は、アプリを開いたときに届きます。</p>' +
       '<div class="stack">' + (stt === 'needLogin' ? btn('Googleにもう一度ログインして同期', 'syncResume', {}, 'primary block') : btn('今すぐ同期する', 'syncNow', {}, 'block')) +

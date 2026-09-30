@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2f7d6d">
+<title>プライバシーポリシー｜たすかReマインド</title>
+<meta name="description" content="たすかReマインド（task-a-remind）のプライバシーポリシー。入力した情報とGoogleアカウントのデータの扱いについて説明します。">
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+:root {
+  --bg: #f6f4ef; --surface: #ffffff; --ink: #23262b; --muted: #6a6f78; --line: #e3dfd6;
+  --accent: #2f7d6d; --accent-soft: #e2f1ec; --warn-soft: #fcefdc;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16181b; --surface: #202328; --ink: #eceae6; --muted: #a2a7ae; --line: #33373d;
+    --accent: #5fbfa8; --accent-soft: #1f3530; --warn-soft: #3a2c1b; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  font-size: 16px; line-height: 1.8;
+}
+a { color: var(--accent); overflow-wrap: anywhere; }
+header { background: var(--surface); border-bottom: 1px solid var(--line); padding: 10px 16px; }
+header a { font-weight: 700; text-decoration: none; color: var(--ink); }
+header a span { color: var(--accent); }
+main { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; }
+h1 { font-size: 24px; line-height: 1.4; margin: 16px 0 4px; }
+h2 { font-size: 18px; margin: 32px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--accent-soft); }
+h3 { font-size: 16px; margin: 20px 0 4px; }
+p, li { margin: 6px 0; }
+ul { padding-left: 1.4em; }
+.meta { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; margin: 12px 0; }
+.note { background: var(--warn-soft); border-radius: 10px; padding: 10px 14px; font-size: 15px; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8px 0; }
+th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+th { background: var(--accent-soft); font-weight: 600; }
+code { font-size: 14px; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+footer { color: var(--muted); font-size: 14px; border-top: 1px solid var(--line); margin-top: 40px; padding-top: 12px; }
+@media (max-width: 520px) {
+  table, thead, tbody, tr, th, td { display: block; }
+  thead { display: none; }
+  tr { border: 1px solid var(--line); border-radius: 10px; margin: 8px 0; overflow: hidden; }
+  td { border: 0; border-top: 1px solid var(--line); }
+  td:first-child { border-top: 0; background: var(--accent-soft); font-weight: 600; }
+}
+</style>
+</head>
+<body>
+<header><a href="./">たすか<span>Re</span>マインド</a></header>
+<main>
+<h1>プライバシーポリシー</h1>
+<p class="meta">たすかReマインド（task-a-remind）　制定日：2026年9月29日</p>
+
+<div class="box">
+<p><b>かんたんに言うと</b></p>
+<ul>
+<li>入力した情報は、<b>あなたの端末</b>と、あなたが選んだ場合は<b>あなた自身のGoogleドライブ</b>にだけ保存されます。</li>
+<li>開発・運営する人（以下「運営者」）のサーバーはありません。運営者があなたのデータを見ることはできません。</li>
+<li>Googleアカウントの情報は、ドライブとの同期のためだけに使います。広告・販売・AIの学習などには使いません。</li>
+</ul>
+</div>
+
+<h2>1. このポリシーの対象</h2>
+<p>このポリシーは、個人の開発者 Jean=Summer が作っている「たすかReマインド」（英字表記：task-a-remind、以下「このアプリ」）に適用されます。このアプリには、次の版があります。</p>
+<ul>
+<li><b>かんたん版（Web版）</b>：<a href="https://jeanjeanjean-sama.github.io/task-a-remind/">https://jeanjeanjean-sama.github.io/task-a-remind/</a></li>
+<li><b>かんたん版＋Googleドライブ同期</b>：かんたん版で「Googleでログインして同期を始める」を選んだ場合</li>
+<li><b>Google版</b>：利用者が自分のGoogleアカウントに、このアプリのプログラム（Google Apps Script）とスプレッドシートを用意して使う版</li>
+</ul>
+
+<h2>2. このアプリで扱う情報と、保存される場所</h2>
+<p>このアプリには、利用者（主に保護者）が、子どもの情報（呼び名、生年月日、医療的ケアの手順、受給者証の期限、連絡先など）や、手続きの予定を入力します。これらは、次の場所にだけ保存されます。</p>
+<table>
+<thead><tr><th>版</th><th>保存される場所</th></tr></thead>
+<tbody>
+<tr><td>かんたん版</td><td>使っている端末のブラウザの中（localStorage）。インターネットには送られません。</td></tr>
+<tr><td>Googleドライブ同期</td><td>上の端末に加えて、<b>あなた自身のGoogleドライブの「このアプリ専用の見えない場所」</b>（appDataFolder）に、1つのファイルとして保存されます。</td></tr>
+<tr><td>Google版</td><td>あなた自身のGoogleアカウントにあるスプレッドシート。</td></tr>
+</tbody>
+</table>
+<p>どの版でも、情報が運営者に送られることはありません。運営者は、利用者の情報を集めたり、保存したり、見たりしません。</p>
+
+<h2>3. Googleアカウントのデータの扱い</h2>
+<p>Googleドライブ同期を使うとき、このアプリはGoogleのログイン画面で、次の2つの許可をお願いします。</p>
+<table>
+<thead><tr><th>お願いする許可</th><th>使いみち</th></tr></thead>
+<tbody>
+<tr><td>このアプリ専用のフォルダの読み書き<br><code>https://www.googleapis.com/auth/drive.appdata</code></td><td>このアプリのデータファイルを、ドライブの専用の場所に保存し、ほかの端末と同じ内容にする（同期する）ため。<b>このアプリが作ったファイルしか見えません。</b>ドライブにある写真や書類など、ほかのファイルを見ることはできません。</td></tr>
+<tr><td>メールアドレスの表示<br><code>email</code></td><td>どのGoogleアカウントで同期しているかを、設定画面に表示するため。</td></tr>
+</tbody>
+</table>
+<h3>使い方の決まり</h3>
+<ul>
+<li>Googleから受け取った情報は、<b>あなたの端末とあなたのドライブの間で、データを同期するためだけ</b>に使います。</li>
+<li>通信は、あなたのブラウザとGoogleの間で直接行います。運営者のサーバーを通りません。</li>
+<li>ログインのしるし（アクセストークン）は、ブラウザのそのタブの中（sessionStorage）だけに置き、タブを閉じると消えます。ほかへは送りません。メールアドレスは、表示のためにその端末のブラウザに保存します。</li>
+<li>Googleから受け取った情報を、売ったり、人に渡したり、広告に使ったりしません。AI（機械学習）のモデルを作ったり改良したりするためにも使いません。お金を貸すかどうかの判断など、信用の評価にも使いません。</li>
+<li>運営者が、あなたのGoogleのデータを読むことはありません。</li>
+</ul>
+<p>このアプリがGoogle APIから受け取った情報の使用と、ほかのアプリへの転送は、<a href="https://developers.google.com/terms/api-services-user-data-policy">Google API サービスのユーザーデータに関するポリシー</a>（限定使用の要件を含む）に従います。</p>
+
+<h2>4. 人に渡すこと・つながる先</h2>
+<p>運営者は、利用者の情報を第三者に渡しません。ただし、このアプリを動かすために、あなたの端末が次のサービスと通信します。</p>
+<ul>
+<li><b>GitHub Pages</b>（GitHub, Inc.）：かんたん版の画面を配信しています。画面を開くと、GitHubがアクセスの記録（IPアドレスなど）を残すことがあります。子どもの情報は送られません。</li>
+<li><b>Google</b>：Googleドライブ同期やGoogle版を使う場合に、ログインとデータの保存のために通信します。Googleでの扱いは、<a href="https://policies.google.com/privacy?hl=ja">Googleのプライバシーポリシー</a>に従います。</li>
+<li><b>Discord</b>：Google版で通知を設定した場合だけ、あなたが指定したDiscordのチャンネルに、手続きの名前・期限・連絡先を送ります。病名や医療の内容は送りません。</li>
+</ul>
+<p>あなたが自分で「書き出し」「印刷・PDF」「カレンダー用ファイル」を作って人に渡した場合、その後の扱いは受け取った人の管理になります。</p>
+
+<h2>5. 情報の削除と、許可の取り消し</h2>
+<ul>
+<li><b>端末のデータ</b>：ブラウザの設定で、このサイトのデータを消すと削除されます。消す前に「データを書き出す」でバックアップをとっておくと安心です。</li>
+<li><b>ドライブのデータ</b>：アプリの「設定」→「同期をやめて、ドライブのデータも消す」で削除できます。または、パソコンのGoogleドライブで「設定」→「アプリの管理」→「たすかReマインド」→「オプション」→「アプリの隠しデータを削除」でも消せます。</li>
+<li><b>Googleの許可の取り消し</b>：<a href="https://myaccount.google.com/connections">Googleアカウントの「サードパーティのアプリとサービス」</a>で、「たすかReマインド」へのアクセスを削除できます。</li>
+<li><b>Google版のデータ</b>：あなたのスプレッドシートとプログラムを、あなたのGoogleドライブから削除してください。</li>
+</ul>
+<p>運営者は利用者の情報を持っていないため、運営者の側で消す作業はありません。</p>
+
+<h2>6. クッキー・アクセス解析・広告</h2>
+<p>このアプリは、アクセス解析や広告のためのクッキー（Cookie）やツールを使っていません。データを端末に保存するために、ブラウザの保存機能（localStorage・sessionStorage）を使います。</p>
+
+<h2>7. 安全のために</h2>
+<ul>
+<li>通信は暗号化（HTTPS）されています。</li>
+<li>Googleの許可は、同期に必要な最小限（このアプリ専用の場所とメールアドレス）だけにしています。</li>
+<li>このアプリのプログラムは、<a href="https://github.com/jeanjeanjean-sama/task-a-remind">GitHub</a>で誰でも確認できます。</li>
+<li>端末をなくしたときに備えて、端末の画面ロックを使ってください。</li>
+</ul>
+
+<h2>8. 子どもの情報について</h2>
+<p>このアプリは、保護者や家族が、子どものために情報をまとめることを目的としています。子ども本人がアカウントを作って使うことは想定していません。</p>
+
+<h2>9. このポリシーの変更</h2>
+<p>このポリシーを変えるときは、このページで知らせ、上の日付を新しくします。変更の履歴は、<a href="https://github.com/jeanjeanjean-sama/task-a-remind/commits/main/src/privacy.html">GitHub</a>で見られます。</p>
+
+<h2>10. 問い合わせ先</h2>
+<ul>
+
+<li>GitHubの<a href="https://github.com/jeanjeanjean-sama/task-a-remind/issues">Issue</a>（GitHubのアカウントが必要です）</li>
+</ul>
+<p class="note">Issueは誰でも見られる場所です。<b>子どもの名前・病名・番号などは書かないでください。</b></p>
+
+<footer>
+<p>運営者：Jean=Summer（個人開発）</p>
+<p><a href="./">たすかReマインドを開く</a>　・　<a href="https://github.com/jeanjeanjean-sama/task-a-remind">ソースコード（GitHub）</a></p>
+</footer>
+</main>
+</body>
+</html>

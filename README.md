@@ -38,10 +38,10 @@
 |---|---|
 | Web版を使いたい | 上の「Web版を開く」をスマホで開き、ホーム画面に追加 → [かんたん版の使い方](guide/01_かんたん版の公開と使い方.md) |
 | Google版（Discord通知つき）を使いたい | [Google版の導入手順](guide/02_Google版の導入手順.md) |
-| このリポジトリを管理・公開したい | **[推奨手順：リポジトリでの管理とWeb版の公開](guide/00_推奨手順.md)**、[Googleドライブ同期の設定](guide/04_Googleドライブ同期の設定.md) |
+| このリポジトリを管理・公開したい | **[推奨手順：リポジトリでの管理とWeb版の公開](guide/00_推奨手順.md)**、[Googleドライブ同期の設定](guide/04_Googleドライブ同期の設定.md)、[本番環境への公開](guide/05_本番環境への公開.md) |
 | 開発に参加したい | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
-設計の資料：[データ定義書](guide/データ定義書.md)／[将来の移行を見据えた設計メモ](guide/03_設計メモ.md)／[セキュリティと個人情報](SECURITY.md)／[変更履歴](CHANGELOG.md)
+設計の資料：[データ定義書](guide/データ定義書.md)／[将来の移行を見据えた設計メモ](guide/03_設計メモ.md)／[セキュリティと個人情報](SECURITY.md)／[プライバシーポリシー](https://jeanjeanjean-sama.github.io/task-a-remind/privacy.html)／[変更履歴](CHANGELOG.md)
 
 ## フォルダの中身
 
