@@ -255,6 +255,24 @@ button.store-badge { border: 0; cursor: pointer; font: inherit; font-size: 11px;
 .sync-banner-error { background: var(--late-soft); }
 .sync-banner .btn { white-space: nowrap; flex-shrink: 0; }
 
+/* 使えるかもしれない制度（目安） */
+.benefit { border-top: 1px solid var(--line); }
+.card-head + .benefit, .hint + .benefit, .warn + .benefit { border-top: 0; }
+.benefit > summary { position: relative; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: flex-start; padding: 11px 26px 11px 0; cursor: pointer; list-style: none; }
+.benefit > summary::-webkit-details-marker { display: none; }
+.benefit > summary::after { content: '＋'; position: absolute; right: 2px; top: 12px; color: var(--muted); font-size: 14px; }
+.benefit[open] > summary::after { content: '－'; }
+.benefit-name { font-weight: 600; flex: 1 1 100%; }
+.benefit-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.benefit-body { padding: 0 0 12px; font-size: 14px; line-height: 1.65; }
+.benefit-body p { margin: 0 0 8px; }
+.benefit-notes { margin: 0 0 8px; padding-left: 1.2em; }
+.benefit-notes li { margin: 2px 0; }
+.benefit-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.card-head.sub { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 6px; }
+.card-head.sub .sub-head { margin: 0; }
+.showif[hidden] { display: none; }
+
 </style>
 </head>
 <body>
@@ -262,8 +280,9 @@ button.store-badge { border: 0; cursor: pointer; font: inherit; font-size: 11px;
 
 <script>
 window.__CONFIG__={"googleClientId":""};
-window.__SCHEMA__={"name":"task-a-remind","title":"たすかReマインド データ定義書","schemaVersion":2,"description":"子どもの情報を「1つの事実は1か所だけ」に保存するためのデータの形。ブラウザ保存・スプレッドシート・将来のデータベースのどれでも、この定義に従う。","commonFields":[{"key":"id","label":"ID","type":"string","help":"記録ごとの固有の番号（自動）。変更しない。"},{"key":"createdAt","label":"作成日時","type":"datetime","help":"自動"},{"key":"updatedAt","label":"更新日時","type":"datetime","help":"自動。移行・同期のとき、新しい方を判断するのに使う。"},{"key":"deleted","label":"削除済み","type":"bool","help":"削除しても記録は残し、この印を付ける（同期のため）。"}],"options":{"visibility":[{"value":"all","label":"誰に見せてもよい"},{"value":"supporter","label":"支援者まで"},{"value":"family","label":"家族のみ"}],"categoryVisibility":{"出生時の様子":"family","医療・服薬":"supporter","本人・家族の意向":"family"},"labelSuggestions":{"基本情報":["血液型","身長","体重","通っている園・学校","利用しているサービス","言葉・コミュニケーション","移動のしかた"],"特徴と関わり方":["成長のペース","見て覚える","体の特徴","人との関わり","疲れやすさ","慣れない場所で","伝わりやすい伝え方"],"好きなこと・遊び":["好きな遊び","好きな音・音楽","好きなおもちゃ","好きな本","好きな食べ物"],"苦手なこと":["苦手なこと","苦手な音・場所","触られるのが苦手なところ","パニックになったとき"],"食事":["ミルクの種類","ミルク1回の量","ミルクの回数・時間","ミルクの介助方法","離乳食・食事の形態","食事の介助方法","食事の回数・時間","食事の量","食物アレルギー","食事の注意点"],"睡眠":["寝る時間","起きる時間","お昼寝","寝かしつけのしかた","眠い時のサイン"],"身体・アレルギー":["アレルギー（食物）","アレルギー（薬）","体温の目安","気をつける体の部位"],"医療・服薬":["服薬","発作","体調が悪い時のサイン","受診の目安"],"発達・できること":["運動","手先","言葉","身のまわりのこと","発達検査の結果"],"出生時の様子":["出産日時","身長・体重・頭囲・胸囲","在胎週数・分娩の経過","産院","出産当時のメモ"],"本人・家族の意向":["家族の願い","本人の希望","目標"],"その他":[]},"milestoneSuggestions":["追視","首すわり","寝返り","ずりばい","おすわり","ハイハイ","つかまり立ち","伝い歩き","ひとり歩き","歯の生え始め","指さし","初めての言葉","二語文","スプーンで食べる","コップで飲む","トイレでおしっこ"]},"collections":{"children":{"label":"子ども","sheet":"子ども","display":"nickname","fields":[{"key":"nickname","label":"呼び名","type":"string","required":true,"help":"家で呼んでいる名前。通知にも表示されます。"},{"key":"fullName","label":"氏名","type":"string"},{"key":"furigana","label":"ふりがな","type":"string"},{"key":"birthDate","label":"生年月日","type":"date","help":"年齢（○歳○ヶ月）を自動で表示します。"},{"key":"prefecture","label":"都道府県","type":"string"},{"key":"municipality","label":"市区町村","type":"string"},{"key":"address","label":"住所","type":"text","help":"印刷では家族用にだけ載ります。"},{"key":"phone","label":"自宅の電話番号","type":"tel"},{"key":"note","label":"メモ","type":"text"}]},"family":{"label":"家族・緊急連絡先","sheet":"家族・緊急連絡先","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"relation","label":"続柄","type":"string","required":true,"help":"例：父、母、祖父、きょうだい"},{"key":"name","label":"氏名","type":"string"},{"key":"birthDate","label":"生年月日","type":"date"},{"key":"occupation","label":"職業","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"address","label":"住所","type":"text"},{"key":"emergencyOrder","label":"緊急連絡の順番","type":"number","help":"1、2…と入れると緊急連絡先として順に載ります。空欄なら緊急連絡先にしません。"},{"key":"livesTogether","label":"同居","type":"select","options":["同居","別居"]},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"備考","type":"text"}]},"profile":{"label":"子どもの情報","sheet":"子どもの情報","display":"label","description":"1項目1行。内容が変わったら古い行に「いつまで」を入れて残し、新しい行を追加する（履歴）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"category","label":"分類","type":"select","required":true,"default":"基本情報","options":["基本情報","特徴と関わり方","好きなこと・遊び","苦手なこと","食事","睡眠","身体・アレルギー","医療・服薬","発達・できること","出生時の様子","本人・家族の意向","その他"]},{"key":"label","label":"項目名","type":"string","required":true,"suggestFrom":"labelSuggestions","help":"候補から選ぶか、自由に入力します。"},{"key":"value","label":"内容","type":"text","required":true},{"key":"caution","label":"注意すること","type":"text","help":"例：首が弱いので支えが必要"},{"key":"validFrom","label":"いつから","type":"date"},{"key":"validTo","label":"いつまで","type":"date","help":"空欄＝今の情報。過去の情報になったら日付を入れる。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"order","label":"並び順","type":"number","hidden":true},{"key":"note","label":"メモ","type":"text"}]},"schedule":{"label":"生活リズム","sheet":"生活リズム","display":"activity","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"time","label":"時刻","type":"time","required":true},{"key":"activity","label":"すること","type":"string","required":true,"help":"例：ミルク1回目、お昼寝、お風呂"},{"key":"kind","label":"種類","type":"select","default":"食事・ミルク","options":["食事・ミルク","睡眠","医療的ケア","服薬","入浴","通園・療育","遊び","その他"]},{"key":"note","label":"メモ","type":"text"}]},"diagnoses":{"label":"診断名","sheet":"診断名","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"name","label":"診断名","type":"string","required":true},{"key":"detail","label":"正式名・補足","type":"text"},{"key":"diagnosedOn","label":"診断された時期","type":"month"},{"key":"department","label":"病院・診療科","type":"string"},{"key":"status","label":"いまの状態","type":"select","default":"経過観察中","options":["経過観察中","治療中","治療済み","その他"]},{"key":"explanation","label":"支援者向けの説明","type":"text","help":"どんな病気・症状か、日常で気をつけること。サポートブックの「症状について」に載ります。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careProcedures":{"label":"医療的ケア手順書","sheet":"医療的ケア手順書","display":"title","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"ケアの名前","type":"string","required":true,"help":"例：経鼻経管栄養、在宅酸素療法"},{"key":"status","label":"状態","type":"select","options":["実施中","終了"],"default":"実施中"},{"key":"startedOn","label":"開始日","type":"date"},{"key":"endedOn","label":"終了日","type":"date"},{"key":"reason","label":"開始の理由・目的","type":"text"},{"key":"history","label":"これまでの経過・変化","type":"text","help":"例：流量の変化、体重の変化、続けている理由"},{"key":"dose","label":"量・設定","type":"text","help":"例：1回○ml×○回、酸素 ○L/分"},{"key":"schedule","label":"実施する時間","type":"text"},{"key":"baseline","label":"いつもの様子・数値の目安","type":"text","help":"例：酸素飽和度（SpO2）平時○〜○%"},{"key":"equipment","label":"器具・規格","type":"text","help":"例：チューブのサイズ・長さ"},{"key":"supplies","label":"使う物・消耗品","type":"text"},{"key":"supplierContactId","label":"機器・業者の連絡先","type":"ref","ref":"contacts"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careSteps":{"label":"手順書の手順","sheet":"手順書の手順","display":"text","fields":[{"key":"procedureId","label":"手順書","type":"ref","ref":"careProcedures","hidden":true},{"key":"section","label":"項目","type":"select","required":true,"options":["いつ・どれだけ","準備","実施前の確認","実施","中断の判断","実施後","注意点","いつもと違う時","交換・入れ直し","緊急時と連絡先"]},{"key":"order","label":"順番","type":"number","hidden":true},{"key":"text","label":"やること","type":"text","required":true},{"key":"criteria","label":"判断の目安・補足","type":"text","help":"例：咳き込んだら一度止め、落ち着いてから再開"},{"key":"photoUrl","label":"写真・動画のリンク","type":"url","help":"Googleドライブなどの共有リンク"}]},"visits":{"label":"受診・入院の記録","sheet":"受診・入院の記録","display":"summary","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","default":"受診","options":["受診","入院","日帰り入院","検査","手術","診断","医療的ケアの開始・変更","事故・けが","セカンドオピニオン","発達の記録","その他"]},{"key":"date","label":"日付","type":"date","required":true},{"key":"endDate","label":"終了日（入院など）","type":"date"},{"key":"facility","label":"病院・機関","type":"string"},{"key":"department","label":"診療科","type":"string"},{"key":"doctor","label":"担当医","type":"string"},{"key":"summary","label":"概要","type":"text","required":true,"help":"一覧に出る短い説明。音声入力で話したままでもかまいません。"},{"key":"symptoms","label":"症状・経緯","type":"text"},{"key":"treatment","label":"治療・検査の内容","type":"text"},{"key":"result","label":"結果・その後の経過","type":"text"},{"key":"note","label":"メモ","type":"text"}]},"milestones":{"label":"成長の記録","sheet":"成長の記録","display":"item","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"item","label":"できたこと","type":"string","required":true,"suggestFrom":"milestoneSuggestions","help":"例：首すわり、ひとり歩き"},{"key":"achievedOn","label":"できた日","type":"date","help":"日付を入れると、そのときの年齢を自動で出します。"},{"key":"ageText","label":"できた時期","type":"string","help":"日付が分からないときに「1歳2ヶ月」のように入れます。"},{"key":"note","label":"メモ","type":"text"}]},"certificates":{"label":"保険証・受給者証・手帳","sheet":"受給者証・手帳","display":"kind","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"療育手帳","options":["健康保険証","小児医療証（子ども医療証）","療育手帳","身体障害者手帳","障害児通所受給者証","障害福祉サービス受給者証","小児慢性特定疾病医療受給者証","重度障害者医療証","特別児童扶養手当","その他"]},{"key":"status","label":"状態","type":"select","default":"取得済み","options":["取得済み","申請中","未取得・取得予定"]},{"key":"name","label":"自治体での呼び名","type":"string","help":"例：愛の手帳（東京都）"},{"key":"issuerNumber","label":"公費負担者番号・保険者番号","type":"string"},{"key":"issuerName","label":"発行元・保険者の名前","type":"string"},{"key":"number","label":"番号（受給者番号・記号番号など）","type":"string"},{"key":"grade","label":"区分・等級・種別","type":"string"},{"key":"disease","label":"対象の疾患名","type":"string"},{"key":"copay","label":"自己負担（上限額・割合）","type":"text"},{"key":"issuedOn","label":"取得日","type":"date"},{"key":"validUntil","label":"有効期限","type":"date","help":"ここから更新の手続きを知らせます。"},{"key":"renewalNote","label":"更新の決まり","type":"text","help":"例：毎年更新、文書料が必要、自動更新"},{"key":"templateId","label":"更新に使う手続きの型","type":"template"},{"key":"note","label":"メモ","type":"text"}]},"contacts":{"label":"医療機関・関係機関","sheet":"関係機関","display":"name","description":"同じ病院で診療科が複数あるときは、診療科ごとに1件ずつ登録する（画面では病院ごとにまとめて表示）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"病院","options":["病院","療育","訪問看護","医療機器業者","福祉サービス","相談支援","保育園・学校","子育て支援","教室・親の会","役所","児童相談所","その他"]},{"key":"name","label":"機関の名前","type":"string","required":true,"help":"例：○○こども病院"},{"key":"department","label":"診療科・区分","type":"string","help":"例：循環器科、理学療法"},{"key":"person","label":"主治医・担当者","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"hours","label":"受付時間","type":"string","help":"例：平日 9:00〜17:00"},{"key":"address","label":"住所","type":"text"},{"key":"visitPattern","label":"通院・利用のしかた","type":"text","help":"例：月1回、心臓の経過観察"},{"key":"supplies","label":"処方・診療材料","type":"text"},{"key":"note","label":"備考","type":"text"}]},"tasks":{"label":"タスク","sheet":"タスク","display":"title","description":"手続きは工程ごとのタスクに分け、「前の工程」が終わると次が出てくる。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"やること","type":"string","required":true},{"key":"processId","label":"手続きのまとまりID","type":"string","hidden":true},{"key":"processName","label":"手続き名","type":"string","hidden":true},{"key":"templateId","label":"手続きの型","type":"string","hidden":true},{"key":"stepNo","label":"工程番号","type":"number","hidden":true},{"key":"dependsOn","label":"前の工程","type":"refs","ref":"tasks","hidden":true},{"key":"dueDate","label":"目安の期限","type":"date"},{"key":"window","label":"いつできるか","type":"select","default":"night","options":[{"value":"night","label":"夜でもできる（書類・ネット）"},{"value":"day","label":"昼しかできない（電話・窓口）"}]},{"key":"scheduledDate","label":"昼にやる日","type":"date","help":"昼しかできないタスクを、この日の昼に1回だけ知らせます。"},{"key":"contactId","label":"連絡先","type":"ref","ref":"contacts"},{"key":"script","label":"伝えること・持ち物","type":"text"},{"key":"assignee","label":"担当","type":"string","help":"例：父、母"},{"key":"status","label":"状態","type":"select","default":"todo","options":[{"value":"todo","label":"未完了"},{"value":"done","label":"完了"},{"value":"skipped","label":"対象外"}]},{"key":"doneAt","label":"完了日","type":"date","hidden":true},{"key":"certificateId","label":"関係する受給者証・手帳","type":"ref","ref":"certificates"},{"key":"note","label":"メモ","type":"text"}]}}};
-window.__TEMPLATES__={"version":1,"caution":"これはサンプルの流れです。実際の手順・必要書類・かかる期間は、自治体や制度によって異なります。必ずお住まいの自治体の案内で確認し、必要に応じて工程を直してください。","templates":[{"id":"ryouiku-renew","name":"療育手帳の更新","certificateKinds":["療育手帳"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90,"script":"期限・必要なもの・判定（発達検査）の予約先を確認する"},{"title":"判定（発達検査）の予約を電話でとる","window":"day","daysBefore":85,"contactKind":"療育","script":"「療育手帳の更新の判定を予約したい」と伝える。子どもの名前・生年月日・手帳番号を手元に用意する"},{"title":"判定（発達検査）を受ける","window":"day","daysBefore":60,"script":"予約した日時・持ち物を確認する"},{"title":"判定の結果を受け取る","window":"day","daysBefore":30},{"title":"役所で更新を申請する","window":"day","daysBefore":21,"contactKind":"役所","script":"判定結果・今の手帳・写真など（自治体の案内で確認）。期限に間に合わない場合は、窓口で相談する"},{"title":"関係する医療証・受給者証の期限も確認する","window":"night","daysBefore":14,"script":"手帳の更新が遅れると切れてしまう証明書がないか確認する"},{"title":"新しい手帳を受け取り、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"tsusho-renew","name":"障害児通所受給者証の更新","certificateKinds":["障害児通所受給者証","障害福祉サービス受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":60},{"title":"相談支援専門員に連絡し、利用計画案の作成を依頼する","window":"day","daysBefore":55,"contactKind":"相談支援","script":"受給者証の更新時期と、今後使いたいサービス・日数を伝える"},{"title":"申請書類を記入する","window":"night","daysBefore":45},{"title":"役所に申請する（窓口・郵送など自治体の方法で）","window":"day","daysBefore":40,"contactKind":"役所"},{"title":"新しい受給者証を事業所に見せ、アプリの有効期限を直す","window":"night","daysBefore":0,"script":"コピーを渡す・写真を送るなど、事業所の方法で"}]},{"id":"shoman-renew","name":"小児慢性特定疾病医療受給者証の更新","certificateKinds":["小児慢性特定疾病医療受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90},{"title":"主治医に意見書（診断書）を依頼する","window":"day","daysBefore":75,"contactKind":"病院","script":"更新用の医療意見書が必要なことと、提出の期限を伝える"},{"title":"意見書を受け取る","window":"day","daysBefore":45},{"title":"申請書類をそろえる","window":"night","daysBefore":40},{"title":"申請する","window":"day","daysBefore":30,"contactKind":"役所"},{"title":"新しい受給者証を病院・薬局に見せ、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"generic","name":"期限のある手続き（汎用）","certificateKinds":[],"steps":[{"title":"必要なものを確認する","window":"night","daysBefore":30},{"title":"申請・提出する","window":"day","daysBefore":14},{"title":"完了を確認し、アプリの情報を直す","window":"night","daysBefore":0}]}]};
+window.__SCHEMA__={"name":"task-a-remind","title":"たすかReマインド データ定義書","schemaVersion":2,"description":"子どもの情報を「1つの事実は1か所だけ」に保存するためのデータの形。ブラウザ保存・スプレッドシート・将来のデータベースのどれでも、この定義に従う。","commonFields":[{"key":"id","label":"ID","type":"string","help":"記録ごとの固有の番号（自動）。変更しない。"},{"key":"createdAt","label":"作成日時","type":"datetime","help":"自動"},{"key":"updatedAt","label":"更新日時","type":"datetime","help":"自動。移行・同期のとき、新しい方を判断するのに使う。"},{"key":"deleted","label":"削除済み","type":"bool","help":"削除しても記録は残し、この印を付ける（同期のため）。"}],"options":{"visibility":[{"value":"all","label":"誰に見せてもよい"},{"value":"supporter","label":"支援者まで"},{"value":"family","label":"家族のみ"}],"categoryVisibility":{"出生時の様子":"family","医療・服薬":"supporter","本人・家族の意向":"family"},"labelSuggestions":{"基本情報":["血液型","身長","体重","通っている園・学校","利用しているサービス","言葉・コミュニケーション","移動のしかた"],"特徴と関わり方":["成長のペース","見て覚える","体の特徴","人との関わり","疲れやすさ","慣れない場所で","伝わりやすい伝え方"],"好きなこと・遊び":["好きな遊び","好きな音・音楽","好きなおもちゃ","好きな本","好きな食べ物"],"苦手なこと":["苦手なこと","苦手な音・場所","触られるのが苦手なところ","パニックになったとき"],"食事":["ミルクの種類","ミルク1回の量","ミルクの回数・時間","ミルクの介助方法","離乳食・食事の形態","食事の介助方法","食事の回数・時間","食事の量","食物アレルギー","食事の注意点"],"睡眠":["寝る時間","起きる時間","お昼寝","寝かしつけのしかた","眠い時のサイン"],"身体・アレルギー":["アレルギー（食物）","アレルギー（薬）","体温の目安","気をつける体の部位"],"医療・服薬":["服薬","発作","体調が悪い時のサイン","受診の目安"],"発達・できること":["運動","手先","言葉","身のまわりのこと","発達検査の結果"],"出生時の様子":["出産日時","身長・体重・頭囲・胸囲","在胎週数・分娩の経過","産院","出産当時のメモ"],"本人・家族の意向":["家族の願い","本人の希望","目標"],"その他":[]},"handbookGrades":[{"value":"1級","label":"1級（身体・精神）"},{"value":"2級","label":"2級（身体・精神）"},{"value":"3級","label":"3級（身体・精神）"},{"value":"4級","label":"4級（身体）"},{"value":"5級","label":"5級（身体）"},{"value":"6級","label":"6級（身体）"},{"value":"A1","label":"A1（療育手帳・最重度）"},{"value":"A2","label":"A2（療育手帳・重度）"},{"value":"B1","label":"B1（療育手帳・中度）"},{"value":"B2","label":"B2（療育手帳・軽度）"}],"physicalTypes":["視覚障害","聴覚・平衡機能障害","音声・言語・そしゃく機能障害","肢体不自由（上肢）","肢体不自由（下肢）","肢体不自由（体幹）","脳原性運動機能障害（上肢機能）","脳原性運動機能障害（移動機能）","内部障害（心臓・じん臓・呼吸器など）"],"milestoneSuggestions":["追視","首すわり","寝返り","ずりばい","おすわり","ハイハイ","つかまり立ち","伝い歩き","ひとり歩き","歯の生え始め","指さし","初めての言葉","二語文","スプーンで食べる","コップで飲む","トイレでおしっこ"]},"collections":{"children":{"label":"子ども","sheet":"子ども","display":"nickname","fields":[{"key":"nickname","label":"呼び名","type":"string","required":true,"help":"家で呼んでいる名前。通知にも表示されます。"},{"key":"fullName","label":"氏名","type":"string"},{"key":"furigana","label":"ふりがな","type":"string"},{"key":"birthDate","label":"生年月日","type":"date","help":"年齢（○歳○ヶ月）を自動で表示します。"},{"key":"prefecture","label":"都道府県","type":"string"},{"key":"municipality","label":"市区町村","type":"string"},{"key":"address","label":"住所","type":"text","help":"印刷では家族用にだけ載ります。"},{"key":"phone","label":"自宅の電話番号","type":"tel"},{"key":"note","label":"メモ","type":"text"}]},"family":{"label":"家族・緊急連絡先","sheet":"家族・緊急連絡先","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"relation","label":"続柄","type":"string","required":true,"help":"例：父、母、祖父、きょうだい"},{"key":"name","label":"氏名","type":"string"},{"key":"birthDate","label":"生年月日","type":"date"},{"key":"occupation","label":"職業","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"address","label":"住所","type":"text"},{"key":"emergencyOrder","label":"緊急連絡の順番","type":"number","help":"1、2…と入れると緊急連絡先として順に載ります。空欄なら緊急連絡先にしません。"},{"key":"livesTogether","label":"同居","type":"select","options":["同居","別居"]},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"備考","type":"text"}]},"profile":{"label":"子どもの情報","sheet":"子どもの情報","display":"label","description":"1項目1行。内容が変わったら古い行に「いつまで」を入れて残し、新しい行を追加する（履歴）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"category","label":"分類","type":"select","required":true,"default":"基本情報","options":["基本情報","特徴と関わり方","好きなこと・遊び","苦手なこと","食事","睡眠","身体・アレルギー","医療・服薬","発達・できること","出生時の様子","本人・家族の意向","その他"]},{"key":"label","label":"項目名","type":"string","required":true,"suggestFrom":"labelSuggestions","help":"候補から選ぶか、自由に入力します。"},{"key":"value","label":"内容","type":"text","required":true},{"key":"caution","label":"注意すること","type":"text","help":"例：首が弱いので支えが必要"},{"key":"validFrom","label":"いつから","type":"date"},{"key":"validTo","label":"いつまで","type":"date","help":"空欄＝今の情報。過去の情報になったら日付を入れる。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"order","label":"並び順","type":"number","hidden":true},{"key":"note","label":"メモ","type":"text"}]},"schedule":{"label":"生活リズム","sheet":"生活リズム","display":"activity","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"time","label":"時刻","type":"time","required":true},{"key":"activity","label":"すること","type":"string","required":true,"help":"例：ミルク1回目、お昼寝、お風呂"},{"key":"kind","label":"種類","type":"select","default":"食事・ミルク","options":["食事・ミルク","睡眠","医療的ケア","服薬","入浴","通園・療育","遊び","その他"]},{"key":"note","label":"メモ","type":"text"}]},"diagnoses":{"label":"診断名","sheet":"診断名","display":"name","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"name","label":"診断名","type":"string","required":true},{"key":"detail","label":"正式名・補足","type":"text"},{"key":"diagnosedOn","label":"診断された時期","type":"month"},{"key":"department","label":"病院・診療科","type":"string"},{"key":"status","label":"いまの状態","type":"select","default":"経過観察中","options":["経過観察中","治療中","治療済み","その他"]},{"key":"explanation","label":"支援者向けの説明","type":"text","help":"どんな病気・症状か、日常で気をつけること。サポートブックの「症状について」に載ります。"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careProcedures":{"label":"医療的ケア手順書","sheet":"医療的ケア手順書","display":"title","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"ケアの名前","type":"string","required":true,"help":"例：経鼻経管栄養、在宅酸素療法"},{"key":"status","label":"状態","type":"select","options":["実施中","終了"],"default":"実施中"},{"key":"startedOn","label":"開始日","type":"date"},{"key":"endedOn","label":"終了日","type":"date"},{"key":"reason","label":"開始の理由・目的","type":"text"},{"key":"history","label":"これまでの経過・変化","type":"text","help":"例：流量の変化、体重の変化、続けている理由"},{"key":"dose","label":"量・設定","type":"text","help":"例：1回○ml×○回、酸素 ○L/分"},{"key":"schedule","label":"実施する時間","type":"text"},{"key":"baseline","label":"いつもの様子・数値の目安","type":"text","help":"例：酸素飽和度（SpO2）平時○〜○%"},{"key":"equipment","label":"器具・規格","type":"text","help":"例：チューブのサイズ・長さ"},{"key":"supplies","label":"使う物・消耗品","type":"text"},{"key":"supplierContactId","label":"機器・業者の連絡先","type":"ref","ref":"contacts"},{"key":"visibility","label":"見せてよい範囲","type":"select","optionsRef":"visibility","default":"supporter"},{"key":"note","label":"メモ","type":"text"}]},"careSteps":{"label":"手順書の手順","sheet":"手順書の手順","display":"text","fields":[{"key":"procedureId","label":"手順書","type":"ref","ref":"careProcedures","hidden":true},{"key":"section","label":"項目","type":"select","required":true,"options":["いつ・どれだけ","準備","実施前の確認","実施","中断の判断","実施後","注意点","いつもと違う時","交換・入れ直し","緊急時と連絡先"]},{"key":"order","label":"順番","type":"number","hidden":true},{"key":"text","label":"やること","type":"text","required":true},{"key":"criteria","label":"判断の目安・補足","type":"text","help":"例：咳き込んだら一度止め、落ち着いてから再開"},{"key":"photoUrl","label":"写真・動画のリンク","type":"url","help":"Googleドライブなどの共有リンク"}]},"visits":{"label":"受診・入院の記録","sheet":"受診・入院の記録","display":"summary","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","default":"受診","options":["受診","入院","日帰り入院","検査","手術","診断","医療的ケアの開始・変更","事故・けが","セカンドオピニオン","発達の記録","その他"]},{"key":"date","label":"日付","type":"date","required":true},{"key":"endDate","label":"終了日（入院など）","type":"date"},{"key":"facility","label":"病院・機関","type":"string"},{"key":"department","label":"診療科","type":"string"},{"key":"doctor","label":"担当医","type":"string"},{"key":"summary","label":"概要","type":"text","required":true,"help":"一覧に出る短い説明。音声入力で話したままでもかまいません。"},{"key":"symptoms","label":"症状・経緯","type":"text"},{"key":"treatment","label":"治療・検査の内容","type":"text"},{"key":"result","label":"結果・その後の経過","type":"text"},{"key":"note","label":"メモ","type":"text"}]},"milestones":{"label":"成長の記録","sheet":"成長の記録","display":"item","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"item","label":"できたこと","type":"string","required":true,"suggestFrom":"milestoneSuggestions","help":"例：首すわり、ひとり歩き"},{"key":"achievedOn","label":"できた日","type":"date","help":"日付を入れると、そのときの年齢を自動で出します。"},{"key":"ageText","label":"できた時期","type":"string","help":"日付が分からないときに「1歳2ヶ月」のように入れます。"},{"key":"note","label":"メモ","type":"text"}]},"certificates":{"label":"保険証・受給者証・手帳","sheet":"受給者証・手帳","display":"kind","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"療育手帳","options":["健康保険証","小児医療証（子ども医療証）","療育手帳","身体障害者手帳","精神障害者保健福祉手帳","障害児通所受給者証","障害福祉サービス受給者証","小児慢性特定疾病医療受給者証","特定医療費（指定難病）受給者証","自立支援医療受給者証","重度障害者医療証","特別児童扶養手当","障害児福祉手当","その他"]},{"key":"status","label":"状態","type":"select","default":"取得済み","options":["取得済み","申請中","未取得・取得予定"]},{"key":"name","label":"自治体での呼び名","type":"string","help":"例：愛の手帳（東京都）"},{"key":"issuerNumber","label":"公費負担者番号・保険者番号","type":"string"},{"key":"issuerName","label":"発行元・保険者の名前","type":"string"},{"key":"number","label":"番号（受給者番号・記号番号など）","type":"string"},{"key":"grade","label":"区分・等級・種別（書いてあるとおり）","type":"string"},{"key":"gradeCode","label":"手帳の等級（選ぶ）","type":"select","optionsRef":"handbookGrades","showIf":{"key":"kind","in":["身体障害者手帳","療育手帳","精神障害者保健福祉手帳"]},"help":"等級を選ぶと「使えるかもしれない制度」の目安を出します。療育手帳は、自治体の呼び名がちがっても近いものを選びます。"},{"key":"disabilityType","label":"障害の種類（身体障害者手帳）","type":"select","optionsRef":"physicalTypes","showIf":{"key":"kind","in":["身体障害者手帳"]},"help":"手帳に書かれている障害のうち、主なものを選びます。"},{"key":"disabilityType2","label":"障害の種類（2つ目があれば）","type":"select","optionsRef":"physicalTypes","showIf":{"key":"kind","in":["身体障害者手帳"]}},{"key":"fareClass","label":"旅客運賃の割引の種別","type":"select","options":["第1種","第2種"],"showIf":{"key":"kind","in":["身体障害者手帳","療育手帳","精神障害者保健福祉手帳"]},"help":"手帳の「旅客鉄道株式会社旅客運賃減額」の欄に書かれています。"},{"key":"disease","label":"対象の疾患名","type":"string"},{"key":"copay","label":"自己負担（上限額・割合）","type":"text"},{"key":"issuedOn","label":"取得日","type":"date"},{"key":"validUntil","label":"有効期限","type":"date","help":"ここから更新の手続きを知らせます。"},{"key":"renewalNote","label":"更新の決まり","type":"text","help":"例：毎年更新、文書料が必要、自動更新"},{"key":"templateId","label":"更新に使う手続きの型","type":"template"},{"key":"note","label":"メモ","type":"text"}]},"benefitChecks":{"label":"制度の確認","sheet":"制度の確認","display":"benefitName","description":"「使えるかもしれない制度（目安）」を、利用者が確かめた結果。ここに記録した制度は、候補の一覧から外れる。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"benefitId","label":"制度のID","type":"string","hidden":true,"help":"src/benefits.json の id"},{"key":"benefitName","label":"制度の名前","type":"string","required":true},{"key":"status","label":"状態","type":"select","required":true,"default":"利用している","options":["手続き中","利用している","対象外だった","今は使わない"]},{"key":"checkedOn","label":"確認した日","type":"date"},{"key":"note","label":"メモ","type":"text","help":"例：窓口で、所得の条件にあてはまらないと言われた"}]},"contacts":{"label":"医療機関・関係機関","sheet":"関係機関","display":"name","description":"同じ病院で診療科が複数あるときは、診療科ごとに1件ずつ登録する（画面では病院ごとにまとめて表示）。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"kind","label":"種類","type":"select","required":true,"default":"病院","options":["病院","療育","訪問看護","医療機器業者","福祉サービス","相談支援","保育園・学校","子育て支援","教室・親の会","役所","児童相談所","その他"]},{"key":"name","label":"機関の名前","type":"string","required":true,"help":"例：○○こども病院"},{"key":"department","label":"診療科・区分","type":"string","help":"例：循環器科、理学療法"},{"key":"person","label":"主治医・担当者","type":"string"},{"key":"phone","label":"電話番号","type":"tel"},{"key":"hours","label":"受付時間","type":"string","help":"例：平日 9:00〜17:00"},{"key":"address","label":"住所","type":"text"},{"key":"visitPattern","label":"通院・利用のしかた","type":"text","help":"例：月1回、心臓の経過観察"},{"key":"supplies","label":"処方・診療材料","type":"text"},{"key":"note","label":"備考","type":"text"}]},"tasks":{"label":"タスク","sheet":"タスク","display":"title","description":"手続きは工程ごとのタスクに分け、「前の工程」が終わると次が出てくる。","fields":[{"key":"childId","label":"子ども","type":"ref","ref":"children","hidden":true},{"key":"title","label":"やること","type":"string","required":true},{"key":"processId","label":"手続きのまとまりID","type":"string","hidden":true},{"key":"processName","label":"手続き名","type":"string","hidden":true},{"key":"templateId","label":"手続きの型","type":"string","hidden":true},{"key":"stepNo","label":"工程番号","type":"number","hidden":true},{"key":"dependsOn","label":"前の工程","type":"refs","ref":"tasks","hidden":true},{"key":"dueDate","label":"目安の期限","type":"date"},{"key":"window","label":"いつできるか","type":"select","default":"night","options":[{"value":"night","label":"夜でもできる（書類・ネット）"},{"value":"day","label":"昼しかできない（電話・窓口）"}]},{"key":"scheduledDate","label":"昼にやる日","type":"date","help":"昼しかできないタスクを、この日の昼に1回だけ知らせます。"},{"key":"contactId","label":"連絡先","type":"ref","ref":"contacts"},{"key":"script","label":"伝えること・持ち物","type":"text"},{"key":"assignee","label":"担当","type":"string","help":"例：父、母"},{"key":"status","label":"状態","type":"select","default":"todo","options":[{"value":"todo","label":"未完了"},{"value":"done","label":"完了"},{"value":"skipped","label":"対象外"}]},{"key":"doneAt","label":"完了日","type":"date","hidden":true},{"key":"certificateId","label":"関係する受給者証・手帳","type":"ref","ref":"certificates"},{"key":"note","label":"メモ","type":"text"}]}}};
+window.__TEMPLATES__={"version":1,"caution":"これはサンプルの流れです。実際の手順・必要書類・かかる期間は、自治体や制度によって異なります。必ずお住まいの自治体の案内で確認し、必要に応じて工程を直してください。","templates":[{"id":"ryouiku-renew","name":"療育手帳の更新","certificateKinds":["療育手帳"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90,"script":"期限・必要なもの・判定（発達検査）の予約先を確認する"},{"title":"判定（発達検査）の予約を電話でとる","window":"day","daysBefore":85,"contactKind":"療育","script":"「療育手帳の更新の判定を予約したい」と伝える。子どもの名前・生年月日・手帳番号を手元に用意する"},{"title":"判定（発達検査）を受ける","window":"day","daysBefore":60,"script":"予約した日時・持ち物を確認する"},{"title":"判定の結果を受け取る","window":"day","daysBefore":30},{"title":"役所で更新を申請する","window":"day","daysBefore":21,"contactKind":"役所","script":"判定結果・今の手帳・写真など（自治体の案内で確認）。期限に間に合わない場合は、窓口で相談する"},{"title":"関係する医療証・受給者証の期限も確認する","window":"night","daysBefore":14,"script":"手帳の更新が遅れると切れてしまう証明書がないか確認する"},{"title":"新しい手帳を受け取り、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"tsusho-renew","name":"障害児通所受給者証の更新","certificateKinds":["障害児通所受給者証","障害福祉サービス受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":60},{"title":"相談支援専門員に連絡し、利用計画案の作成を依頼する","window":"day","daysBefore":55,"contactKind":"相談支援","script":"受給者証の更新時期と、今後使いたいサービス・日数を伝える"},{"title":"申請書類を記入する","window":"night","daysBefore":45},{"title":"役所に申請する（窓口・郵送など自治体の方法で）","window":"day","daysBefore":40,"contactKind":"役所"},{"title":"新しい受給者証を事業所に見せ、アプリの有効期限を直す","window":"night","daysBefore":0,"script":"コピーを渡す・写真を送るなど、事業所の方法で"}]},{"id":"shoman-renew","name":"小児慢性特定疾病医療受給者証の更新","certificateKinds":["小児慢性特定疾病医療受給者証"],"steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90},{"title":"主治医に意見書（診断書）を依頼する","window":"day","daysBefore":75,"contactKind":"病院","script":"更新用の医療意見書が必要なことと、提出の期限を伝える"},{"title":"意見書を受け取る","window":"day","daysBefore":45},{"title":"申請書類をそろえる","window":"night","daysBefore":40},{"title":"申請する","window":"day","daysBefore":30,"contactKind":"役所"},{"title":"新しい受給者証を病院・薬局に見せ、アプリの有効期限を直す","window":"night","daysBefore":0}]},{"id":"shintai-recheck","name":"身体障害者手帳の再認定（等級の見直し）","certificateKinds":["身体障害者手帳"],"source":"横浜市「障害福祉のあんない2026」16頁（必要書類：写真・指定医師の身体障害者診断書など）","steps":[{"title":"再認定の案内と必要書類を確認する","window":"night","daysBefore":90,"script":"再認定の期日・診断書の様式・写真の大きさ（タテ4cm×ヨコ3cm）を確認する"},{"title":"指定医に身体障害者診断書を依頼する","window":"day","daysBefore":75,"contactKind":"病院","script":"「身体障害者手帳の再認定の診断書をお願いしたい」と伝え、提出の期限も伝える"},{"title":"診断書を受け取る","window":"day","daysBefore":45},{"title":"区役所に申請する","window":"day","daysBefore":30,"contactKind":"役所","script":"診断書・写真・今の手帳・マイナンバーが確認できるもの・本人確認書類（自治体の案内で確認）"},{"title":"新しい手帳を受け取り、アプリの等級と期限を直す","window":"night","daysBefore":0,"script":"等級が変わると、使える制度も変わることがあります"}]},{"id":"seishin-renew","name":"精神障害者保健福祉手帳の更新","certificateKinds":["精神障害者保健福祉手帳"],"source":"横浜市「障害福祉のあんない2026」16〜17頁（必要書類・申請先）","steps":[{"title":"更新の案内と必要書類を確認する","window":"night","daysBefore":90,"script":"郵送・窓口・オンラインのどれで申請するかも決める"},{"title":"主治医に手帳用の診断書を依頼する","window":"day","daysBefore":80,"contactKind":"病院","script":"「精神障害者保健福祉手帳の更新の診断書をお願いしたい」と伝える"},{"title":"診断書を受け取る","window":"day","daysBefore":50},{"title":"申請する（郵送・窓口・オンラインのどれか）","window":"night","daysBefore":40,"script":"診断書・写真（必要な場合）・マイナンバーが確認できるもの・本人確認書類"},{"title":"新しい手帳を受け取り、アプリの期限を直す","window":"night","daysBefore":0}]},{"id":"apply-benefit","name":"制度の申請（汎用）","certificateKinds":[],"source":"横浜市「障害福祉のあんない2026」各制度の【窓口】【必要なもの】","steps":[{"title":"窓口に、対象になるかと必要なものを聞く","window":"day","daysBefore":28,"contactKind":"役所","script":"「○○を使えるか知りたい」と伝える。手帳を手元に用意する"},{"title":"必要な書類をそろえる","window":"night","daysBefore":21},{"title":"申請する（窓口・郵送など、案内された方法で）","window":"day","daysBefore":14,"contactKind":"役所"},{"title":"結果を確認し、アプリに記録する","window":"night","daysBefore":0,"script":"受給者証などが届いたら「保険証・受給者証・手帳」に登録する"}]},{"id":"apply-benefit-doctor","name":"診断書が必要な制度の申請","certificateKinds":[],"source":"横浜市「障害福祉のあんない2026」各制度の【必要なもの】（診断書・意見書など）","steps":[{"title":"窓口に、対象になるかと必要な書類・診断書の様式を聞く","window":"day","daysBefore":45,"contactKind":"役所","script":"「○○を申請したい」と伝え、診断書を省略できるかも聞く。手帳を手元に用意する"},{"title":"主治医に診断書（意見書）を依頼する","window":"day","daysBefore":40,"contactKind":"病院","script":"制度の名前と、提出の期限を伝える"},{"title":"診断書（意見書）を受け取る","window":"day","daysBefore":21},{"title":"そのほかの書類をそろえる","window":"night","daysBefore":18,"script":"戸籍・住民票などは、取ってからの期限が決まっていることがあります"},{"title":"申請する（窓口・郵送など、案内された方法で）","window":"day","daysBefore":14,"contactKind":"役所"},{"title":"結果を確認し、アプリに記録する","window":"night","daysBefore":0,"script":"認定の通知・受給者証などが届いたら「保険証・受給者証・手帳」に登録する"}]},{"id":"tax-deduction","name":"障害者控除を申告する（年末調整・確定申告）","certificateKinds":[],"source":"横浜市「障害福祉のあんない2026」114〜115頁","steps":[{"title":"手帳の等級を確かめ、障害者か特別障害者かを確認する","window":"night","daysBefore":21},{"title":"年末調整の書類（扶養控除等の申告書）か確定申告に書く","window":"night","daysBefore":14,"script":"勤務先の年末調整の書類に、子どもの障害者控除の欄がある"},{"title":"源泉徴収票などで、控除されたか確認する","window":"night","daysBefore":0}]},{"id":"generic","name":"期限のある手続き（汎用）","certificateKinds":[],"steps":[{"title":"必要なものを確認する","window":"night","daysBefore":30},{"title":"申請・提出する","window":"day","daysBefore":14},{"title":"完了を確認し、アプリの情報を直す","window":"night","daysBefore":0}]}]};
+window.__BENEFITS__={"version":1,"area":"横浜市","areaKeywords":["横浜"],"source":{"title":"障害福祉のあんない2026","publisher":"横浜市 健康福祉局","asOf":"2026-04-01","errataAsOf":"2026-07-01","searchWord":"障害福祉のあんない","note":"本冊（令和8年4月1日時点の情報）と、正誤表（令和8年7月1日現在）・新旧対照表をもとにしています。ページは冊子のページ番号です。"},"reviewBy":"2027-07-31","caution":"横浜市「障害福祉のあんない2026」をもとにした目安です。所得・年齢・施設の利用などの条件で使えないことや、ここに出ない制度が使えることもあります。申請の前に、必ず区の福祉保健センターなどの窓口で確認してください。","levels":{"likely":"当てはまりそう","maybe":"条件しだい"},"benefits":[{"id":"tokuji","name":"特別児童扶養手当","category":"手当","summary":"障害のある20歳未満の子どもを育てている保護者に、国の手当が出ます。手帳の等級ではなく、医師の診断書などで障害の程度を判定します。","page":"104〜105","office":"区福祉保健センター・こども青少年局こども家庭課","incomeLimit":true,"ageUnder":20,"heldKinds":["特別児童扶養手当"],"templateId":"apply-benefit-doctor","notes":["子どもが施設に入所しているときや、障害を理由とする年金を受けられるときは対象外です。","療育手帳A1・A2や、身体障害者手帳1級〜おおむね3級の一部の方は、診断書を省略できる場合があります（窓口で確認）。"],"when":[{"level":"maybe","all":[{"kind":"身体障害者手帳","grades":["1級","2級","3級"]}]},{"level":"maybe","all":[{"kind":"療育手帳","grades":["A1","A2","B1"]}]},{"level":"maybe","all":[{"kind":"精神障害者保健福祉手帳","grades":["1級","2級"]}]}]},{"id":"shojifukushi","name":"障害児福祉手当","category":"手当","summary":"日常生活でいつも介護が必要な、重い障害のある20歳未満の子ども本人に手当が出ます。","page":"105","office":"区福祉保健センター","incomeLimit":true,"ageUnder":20,"heldKinds":["障害児福祉手当"],"templateId":"apply-benefit-doctor","notes":["目安は、身体障害者手帳1・2級程度、または知的障害が最重度の方などです。","施設に入所しているときや、障害を理由とする年金などを受けているときは対象外です。","手当用の診断書（所定の様式）が必要です。"],"when":[{"level":"maybe","all":[{"kind":"身体障害者手帳","grades":["1級","2級"]}]},{"level":"maybe","all":[{"kind":"療育手帳","grades":["A1"]}]},{"level":"maybe","all":[{"kind":"精神障害者保健福祉手帳","grades":["1級"]}]}]},{"id":"kanagawa-zaitaku","name":"神奈川県在宅重度障害者等手当","category":"手当","summary":"重い障害が重なっている方などに、神奈川県から年に1回手当が出ます。","page":"103","office":"区福祉保健センター","incomeLimit":true,"heldKinds":[],"templateId":"apply-benefit","notes":["申請は原則として毎年8月1日から9月10日までです。","県内に6か月以上住んでいることなどの条件があります。"],"when":[{"level":"likely","count":2,"of":[{"kind":"身体障害者手帳","grades":["1級","2級"]},{"kind":"療育手帳","grades":["A1","A2"]},{"kind":"精神障害者保健福祉手帳","grades":["1級"]}]},{"level":"likely","all":[{"kind":"障害児福祉手当"}]}]},{"id":"judo-iryo","name":"重度障害者医療費の助成","category":"医療","summary":"病院などで払う医療費（保険診療の自己負担）を全額助成します。","page":"100","office":"区福祉保健センター 保険年金課 給付担当","incomeLimit":false,"heldKinds":["重度障害者医療証"],"templateId":"apply-benefit","notes":["生活保護を受けている方は対象外です。","精神障害者保健福祉手帳1級の方は、入院の費用は対象外です。"],"when":[{"level":"likely","all":[{"kind":"身体障害者手帳","grades":["1級","2級"]}]},{"level":"likely","all":[{"kind":"療育手帳","grades":["A1","A2"]}]},{"level":"likely","all":[{"kind":"身体障害者手帳","grades":["3級"]},{"kind":"療育手帳","grades":["B1"]}]},{"level":"likely","all":[{"kind":"精神障害者保健福祉手帳","grades":["1級"]}]}]},{"id":"ikusei","name":"自立支援医療（育成医療）","category":"医療","summary":"18歳未満で、手術などの治療で効果が期待できる体の障害があるとき、指定医療機関での医療費の自己負担が原則1割になります。","page":"99","office":"区福祉保健センター","incomeLimit":true,"ageUnder":18,"heldKinds":["自立支援医療受給者証"],"templateId":"apply-benefit-doctor","notes":["治療の前に申請が必要です。","手帳の有無ではなく、病気・障害と治療の内容で決まります。","所得が一定以上の世帯は対象外です。"],"when":[{"level":"maybe","all":[{"kind":"身体障害者手帳"}]}]},{"id":"tokubetsu-josha","name":"福祉特別乗車券","category":"外出","group":"外出の券（どれか1つ）","summary":"市内の路線バス・市営地下鉄・金沢シーサイドラインに、運賃を払わずに乗れる券です。利用者負担金がかかります（20歳未満は少なくなります）。","page":"59","office":"区福祉保健センター","incomeLimit":false,"heldKinds":[],"templateId":"apply-benefit","notes":["福祉タクシー利用券・障害者自動車燃料券とは、どれか1つを選びます。","使えるのは本人だけです。"],"when":[{"level":"likely","all":[{"kind":"身体障害者手帳","grades":["1級","2級","3級","4級"]}]},{"level":"likely","all":[{"kind":"療育手帳","grades":["A1","A2","B1","B2"]}]},{"level":"likely","all":[{"kind":"精神障害者保健福祉手帳","grades":["1級","2級","3級"]}]}]},{"id":"fukushi-taxi","name":"福祉タクシー利用券","category":"外出","group":"外出の券（どれか1つ）","summary":"タクシー代の一部を助成する券が、毎年交付されます。","page":"60〜61","office":"区福祉保健センター","incomeLimit":false,"heldKinds":[],"templateId":"apply-benefit","notes":["福祉特別乗車券・障害者自動車燃料券とは、どれか1つを選びます。","使えるのは本人だけです（家族が一緒に乗るのはかまいません）。","身体障害者手帳は、下肢・体幹・視覚・内部・移動機能のいずれかの障害を含む場合が対象です。"],"when":[{"level":"likely","all":[{"kind":"身体障害者手帳","grades":["1級","2級"],"types":["視覚障害","肢体不自由（下肢）","肢体不自由（体幹）","脳原性運動機能障害（移動機能）","内部障害（心臓・じん臓・呼吸器など）"]}]},{"level":"likely","all":[{"kind":"療育手帳","grades":["A1","A2"]}]},{"level":"likely","all":[{"kind":"身体障害者手帳","grades":["3級"],"types":["視覚障害","肢体不自由（下肢）","肢体不自由（体幹）","脳原性運動機能障害（移動機能）","内部障害（心臓・じん臓・呼吸器など）"]},{"kind":"療育手帳","grades":["B1"]}]},{"level":"likely","all":[{"kind":"精神障害者保健福祉手帳","grades":["1級"]}]}]},{"id":"nenryo","name":"障害者自動車燃料券","category":"外出","group":"外出の券（どれか1つ）","summary":"本人や家族などが持っている自家用車（二輪を除く）の燃料代を助成する券です。","page":"63","office":"区福祉保健センター","incomeLimit":false,"heldKinds":[],"templateId":"apply-benefit","notes":["福祉特別乗車券・福祉タクシー利用券とは、どれか1つを選びます。","身体障害者手帳は、下肢・体幹・視覚・内部・移動機能のいずれかの障害を含む場合が対象です。"],"when":[{"level":"likely","all":[{"kind":"身体障害者手帳","grades":["1級","2級"],"types":["視覚障害","肢体不自由（下肢）","肢体不自由（体幹）","脳原性運動機能障害（移動機能）","内部障害（心臓・じん臓・呼吸器など）"]}]},{"level":"likely","all":[{"kind":"療育手帳","grades":["A1","A2"]}]},{"level":"likely","all":[{"kind":"身体障害者手帳","grades":["3級"],"types":["視覚障害","肢体不自由（下肢）","肢体不自由（体幹）","脳原性運動機能障害（移動機能）","内部障害（心臓・じん臓・呼吸器など）"]},{"kind":"療育手帳","grades":["B1"]}]},{"level":"likely","all":[{"kind":"精神障害者保健福祉手帳","grades":["1級"]}]}]},{"id":"yuryo-doro","name":"有料道路通行料金の割引","category":"外出","summary":"事前に登録すると、高速道路の料金が割引になります（最大5割）。子どもが乗って家族が運転する場合（介護運転）は、手帳に「第1種」と書かれている方が対象です。","page":"61〜62","office":"区福祉保健センター（ETCを使う場合はオンライン申請もできます）","incomeLimit":false,"heldKinds":[],"templateId":"apply-benefit","notes":["登録できる車は、本人か親族などが持っている車です。"],"when":[{"level":"likely","all":[{"kind":"身体障害者手帳","fareClass":"第1種"}]},{"level":"likely","all":[{"kind":"療育手帳","fareClass":"第1種"}]}]},{"id":"tetsudo","name":"鉄道・バスなどの運賃の割引","category":"外出","summary":"JR・私鉄・市営地下鉄・バスなどで手帳を見せると、本人の運賃が割引になります。「第1種」の方は、付き添いの人も割引になることがあります。","page":"56〜59","office":"各交通事業者","incomeLimit":false,"noApplication":true,"heldKinds":[],"notes":["手帳に顔写真と「第1種／第2種」の表示が必要です。","会社によって、割引の内容や扱いが違います。"],"when":[{"level":"likely","all":[{"kind":"身体障害者手帳"}]},{"level":"likely","all":[{"kind":"療育手帳"}]},{"level":"likely","all":[{"kind":"精神障害者保健福祉手帳"}]}]},{"id":"taxi-waribiki","name":"タクシー料金の割引（1割）","category":"外出","summary":"タクシー会社の制度で、乗るときに手帳などを見せると料金が1割引になります（一部対象外の会社があります）。","page":"60","office":"タクシー会社（問い合わせは県のタクシー協会など）","incomeLimit":false,"noApplication":true,"heldKinds":[],"notes":["指定難病の受給者証による割引は、会社によって違います。乗る前にタクシー会社に確認してください。"],"when":[{"level":"likely","all":[{"kind":"身体障害者手帳"}]},{"level":"likely","all":[{"kind":"療育手帳"}]},{"level":"likely","all":[{"kind":"精神障害者保健福祉手帳"}]},{"level":"maybe","all":[{"kind":"特定医療費（指定難病）受給者証"}]}]},{"id":"zei-kojo","name":"所得税・住民税の障害者控除","category":"税金","summary":"手帳を持っている子どもを扶養していると、親の所得税・住民税が軽くなります。重い障害（特別障害者）にあたると、控除が大きくなります。","page":"114〜115","office":"勤務先（年末調整）・税務署（確定申告）・区役所税務課","incomeLimit":false,"heldKinds":[],"templateId":"tax-deduction","notes":["特別障害者の目安：身体障害者手帳1・2級、療育手帳A、精神障害者保健福祉手帳1級など。","障害者にあたるかどうかは、その年の12月31日の状態で決まります。"],"when":[{"level":"likely","all":[{"kind":"身体障害者手帳"}]},{"level":"likely","all":[{"kind":"療育手帳"}]},{"level":"likely","all":[{"kind":"精神障害者保健福祉手帳"}]}]},{"id":"suido","name":"水道料金・下水道使用料の減免","category":"公共料金","summary":"水道料金と下水道使用料の、基本料金にあたる額が免除されます。","page":"120","office":"区福祉保健センター または 水道局お客さまサービスセンター","incomeLimit":false,"heldKinds":[],"templateId":"apply-benefit","notes":["対象の方が3か月以上施設に入所している場合は対象外です。","世帯の中の別の人とあわせて条件を満たす場合もあります（窓口で確認）。"],"when":[{"level":"likely","all":[{"kind":"身体障害者手帳","grades":["1級","2級"]}]},{"level":"likely","all":[{"kind":"療育手帳","grades":["A1","A2"]}]},{"level":"likely","all":[{"kind":"精神障害者保健福祉手帳","grades":["1級"]}]},{"level":"likely","all":[{"kind":"特別児童扶養手当"}]},{"level":"likely","count":2,"of":[{"kind":"身体障害者手帳","grades":["3級"]},{"kind":"精神障害者保健福祉手帳","grades":["2級"]},{"kind":"療育手帳"}]}]},{"id":"jidoshazei","name":"自動車税の減免","category":"税金","summary":"本人が運転する車や、生計を一にする家族が本人のために運転する車の自動車税が減免されます（上限があります）。","page":"116","office":"県税事務所 または 自動車税管理事務所","incomeLimit":false,"heldKinds":[],"templateId":"apply-benefit","notes":["対象になる等級が決まっています（窓口で確認）。","申請の期限があります（4月1日に車を持っている場合は、通常5月31日まで）。"],"when":[{"level":"maybe","all":[{"kind":"身体障害者手帳"}]},{"level":"maybe","all":[{"kind":"療育手帳"}]},{"level":"maybe","all":[{"kind":"精神障害者保健福祉手帳"}]}]},{"id":"hosogu","name":"補装具費の支給","category":"用具","summary":"車いす・装具・補聴器など、体の働きを補う道具の購入・借受け・修理の費用が支給されます。自己負担は原則1割です。","page":"48","office":"区福祉保健センター","incomeLimit":true,"heldKinds":[],"templateId":"apply-benefit-doctor","notes":["買う前に申請が必要です。","手帳の障害の種類によって、対象になる道具が違います。","18歳未満は「補装具費支給意見書」が必要です。"],"when":[{"level":"maybe","all":[{"kind":"身体障害者手帳"}]},{"level":"maybe","all":[{"kind":"特定医療費（指定難病）受給者証"}]}]},{"id":"nichijo-yogu","name":"日常生活用具の給付","category":"用具","summary":"重い障害のある方に、特殊寝台・入浴補助用具など、日常生活に必要な用具を給付します。自己負担は原則1割です。","page":"45","office":"区福祉保健センター","incomeLimit":false,"heldKinds":[],"templateId":"apply-benefit","notes":["用具ごとに、対象になる障害と程度が決まっています。"],"when":[{"level":"maybe","all":[{"kind":"身体障害者手帳"}]},{"level":"maybe","all":[{"kind":"療育手帳"}]},{"level":"maybe","all":[{"kind":"精神障害者保健福祉手帳"}]},{"level":"maybe","all":[{"kind":"特定医療費（指定難病）受給者証"}]}]}]};
 window.__BUILD__={"version":"0.3.1"};
 </script>
 <script>
@@ -454,6 +473,118 @@ var Logic = (function () {
     return r;
   }
 
+  // ---------- 使えるかもしれない制度（目安） ----------
+  // 制度の一覧（src/benefits.json）と、子どもの手帳・受給者証を照らし合わせる。
+  // 言い切らない：結果は「当てはまりそう（likely）」か「条件しだい（maybe）」の2段階だけ。
+  // 医療の情報を含むので、通知（Discord）の文面には使わない。
+  var HANDBOOK_KINDS = ['身体障害者手帳', '療育手帳', '精神障害者保健福祉手帳'];
+  var Z2H = { '０': '0', '１': '1', '２': '2', '３': '3', '４': '4', '５': '5', '６': '6', '７': '7', '８': '8', '９': '9', 'Ａ': 'A', 'Ｂ': 'B', 'ａ': 'A', 'ｂ': 'B' };
+
+  /** 手帳の等級を「1級」「A1」などの形で返す。選ぶ欄が空なら、書いてある欄から読み取れるときだけ使う */
+  function certGrade(c) {
+    if (!c) return '';
+    if (c.gradeCode) return c.gradeCode;
+    if (HANDBOOK_KINDS.indexOf(c.kind) < 0) return '';
+    var s = String(c.grade || '').replace(/[０-９ＡＢａｂ]/g, function (ch) { return Z2H[ch]; });
+    var found = [];
+    var re = /([1-6])\s*級/g, m;
+    while ((m = re.exec(s))) found.push(m[1] + '級');
+    re = /([ABab])\s*([12])/g;
+    while ((m = re.exec(s))) found.push(m[1].toUpperCase() + m[2]);
+    // 2つ以上読み取れたときは、どれか分からないので使わない
+    var uniq = found.filter(function (x, i) { return found.indexOf(x) === i; });
+    return uniq.length === 1 ? uniq[0] : '';
+  }
+
+  function ageYears(birth, today) {
+    var b = parseYmd(birth), t = parseYmd(today);
+    if (!b || !t) return null;
+    var y = t.getFullYear() - b.getFullYear();
+    if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) y -= 1;
+    return y;
+  }
+
+  /** 1つの条件を、持っている証明書と照らす → 'yes' / 'unknown'（情報が足りない）/ 'no' */
+  function evalCond(cond, certs, why) {
+    var best = 'no', note = '';
+    certs.forEach(function (c) {
+      if (c.kind !== cond.kind || best === 'yes') return;
+      var r = 'yes', miss = [];
+      if (cond.grades) {
+        var g = certGrade(c);
+        if (!g) { r = 'unknown'; miss.push('等級'); }
+        else if (cond.grades.indexOf(g) < 0) r = 'no';
+      }
+      if (r !== 'no' && cond.types) {
+        var ts = [c.disabilityType, c.disabilityType2].filter(Boolean);
+        if (!ts.length) { r = 'unknown'; miss.push('障害の種類'); }
+        else if (!ts.some(function (x) { return cond.types.indexOf(x) >= 0; })) r = 'no';
+      }
+      if (r !== 'no' && cond.fareClass) {
+        if (!c.fareClass) { r = 'unknown'; miss.push('第1種・第2種'); }
+        else if (c.fareClass !== cond.fareClass) r = 'no';
+      }
+      if (r === 'yes' || (r === 'unknown' && best === 'no')) {
+        best = r;
+        var g2 = certGrade(c);
+        note = c.kind + (g2 ? ' ' + g2 : '') + (r === 'unknown' ? '（' + miss.join('・') + 'が入っていません）' : '');
+      }
+    });
+    if (best !== 'no' && note) why.push(note);
+    return best;
+  }
+
+  /** when の1行（all：すべて／count：of のうち count 個以上）を評価 */
+  function evalWhen(w, certs) {
+    var why = [];
+    var results = (w.all || w.of || []).map(function (cond) { return evalCond(cond, certs, why); });
+    var yes = results.filter(function (r) { return r === 'yes'; }).length;
+    var unk = results.filter(function (r) { return r === 'unknown'; }).length;
+    var need = w.all ? results.length : (w.count || 1);
+    var r = yes >= need ? 'yes' : yes + unk >= need ? 'unknown' : 'no';
+    return { result: r, why: why };
+  }
+
+  /**
+   * 子どもに「使えるかもしれない制度」を出す。
+   * 戻り値：{ area: 'match' | 'other' | 'unset', stale, items: [{ benefit, level, why }], checked: [{ benefit, check }] }
+   *   area：子どもの市区町村が一覧の地域か（'unset' は未入力。目安として出す）
+   *   stale：一覧の見直し期限（reviewBy）を過ぎているか
+   */
+  function suggestBenefits(db, data, childId, today) {
+    var out = { area: 'unset', stale: false, items: [], checked: [] };
+    if (!data || !data.benefits) return out;
+    today = today || ymd();
+    out.stale = !!(data.reviewBy && today > data.reviewBy);
+    var child = alive(db.children).filter(function (c) { return c.id === childId; })[0] || {};
+    var place = String(child.municipality || '') + String(child.prefecture || '');
+    if (place) {
+      out.area = (data.areaKeywords || []).some(function (k) { return place.indexOf(k) >= 0; }) ? 'match' : 'other';
+      if (out.area === 'other') return out;
+    }
+    var certs = alive(db.certificates).filter(function (c) {
+      return c.childId === childId && (!c.status || c.status === '取得済み');
+    });
+    var checks = {};
+    alive(db.benefitChecks).forEach(function (r) { if (r.childId === childId && r.benefitId) checks[r.benefitId] = r; });
+    var age = child.birthDate ? ageYears(child.birthDate, today) : null;
+    data.benefits.forEach(function (b) {
+      if (checks[b.id]) { out.checked.push({ benefit: b, check: checks[b.id] }); return; }
+      if (b.ageUnder && age !== null && age >= b.ageUnder) return;
+      if ((b.heldKinds || []).some(function (k) { return certs.some(function (c) { return c.kind === k; }); })) return;
+      var level = '', why = [];
+      (b.when || []).forEach(function (w) {
+        var e = evalWhen(w, certs);
+        if (e.result === 'no') return;
+        var lv = e.result === 'yes' ? (w.level || 'maybe') : 'maybe';
+        if (!level || (level === 'maybe' && lv === 'likely')) { level = lv; why = e.why; }
+      });
+      if (level) out.items.push({ benefit: b, level: level, why: why });
+    });
+    out.items.sort(function (a, b) { return (a.level === b.level ? 0 : a.level === 'likely' ? -1 : 1); });
+    return out;
+  }
+
   // ---------- 通知の文面（病名など医療の情報は載せない） ----------
   function contactLine(t, contactsById) {
     var c = t.contactId && contactsById[t.contactId];
@@ -630,7 +761,7 @@ var Logic = (function () {
     function rec(o) { o.id = uuid(); o.createdAt = now; o.updatedAt = now; o.deleted = false; return o; }
     var birth = addDays(today, -640);
     var child = rec({ nickname: 'さくら（サンプル）', fullName: '見本 さくら', furigana: 'みほん さくら', birthDate: birth,
-      prefecture: '東京都', municipality: '○○市', address: '〒000-0000 東京都○○市○○町1-2-3（架空）', phone: '', note: 'これは架空のサンプルです' });
+      prefecture: '神奈川県', municipality: '横浜市○○区（架空）', address: '〒000-0000 神奈川県横浜市○○区○○町1-2-3（架空）', phone: '', note: 'これは架空のサンプルです' });
     var cid = child.id;
 
     function fam(relation, name, order, extra) {
@@ -693,7 +824,7 @@ var Logic = (function () {
       c('訪問看護', '○○訪問看護ステーション', '', '03-0000-0800', '', { person: '△△さん', visitPattern: '週1回、体調の確認とチューブ交換' }),
       c('療育', '○○療育センター', '理学療法', '03-0000-1111', '平日 9:00〜16:00', { visitPattern: '月2回、運動の訓練' }),
       c('相談支援', '○○相談支援センター', '', '03-0000-2222', '平日 9:00〜17:00', { person: '△△さん' }),
-      c('役所', '○○市役所 障害福祉課', '', '03-0000-3333', '平日 8:30〜17:15'),
+      c('役所', '○○区福祉保健センター（架空）', '障害者支援担当', '045-000-3333', '平日 8:45〜17:00'),
       c('医療機器業者', '○○メディカル', '在宅酸素', '0120-000-000', '24時間', { person: '△△さん', note: '災害時・停電時に連絡' })
     ];
     var byKind = {};
@@ -706,7 +837,7 @@ var Logic = (function () {
     var certs = [
       cert('健康保険証', null, '', { issuerName: '（架空）○○健康保険組合', issuerNumber: '00000000' }),
       cert('小児医療証（子ども医療証）', null, '', { renewalNote: '毎年自動で更新' }),
-      cert('身体障害者手帳', 400, 'generic', { grade: '（架空）3級' }),
+      cert('身体障害者手帳', 400, 'shintai-recheck', { grade: '（架空）3級', gradeCode: '3級', disabilityType: '内部障害（心臓・じん臓・呼吸器など）', fareClass: '第2種', renewalNote: '再認定の期日あり' }),
       cert('小児慢性特定疾病医療受給者証', 70, 'shoman-renew', { disease: '（架空）心臓の病気', copay: '月額上限 ○○円・2割', renewalNote: '毎年更新。文書料が必要' }),
       cert('療育手帳', null, 'ryouiku-renew', { status: '未取得・取得予定', number: '', note: '2歳以降に取得予定' })
     ];
@@ -766,7 +897,8 @@ var Logic = (function () {
       childId: cid,
       collections: {
         children: [child], family: family, profile: profile, schedule: schedule, diagnoses: diagnoses, contacts: contacts,
-        certificates: certs, careProcedures: [proc, o2], careSteps: steps, visits: visits, milestones: milestones, tasks: tasks
+        certificates: certs, careProcedures: [proc, o2], careSteps: steps, visits: visits, milestones: milestones, tasks: tasks,
+        benefitChecks: [rec({ childId: cid, benefitId: 'tetsudo', benefitName: '鉄道・バスなどの運賃の割引', status: '利用している', checkedOn: addDays(today, -200), note: '（架空）' })]
       }
     };
   }
@@ -778,6 +910,7 @@ var Logic = (function () {
     nowIso: nowIso, uuid: uuid, alive: alive, indexById: indexById,
     isActionable: isActionable, dueLabel: dueLabel, findTemplate: findTemplate, planProcess: planProcess,
     certificateAlerts: certificateAlerts, summarize: summarize,
+    certGrade: certGrade, ageYears: ageYears, suggestBenefits: suggestBenefits,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,
     makeExport: makeExport, migrate: migrate, upgradeCollections: upgradeCollections, mergeImport: mergeImport, buildSample: buildSample
   };
@@ -1059,6 +1192,7 @@ var DriveSync = (function () {
 
   var SCHEMA = window.__SCHEMA__;
   var TEMPLATES = window.__TEMPLATES__;
+  var BENEFITS = window.__BENEFITS__ || null; // 使えるかもしれない制度（横浜市・目安）
   var BUILD = window.__BUILD__ || {};
   var CONFIG = Object.assign({}, window.__CONFIG__ || {}, window.__CONFIG_OVERRIDE__ || {});
   var COLS = Object.keys(SCHEMA.collections);
@@ -1153,7 +1287,7 @@ var DriveSync = (function () {
   var S = {
     store: null, db: {}, settings: {}, ready: false, error: '',
     childId: null, tab: 'today', infoTab: 'profile', careId: null,
-    openProcess: {}, showHistory: {}, showDone: false,
+    openProcess: {}, showHistory: {}, showDone: false, showBenefitChecked: false,
     form: null, print: null, toast: '', notice: null, busy: false,
     sync: null
   };
@@ -1431,12 +1565,71 @@ var DriveSync = (function () {
     var html = '<div class="toolbar">' + btn('＋ 手続きを始める', 'startProcess', {}, 'primary') + btn('＋ タスクを1つ追加', 'newRec', { col: 'tasks' }) + '</div>';
     html += card('進行中の手続き', active.length ? active.map(function (g) { return processCard(g, byId); }).join('') :
       empty('進行中の手続きはありません。受給者証・手帳を登録すると、期限が近づいたときに「今日」の画面でお知らせします。'));
+    html += benefitCard();
     if (done.length) {
       html += card('終わった手続き（' + done.length + '）', S.showDone ? done.map(function (g) { return processCard(g, byId); }).join('') : '',
         btn(S.showDone ? '閉じる' : '表示する', 'toggleDone', {}, 'sm ghost'));
     }
     html += '<p class="muted small">' + h(TEMPLATES.caution) + '</p>';
     return html;
+  }
+
+  // ---------------------------------------------------------------- 使えるかもしれない制度（目安）
+  var HANDBOOK_KINDS = ['身体障害者手帳', '療育手帳', '精神障害者保健福祉手帳'];
+  function findBenefit(id) { return BENEFITS && BENEFITS.benefits.find(function (b) { return b.id === id; }); }
+  function benefitCard() {
+    if (!BENEFITS) return '';
+    var r = L.suggestBenefits(S.db, BENEFITS, S.childId, today());
+    var title = '使えるかもしれない制度（目安）';
+    if (r.area === 'other') {
+      return card(title, empty('いまは' + h(BENEFITS.area) + 'の制度だけを載せています。子どもの情報の「市区町村」が' + h(BENEFITS.area) + 'のときに目安を出します。'));
+    }
+    var body = '';
+    if (r.stale) body += '<p class="warn">この一覧は' + h(BENEFITS.source.title) + '（' + h(L.fmtDate(BENEFITS.source.asOf)) + '時点）をもとにしています。新しい情報が出ているかもしれません。</p>';
+    if (r.area === 'unset') body += '<p class="hint">' + h(BENEFITS.area) + 'の制度の目安です。子どもの情報に「市区町村」を入れると、住んでいる地域に合わせて出し分けます。</p>';
+    var hasHandbook = mine('certificates').some(function (c) { return HANDBOOK_KINDS.indexOf(c.kind) >= 0 && (!c.status || c.status === '取得済み'); });
+    if (!r.items.length) {
+      body += empty(hasHandbook ? 'いま出せる目安はありません。手帳の「等級」や「障害の種類」を選ぶと、出せるものが増えることがあります。' :
+        '身体障害者手帳・療育手帳・精神障害者保健福祉手帳を登録して等級を選ぶと、使えるかもしれない制度の目安が出ます。') +
+        '<div class="row-end">' + btn('保険証・受給者証・手帳を開く', 'gotoCerts', {}, 'sm') + '</div>';
+    } else {
+      body += r.items.map(benefitItem).join('');
+    }
+    if (r.checked.length) {
+      body += '<div class="card-head sub"><h3 class="sub-head">確認ずみ（' + r.checked.length + '）</h3>' +
+        btn(S.showBenefitChecked ? '閉じる' : '表示する', 'toggleBenefitChecked', {}, 'sm ghost') + '</div>';
+      if (S.showBenefitChecked) {
+        body += r.checked.map(function (x) {
+          var c = x.check;
+          return '<div class="item"><div class="item-main"><button type="button" class="linklike item-title" data-act="editRec" data-col="benefitChecks" data-id="' + h(c.id) + '">' + h(x.benefit.name) + '</button>' +
+            '<div class="item-sub"><span class="pill' + (c.status === '利用している' ? ' pill-ok' : '') + '">' + h(c.status) + '</span>' +
+            (c.checkedOn ? '　' + h(L.fmtDate(c.checkedOn)) : '') + '</div>' + (c.note ? '<div class="small muted">' + br(c.note) + '</div>' : '') + '</div></div>';
+        }).join('') + '<p class="small muted">記録を消すと、また候補に出るようになります。</p>';
+      }
+    }
+    body += '<p class="small muted">' + h(BENEFITS.caution) + '</p>';
+    return card(title, body, r.items.length ? '<span class="pill">' + r.items.length + '件</span>' : '');
+  }
+  function benefitItem(x) {
+    var b = x.benefit;
+    var lv = BENEFITS.levels[x.level] || x.level;
+    var tags = '<span class="pill ' + (x.level === 'likely' ? 'pill-ok' : '') + '">' + h(lv) + '</span>' +
+      (b.incomeLimit ? ' <span class="pill">所得の条件あり</span>' : '') + (b.ageUnder ? ' <span class="pill">' + b.ageUnder + '歳未満</span>' : '');
+    var inner = '<p>' + h(b.summary) + '</p>' +
+      (x.why.length ? '<p class="small"><b>目安にした登録：</b>' + h(x.why.join('、')) + '</p>' : '') +
+      (b.group ? '<p class="small"><b>選び方：</b>' + h(b.group) + '</p>' : '') +
+      ((b.notes || []).length ? '<ul class="small benefit-notes">' + b.notes.map(function (n) { return '<li>' + h(n) + '</li>'; }).join('') + '</ul>' : '') +
+      '<p class="small muted">窓口：' + h(b.office) + '<br>出典：' + h(BENEFITS.source.title) + ' ' + h(b.page) + '頁</p>' +
+      '<div class="benefit-actions">' +
+      (b.noApplication ? '<span class="small muted">申請はいりません（手帳などを見せて使います）</span>' : btn('手続きにする', 'benefitStart', { id: b.id }, 'primary sm')) +
+      btn('使っている', 'benefitMark', { id: b.id, status: '利用している' }, 'sm') +
+      btn('対象外・使わない', 'benefitMark', { id: b.id, status: '対象外だった' }, 'sm ghost') + '</div>';
+    return '<details class="benefit"><summary><span class="benefit-name">' + h(b.name) + '</span><span class="benefit-tags">' + tags + '</span></summary>' +
+      '<div class="benefit-body">' + inner + '</div></details>';
+  }
+  function benefitCheckRecord(b, status) {
+    var exist = mine('benefitChecks').find(function (r) { return r.benefitId === b.id; });
+    return Object.assign(exist ? Object.assign({}, exist) : newRecord('benefitChecks'), { benefitId: b.id, benefitName: b.name, status: status, checkedOn: today() });
   }
 
   function processCard(g, byId) {
@@ -1472,14 +1665,16 @@ var DriveSync = (function () {
       return '<option value="' + h(c.id) + '"' + (c.id === f.certificateId ? ' selected' : '') + '>' + h((c.name || c.kind) + (c.validUntil ? '（期限 ' + L.fmtMD(c.validUntil) + '）' : '')) + '</option>';
     }).join('');
     var tpl = L.findTemplate(TEMPLATES, f.templateId) || TEMPLATES.templates[0];
+    var ben = f.benefitId && findBenefit(f.benefitId);
     return sheet('手続きを始める',
       '<form data-form="startProcess" class="fields">' +
+      (ben ? '<input type="hidden" name="benefitId" value="' + h(ben.id) + '"><p class="hint">「' + h(ben.name) + '」の申請の流れを作ります。窓口：' + h(ben.office) + '。目安なので、最初の工程で対象になるかを窓口に確かめてください。</p>' : '') +
       '<label class="field"><span class="lbl">手続きの型 <b class="req">必須</b></span><select name="templateId" data-change="tplPreview">' + tplOpts + '</select></label>' +
       '<div class="preview"><p class="small muted">この型の工程：</p><ol class="small">' + tpl.steps.map(function (s) {
         return '<li>' + h(s.title) + (s.window === 'day' ? ' <span class="pill">昼</span>' : '') + '</li>';
       }).join('') + '</ol></div>' +
       '<label class="field"><span class="lbl">関係する受給者証・手帳</span><select name="certificateId">' + certOpts + '</select></label>' +
-      '<label class="field"><span class="lbl">期限（有効期限など） <b class="req">必須</b></span><input type="date" name="deadline" required value="' + h(f.deadline || '') + '">' +
+      '<label class="field"><span class="lbl">' + (ben ? '申請を終えたい日' : '期限（有効期限など）') + ' <b class="req">必須</b></span><input type="date" name="deadline" required value="' + h(f.deadline || '') + '">' +
       '<span class="help">この日から逆算して、工程ごとの目安日を決めます。</span></label>' +
       '<label class="field"><span class="lbl">手続きの名前</span><input type="text" name="name" placeholder="' + h(tpl.name) + '" value="' + h(f.name || '') + '"></label>' +
       '<p class="small muted">' + h(TEMPLATES.caution) + '</p>' +
@@ -1498,12 +1693,15 @@ var DriveSync = (function () {
     mine('contacts').forEach(function (c) { if (!byKind[c.kind]) byKind[c.kind] = c.id; });
     var tasks = L.planProcess(tpl, deadline, {
       childId: S.childId, certificateId: certId, today: today(), contactIdsByKind: byKind,
-      processName: String(fd.get('name') || '').trim() || (cert ? (cert.name || cert.kind) + 'の更新' : tpl.name)
+      processName: String(fd.get('name') || '').trim() || (cert ? (cert.name || cert.kind) + 'の更新' : fd.get('benefitId') && findBenefit(fd.get('benefitId')) ? findBenefit(fd.get('benefitId')).name + 'の申請' : tpl.name)
     });
+    var items = tasks.map(function (t) { return { col: 'tasks', rec: t }; });
+    var ben = fd.get('benefitId') && findBenefit(fd.get('benefitId'));
+    if (ben) items.push({ col: 'benefitChecks', rec: benefitCheckRecord(ben, '手続き中') });
     S.form = null;
     S.tab = 'process';
     S.openProcess[tasks[0].processId] = true;
-    saveMany(tasks.map(function (t) { return { col: 'tasks', rec: t }; })).then(function () { toast('手続きを登録しました。今やれる工程は「今日」に出ます'); });
+    saveMany(items).then(function () { toast('手続きを登録しました。今やれる工程は「今日」に出ます'); });
   }
 
   // ---------------------------------------------------------------- 子どもの情報
@@ -1715,6 +1913,7 @@ var DriveSync = (function () {
         var sub = [];
         if (c.name) sub.push(h(c.kind));
         if (c.grade) sub.push(h(c.grade));
+        else if (c.gradeCode) sub.push(h(c.gradeCode));
         if (c.disease) sub.push(h(c.disease));
         if (c.issuerName) sub.push(h(c.issuerName));
         if (!owned) sub.push('<span class="pill">' + h(c.status) + '</span>');
@@ -1723,7 +1922,9 @@ var DriveSync = (function () {
           '<div class="item-sub">' + sub.join('　') + '</div>' +
           (c.renewalNote ? '<div class="small muted">' + br(c.renewalNote) + '</div>' : '') + '</div>' +
           '<div class="item-actions">' + (running ? '<span class="pill">手続き中</span>' : btn(owned ? '更新の手続き' : '取得の手続き', 'startProcess', { cert: c.id }, 'sm')) + '</div></div>';
-      }).join('') : empty('保険証・医療証・受給者証・手帳と有効期限を登録すると、期限が近づいたときにお知らせします。'));
+      }).join('') : empty('保険証・医療証・受給者証・手帳と有効期限を登録すると、期限が近づいたときにお知らせします。')) +
+      (BENEFITS && list.some(function (c) { return HANDBOOK_KINDS.indexOf(c.kind) >= 0; }) ?
+        '<p class="small muted">手帳の等級などから、使えるかもしれない制度の目安を「手続き」の画面に出しています。 ' + btn('見る', 'gotoBenefits', {}, 'sm ghost') + '</p>' : '');
   }
 
   // ---------------------------------------------------------------- 手順書
@@ -1941,13 +2142,26 @@ var DriveSync = (function () {
     var title = f.title || (def.label + (f.isNew ? 'を追加' : 'を編集'));
     var fields = def.fields.filter(function (fd) { return !fd.hidden; });
     var inner = '<form data-form="record" class="fields">' + (f.hint ? '<p class="hint">' + h(f.hint) + '</p>' : '') +
-      fields.map(function (fd) { return fieldInput(fd, rec[fd.key], f.col); }).join('');
+      fields.map(function (fd) { return showIfWrap(fd, rec, fieldInput(fd, rec[fd.key], f.col)); }).join('');
     if (f.col === 'profile' && !f.isNew && !rec.validTo) {
       inner += '<label class="check"><input type="checkbox" name="__asHistory" checked> 内容を変えたときは、前の内容を履歴として残す</label>';
     }
     inner += '<div class="sheet-actions">' + (!f.isNew ? btn('削除', 'deleteRec', {}, 'ghost danger') : '') +
       '<span class="spacer"></span>' + btn('やめる', 'closeForm', {}, 'ghost') + '<button type="submit" class="btn primary">保存</button></div></form>';
     return sheet(title, inner);
+  }
+
+  // 定義書の showIf：ほかの欄の値によって、出す・出さないを切り替える（値は消さない）
+  function showIfWrap(fd, rec, html) {
+    if (!fd.showIf) return html;
+    var on = fd.showIf.in.indexOf(rec[fd.showIf.key]) >= 0;
+    return '<div class="showif" data-showif-key="' + h(fd.showIf.key) + '" data-showif-in="' + h(JSON.stringify(fd.showIf.in)) + '"' + (on ? '' : ' hidden') + '>' + html + '</div>';
+  }
+  function updateShowIf(form) {
+    Array.prototype.forEach.call(form.querySelectorAll('[data-showif-key]'), function (el) {
+      var src = form.querySelector('[name="' + el.getAttribute('data-showif-key') + '"]');
+      el.hidden = !src || JSON.parse(el.getAttribute('data-showif-in')).indexOf(src.value) < 0;
+    });
   }
 
   function fieldInput(fd, v, col) {
@@ -2380,6 +2594,20 @@ var DriveSync = (function () {
       S.form = { kind: 'startProcess', templateId: tplId || TEMPLATES.templates[0].id, certificateId: cert ? cert.id : '', deadline: cert ? cert.validUntil : '' };
       render();
     },
+    benefitStart: function (d) {
+      var b = findBenefit(d.id);
+      if (!b) return;
+      S.form = { kind: 'startProcess', templateId: b.templateId || 'apply-benefit', certificateId: '', deadline: L.addDays(today(), 30), name: b.name + 'の申請', benefitId: b.id };
+      render();
+    },
+    benefitMark: function (d) {
+      var b = findBenefit(d.id);
+      if (!b) return;
+      openForm('benefitChecks', benefitCheckRecord(b, d.status), { title: b.name, hint: '保存すると、この制度は候補の一覧から外れます（「確認ずみ」に入ります）。' });
+    },
+    toggleBenefitChecked: function () { S.showBenefitChecked = !S.showBenefitChecked; render(); },
+    gotoCerts: function () { S.tab = 'info'; S.infoTab = 'certificates'; S.form = null; saveUi(); render(); window.scrollTo(0, 0); },
+    gotoBenefits: function () { S.tab = 'process'; S.form = null; saveUi(); render(); var el = document.querySelector('details.benefit'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center' }); },
     toggleProcess: function (d) { S.openProcess[d.key] = !S.openProcess[d.key]; render(); },
     toggleDone: function () { S.showDone = !S.showDone; render(); },
     deleteProcess: function (d) {
@@ -2484,9 +2712,10 @@ var DriveSync = (function () {
     else if (kind === 'tplPreview') {
       var form = el.form;
       var fd = new FormData(form);
-      S.form = { kind: 'startProcess', templateId: fd.get('templateId'), certificateId: fd.get('certificateId'), deadline: fd.get('deadline'), name: fd.get('name') };
+      S.form = { kind: 'startProcess', templateId: fd.get('templateId'), certificateId: fd.get('certificateId'), deadline: fd.get('deadline'), name: fd.get('name'), benefitId: fd.get('benefitId') || '' };
       render();
     }
+    if (el.form && el.form.getAttribute('data-form') === 'record') updateShowIf(el.form);
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && (S.form || S.notice)) { S.form = null; S.notice = null; render(); }

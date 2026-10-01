@@ -42,6 +42,69 @@
       ]
     },
     {
+      "id": "shintai-recheck",
+      "name": "身体障害者手帳の再認定（等級の見直し）",
+      "certificateKinds": ["身体障害者手帳"],
+      "source": "横浜市「障害福祉のあんない2026」16頁（必要書類：写真・指定医師の身体障害者診断書など）",
+      "steps": [
+        { "title": "再認定の案内と必要書類を確認する", "window": "night", "daysBefore": 90, "script": "再認定の期日・診断書の様式・写真の大きさ（タテ4cm×ヨコ3cm）を確認する" },
+        { "title": "指定医に身体障害者診断書を依頼する", "window": "day", "daysBefore": 75, "contactKind": "病院", "script": "「身体障害者手帳の再認定の診断書をお願いしたい」と伝え、提出の期限も伝える" },
+        { "title": "診断書を受け取る", "window": "day", "daysBefore": 45 },
+        { "title": "区役所に申請する", "window": "day", "daysBefore": 30, "contactKind": "役所", "script": "診断書・写真・今の手帳・マイナンバーが確認できるもの・本人確認書類（自治体の案内で確認）" },
+        { "title": "新しい手帳を受け取り、アプリの等級と期限を直す", "window": "night", "daysBefore": 0, "script": "等級が変わると、使える制度も変わることがあります" }
+      ]
+    },
+    {
+      "id": "seishin-renew",
+      "name": "精神障害者保健福祉手帳の更新",
+      "certificateKinds": ["精神障害者保健福祉手帳"],
+      "source": "横浜市「障害福祉のあんない2026」16〜17頁（必要書類・申請先）",
+      "steps": [
+        { "title": "更新の案内と必要書類を確認する", "window": "night", "daysBefore": 90, "script": "郵送・窓口・オンラインのどれで申請するかも決める" },
+        { "title": "主治医に手帳用の診断書を依頼する", "window": "day", "daysBefore": 80, "contactKind": "病院", "script": "「精神障害者保健福祉手帳の更新の診断書をお願いしたい」と伝える" },
+        { "title": "診断書を受け取る", "window": "day", "daysBefore": 50 },
+        { "title": "申請する（郵送・窓口・オンラインのどれか）", "window": "night", "daysBefore": 40, "script": "診断書・写真（必要な場合）・マイナンバーが確認できるもの・本人確認書類" },
+        { "title": "新しい手帳を受け取り、アプリの期限を直す", "window": "night", "daysBefore": 0 }
+      ]
+    },
+    {
+      "id": "apply-benefit",
+      "name": "制度の申請（汎用）",
+      "certificateKinds": [],
+      "source": "横浜市「障害福祉のあんない2026」各制度の【窓口】【必要なもの】",
+      "steps": [
+        { "title": "窓口に、対象になるかと必要なものを聞く", "window": "day", "daysBefore": 28, "contactKind": "役所", "script": "「○○を使えるか知りたい」と伝える。手帳を手元に用意する" },
+        { "title": "必要な書類をそろえる", "window": "night", "daysBefore": 21 },
+        { "title": "申請する（窓口・郵送など、案内された方法で）", "window": "day", "daysBefore": 14, "contactKind": "役所" },
+        { "title": "結果を確認し、アプリに記録する", "window": "night", "daysBefore": 0, "script": "受給者証などが届いたら「保険証・受給者証・手帳」に登録する" }
+      ]
+    },
+    {
+      "id": "apply-benefit-doctor",
+      "name": "診断書が必要な制度の申請",
+      "certificateKinds": [],
+      "source": "横浜市「障害福祉のあんない2026」各制度の【必要なもの】（診断書・意見書など）",
+      "steps": [
+        { "title": "窓口に、対象になるかと必要な書類・診断書の様式を聞く", "window": "day", "daysBefore": 45, "contactKind": "役所", "script": "「○○を申請したい」と伝え、診断書を省略できるかも聞く。手帳を手元に用意する" },
+        { "title": "主治医に診断書（意見書）を依頼する", "window": "day", "daysBefore": 40, "contactKind": "病院", "script": "制度の名前と、提出の期限を伝える" },
+        { "title": "診断書（意見書）を受け取る", "window": "day", "daysBefore": 21 },
+        { "title": "そのほかの書類をそろえる", "window": "night", "daysBefore": 18, "script": "戸籍・住民票などは、取ってからの期限が決まっていることがあります" },
+        { "title": "申請する（窓口・郵送など、案内された方法で）", "window": "day", "daysBefore": 14, "contactKind": "役所" },
+        { "title": "結果を確認し、アプリに記録する", "window": "night", "daysBefore": 0, "script": "認定の通知・受給者証などが届いたら「保険証・受給者証・手帳」に登録する" }
+      ]
+    },
+    {
+      "id": "tax-deduction",
+      "name": "障害者控除を申告する（年末調整・確定申告）",
+      "certificateKinds": [],
+      "source": "横浜市「障害福祉のあんない2026」114〜115頁",
+      "steps": [
+        { "title": "手帳の等級を確かめ、障害者か特別障害者かを確認する", "window": "night", "daysBefore": 21 },
+        { "title": "年末調整の書類（扶養控除等の申告書）か確定申告に書く", "window": "night", "daysBefore": 14, "script": "勤務先の年末調整の書類に、子どもの障害者控除の欄がある" },
+        { "title": "源泉徴収票などで、控除されたか確認する", "window": "night", "daysBefore": 0 }
+      ]
+    },
+    {
       "id": "generic",
       "name": "期限のある手続き（汎用）",
       "certificateKinds": [],

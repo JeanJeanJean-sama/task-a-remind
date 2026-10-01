@@ -9,6 +9,7 @@
 
   var SCHEMA = window.__SCHEMA__;
   var TEMPLATES = window.__TEMPLATES__;
+  var BENEFITS = window.__BENEFITS__ || null; // 使えるかもしれない制度（横浜市・目安）
   var BUILD = window.__BUILD__ || {};
   var CONFIG = Object.assign({}, window.__CONFIG__ || {}, window.__CONFIG_OVERRIDE__ || {});
   var COLS = Object.keys(SCHEMA.collections);
@@ -103,7 +104,7 @@
   var S = {
     store: null, db: {}, settings: {}, ready: false, error: '',
     childId: null, tab: 'today', infoTab: 'profile', careId: null,
-    openProcess: {}, showHistory: {}, showDone: false,
+    openProcess: {}, showHistory: {}, showDone: false, showBenefitChecked: false,
     form: null, print: null, toast: '', notice: null, busy: false,
     sync: null
   };
@@ -381,12 +382,71 @@
     var html = '<div class="toolbar">' + btn('＋ 手続きを始める', 'startProcess', {}, 'primary') + btn('＋ タスクを1つ追加', 'newRec', { col: 'tasks' }) + '</div>';
     html += card('進行中の手続き', active.length ? active.map(function (g) { return processCard(g, byId); }).join('') :
       empty('進行中の手続きはありません。受給者証・手帳を登録すると、期限が近づいたときに「今日」の画面でお知らせします。'));
+    html += benefitCard();
     if (done.length) {
       html += card('終わった手続き（' + done.length + '）', S.showDone ? done.map(function (g) { return processCard(g, byId); }).join('') : '',
         btn(S.showDone ? '閉じる' : '表示する', 'toggleDone', {}, 'sm ghost'));
     }
     html += '<p class="muted small">' + h(TEMPLATES.caution) + '</p>';
     return html;
+  }
+
+  // ---------------------------------------------------------------- 使えるかもしれない制度（目安）
+  var HANDBOOK_KINDS = ['身体障害者手帳', '療育手帳', '精神障害者保健福祉手帳'];
+  function findBenefit(id) { return BENEFITS && BENEFITS.benefits.find(function (b) { return b.id === id; }); }
+  function benefitCard() {
+    if (!BENEFITS) return '';
+    var r = L.suggestBenefits(S.db, BENEFITS, S.childId, today());
+    var title = '使えるかもしれない制度（目安）';
+    if (r.area === 'other') {
+      return card(title, empty('いまは' + h(BENEFITS.area) + 'の制度だけを載せています。子どもの情報の「市区町村」が' + h(BENEFITS.area) + 'のときに目安を出します。'));
+    }
+    var body = '';
+    if (r.stale) body += '<p class="warn">この一覧は' + h(BENEFITS.source.title) + '（' + h(L.fmtDate(BENEFITS.source.asOf)) + '時点）をもとにしています。新しい情報が出ているかもしれません。</p>';
+    if (r.area === 'unset') body += '<p class="hint">' + h(BENEFITS.area) + 'の制度の目安です。子どもの情報に「市区町村」を入れると、住んでいる地域に合わせて出し分けます。</p>';
+    var hasHandbook = mine('certificates').some(function (c) { return HANDBOOK_KINDS.indexOf(c.kind) >= 0 && (!c.status || c.status === '取得済み'); });
+    if (!r.items.length) {
+      body += empty(hasHandbook ? 'いま出せる目安はありません。手帳の「等級」や「障害の種類」を選ぶと、出せるものが増えることがあります。' :
+        '身体障害者手帳・療育手帳・精神障害者保健福祉手帳を登録して等級を選ぶと、使えるかもしれない制度の目安が出ます。') +
+        '<div class="row-end">' + btn('保険証・受給者証・手帳を開く', 'gotoCerts', {}, 'sm') + '</div>';
+    } else {
+      body += r.items.map(benefitItem).join('');
+    }
+    if (r.checked.length) {
+      body += '<div class="card-head sub"><h3 class="sub-head">確認ずみ（' + r.checked.length + '）</h3>' +
+        btn(S.showBenefitChecked ? '閉じる' : '表示する', 'toggleBenefitChecked', {}, 'sm ghost') + '</div>';
+      if (S.showBenefitChecked) {
+        body += r.checked.map(function (x) {
+          var c = x.check;
+          return '<div class="item"><div class="item-main"><button type="button" class="linklike item-title" data-act="editRec" data-col="benefitChecks" data-id="' + h(c.id) + '">' + h(x.benefit.name) + '</button>' +
+            '<div class="item-sub"><span class="pill' + (c.status === '利用している' ? ' pill-ok' : '') + '">' + h(c.status) + '</span>' +
+            (c.checkedOn ? '　' + h(L.fmtDate(c.checkedOn)) : '') + '</div>' + (c.note ? '<div class="small muted">' + br(c.note) + '</div>' : '') + '</div></div>';
+        }).join('') + '<p class="small muted">記録を消すと、また候補に出るようになります。</p>';
+      }
+    }
+    body += '<p class="small muted">' + h(BENEFITS.caution) + '</p>';
+    return card(title, body, r.items.length ? '<span class="pill">' + r.items.length + '件</span>' : '');
+  }
+  function benefitItem(x) {
+    var b = x.benefit;
+    var lv = BENEFITS.levels[x.level] || x.level;
+    var tags = '<span class="pill ' + (x.level === 'likely' ? 'pill-ok' : '') + '">' + h(lv) + '</span>' +
+      (b.incomeLimit ? ' <span class="pill">所得の条件あり</span>' : '') + (b.ageUnder ? ' <span class="pill">' + b.ageUnder + '歳未満</span>' : '');
+    var inner = '<p>' + h(b.summary) + '</p>' +
+      (x.why.length ? '<p class="small"><b>目安にした登録：</b>' + h(x.why.join('、')) + '</p>' : '') +
+      (b.group ? '<p class="small"><b>選び方：</b>' + h(b.group) + '</p>' : '') +
+      ((b.notes || []).length ? '<ul class="small benefit-notes">' + b.notes.map(function (n) { return '<li>' + h(n) + '</li>'; }).join('') + '</ul>' : '') +
+      '<p class="small muted">窓口：' + h(b.office) + '<br>出典：' + h(BENEFITS.source.title) + ' ' + h(b.page) + '頁</p>' +
+      '<div class="benefit-actions">' +
+      (b.noApplication ? '<span class="small muted">申請はいりません（手帳などを見せて使います）</span>' : btn('手続きにする', 'benefitStart', { id: b.id }, 'primary sm')) +
+      btn('使っている', 'benefitMark', { id: b.id, status: '利用している' }, 'sm') +
+      btn('対象外・使わない', 'benefitMark', { id: b.id, status: '対象外だった' }, 'sm ghost') + '</div>';
+    return '<details class="benefit"><summary><span class="benefit-name">' + h(b.name) + '</span><span class="benefit-tags">' + tags + '</span></summary>' +
+      '<div class="benefit-body">' + inner + '</div></details>';
+  }
+  function benefitCheckRecord(b, status) {
+    var exist = mine('benefitChecks').find(function (r) { return r.benefitId === b.id; });
+    return Object.assign(exist ? Object.assign({}, exist) : newRecord('benefitChecks'), { benefitId: b.id, benefitName: b.name, status: status, checkedOn: today() });
   }
 
   function processCard(g, byId) {
@@ -422,14 +482,16 @@
       return '<option value="' + h(c.id) + '"' + (c.id === f.certificateId ? ' selected' : '') + '>' + h((c.name || c.kind) + (c.validUntil ? '（期限 ' + L.fmtMD(c.validUntil) + '）' : '')) + '</option>';
     }).join('');
     var tpl = L.findTemplate(TEMPLATES, f.templateId) || TEMPLATES.templates[0];
+    var ben = f.benefitId && findBenefit(f.benefitId);
     return sheet('手続きを始める',
       '<form data-form="startProcess" class="fields">' +
+      (ben ? '<input type="hidden" name="benefitId" value="' + h(ben.id) + '"><p class="hint">「' + h(ben.name) + '」の申請の流れを作ります。窓口：' + h(ben.office) + '。目安なので、最初の工程で対象になるかを窓口に確かめてください。</p>' : '') +
       '<label class="field"><span class="lbl">手続きの型 <b class="req">必須</b></span><select name="templateId" data-change="tplPreview">' + tplOpts + '</select></label>' +
       '<div class="preview"><p class="small muted">この型の工程：</p><ol class="small">' + tpl.steps.map(function (s) {
         return '<li>' + h(s.title) + (s.window === 'day' ? ' <span class="pill">昼</span>' : '') + '</li>';
       }).join('') + '</ol></div>' +
       '<label class="field"><span class="lbl">関係する受給者証・手帳</span><select name="certificateId">' + certOpts + '</select></label>' +
-      '<label class="field"><span class="lbl">期限（有効期限など） <b class="req">必須</b></span><input type="date" name="deadline" required value="' + h(f.deadline || '') + '">' +
+      '<label class="field"><span class="lbl">' + (ben ? '申請を終えたい日' : '期限（有効期限など）') + ' <b class="req">必須</b></span><input type="date" name="deadline" required value="' + h(f.deadline || '') + '">' +
       '<span class="help">この日から逆算して、工程ごとの目安日を決めます。</span></label>' +
       '<label class="field"><span class="lbl">手続きの名前</span><input type="text" name="name" placeholder="' + h(tpl.name) + '" value="' + h(f.name || '') + '"></label>' +
       '<p class="small muted">' + h(TEMPLATES.caution) + '</p>' +
@@ -448,12 +510,15 @@
     mine('contacts').forEach(function (c) { if (!byKind[c.kind]) byKind[c.kind] = c.id; });
     var tasks = L.planProcess(tpl, deadline, {
       childId: S.childId, certificateId: certId, today: today(), contactIdsByKind: byKind,
-      processName: String(fd.get('name') || '').trim() || (cert ? (cert.name || cert.kind) + 'の更新' : tpl.name)
+      processName: String(fd.get('name') || '').trim() || (cert ? (cert.name || cert.kind) + 'の更新' : fd.get('benefitId') && findBenefit(fd.get('benefitId')) ? findBenefit(fd.get('benefitId')).name + 'の申請' : tpl.name)
     });
+    var items = tasks.map(function (t) { return { col: 'tasks', rec: t }; });
+    var ben = fd.get('benefitId') && findBenefit(fd.get('benefitId'));
+    if (ben) items.push({ col: 'benefitChecks', rec: benefitCheckRecord(ben, '手続き中') });
     S.form = null;
     S.tab = 'process';
     S.openProcess[tasks[0].processId] = true;
-    saveMany(tasks.map(function (t) { return { col: 'tasks', rec: t }; })).then(function () { toast('手続きを登録しました。今やれる工程は「今日」に出ます'); });
+    saveMany(items).then(function () { toast('手続きを登録しました。今やれる工程は「今日」に出ます'); });
   }
 
   // ---------------------------------------------------------------- 子どもの情報
@@ -665,6 +730,7 @@
         var sub = [];
         if (c.name) sub.push(h(c.kind));
         if (c.grade) sub.push(h(c.grade));
+        else if (c.gradeCode) sub.push(h(c.gradeCode));
         if (c.disease) sub.push(h(c.disease));
         if (c.issuerName) sub.push(h(c.issuerName));
         if (!owned) sub.push('<span class="pill">' + h(c.status) + '</span>');
@@ -673,7 +739,9 @@
           '<div class="item-sub">' + sub.join('　') + '</div>' +
           (c.renewalNote ? '<div class="small muted">' + br(c.renewalNote) + '</div>' : '') + '</div>' +
           '<div class="item-actions">' + (running ? '<span class="pill">手続き中</span>' : btn(owned ? '更新の手続き' : '取得の手続き', 'startProcess', { cert: c.id }, 'sm')) + '</div></div>';
-      }).join('') : empty('保険証・医療証・受給者証・手帳と有効期限を登録すると、期限が近づいたときにお知らせします。'));
+      }).join('') : empty('保険証・医療証・受給者証・手帳と有効期限を登録すると、期限が近づいたときにお知らせします。')) +
+      (BENEFITS && list.some(function (c) { return HANDBOOK_KINDS.indexOf(c.kind) >= 0; }) ?
+        '<p class="small muted">手帳の等級などから、使えるかもしれない制度の目安を「手続き」の画面に出しています。 ' + btn('見る', 'gotoBenefits', {}, 'sm ghost') + '</p>' : '');
   }
 
   // ---------------------------------------------------------------- 手順書
@@ -891,13 +959,26 @@
     var title = f.title || (def.label + (f.isNew ? 'を追加' : 'を編集'));
     var fields = def.fields.filter(function (fd) { return !fd.hidden; });
     var inner = '<form data-form="record" class="fields">' + (f.hint ? '<p class="hint">' + h(f.hint) + '</p>' : '') +
-      fields.map(function (fd) { return fieldInput(fd, rec[fd.key], f.col); }).join('');
+      fields.map(function (fd) { return showIfWrap(fd, rec, fieldInput(fd, rec[fd.key], f.col)); }).join('');
     if (f.col === 'profile' && !f.isNew && !rec.validTo) {
       inner += '<label class="check"><input type="checkbox" name="__asHistory" checked> 内容を変えたときは、前の内容を履歴として残す</label>';
     }
     inner += '<div class="sheet-actions">' + (!f.isNew ? btn('削除', 'deleteRec', {}, 'ghost danger') : '') +
       '<span class="spacer"></span>' + btn('やめる', 'closeForm', {}, 'ghost') + '<button type="submit" class="btn primary">保存</button></div></form>';
     return sheet(title, inner);
+  }
+
+  // 定義書の showIf：ほかの欄の値によって、出す・出さないを切り替える（値は消さない）
+  function showIfWrap(fd, rec, html) {
+    if (!fd.showIf) return html;
+    var on = fd.showIf.in.indexOf(rec[fd.showIf.key]) >= 0;
+    return '<div class="showif" data-showif-key="' + h(fd.showIf.key) + '" data-showif-in="' + h(JSON.stringify(fd.showIf.in)) + '"' + (on ? '' : ' hidden') + '>' + html + '</div>';
+  }
+  function updateShowIf(form) {
+    Array.prototype.forEach.call(form.querySelectorAll('[data-showif-key]'), function (el) {
+      var src = form.querySelector('[name="' + el.getAttribute('data-showif-key') + '"]');
+      el.hidden = !src || JSON.parse(el.getAttribute('data-showif-in')).indexOf(src.value) < 0;
+    });
   }
 
   function fieldInput(fd, v, col) {
@@ -1330,6 +1411,20 @@
       S.form = { kind: 'startProcess', templateId: tplId || TEMPLATES.templates[0].id, certificateId: cert ? cert.id : '', deadline: cert ? cert.validUntil : '' };
       render();
     },
+    benefitStart: function (d) {
+      var b = findBenefit(d.id);
+      if (!b) return;
+      S.form = { kind: 'startProcess', templateId: b.templateId || 'apply-benefit', certificateId: '', deadline: L.addDays(today(), 30), name: b.name + 'の申請', benefitId: b.id };
+      render();
+    },
+    benefitMark: function (d) {
+      var b = findBenefit(d.id);
+      if (!b) return;
+      openForm('benefitChecks', benefitCheckRecord(b, d.status), { title: b.name, hint: '保存すると、この制度は候補の一覧から外れます（「確認ずみ」に入ります）。' });
+    },
+    toggleBenefitChecked: function () { S.showBenefitChecked = !S.showBenefitChecked; render(); },
+    gotoCerts: function () { S.tab = 'info'; S.infoTab = 'certificates'; S.form = null; saveUi(); render(); window.scrollTo(0, 0); },
+    gotoBenefits: function () { S.tab = 'process'; S.form = null; saveUi(); render(); var el = document.querySelector('details.benefit'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center' }); },
     toggleProcess: function (d) { S.openProcess[d.key] = !S.openProcess[d.key]; render(); },
     toggleDone: function () { S.showDone = !S.showDone; render(); },
     deleteProcess: function (d) {
@@ -1434,9 +1529,10 @@
     else if (kind === 'tplPreview') {
       var form = el.form;
       var fd = new FormData(form);
-      S.form = { kind: 'startProcess', templateId: fd.get('templateId'), certificateId: fd.get('certificateId'), deadline: fd.get('deadline'), name: fd.get('name') };
+      S.form = { kind: 'startProcess', templateId: fd.get('templateId'), certificateId: fd.get('certificateId'), deadline: fd.get('deadline'), name: fd.get('name'), benefitId: fd.get('benefitId') || '' };
       render();
     }
+    if (el.form && el.form.getAttribute('data-form') === 'record') updateShowIf(el.form);
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && (S.form || S.notice)) { S.form = null; S.notice = null; render(); }

@@ -1,0 +1,367 @@
+{
+  "version": 1,
+  "area": "横浜市",
+  "areaKeywords": ["横浜"],
+  "source": {
+    "title": "障害福祉のあんない2026",
+    "publisher": "横浜市 健康福祉局",
+    "asOf": "2026-04-01",
+    "errataAsOf": "2026-07-01",
+    "searchWord": "障害福祉のあんない",
+    "note": "本冊（令和8年4月1日時点の情報）と、正誤表（令和8年7月1日現在）・新旧対照表をもとにしています。ページは冊子のページ番号です。"
+  },
+  "reviewBy": "2027-07-31",
+  "caution": "横浜市「障害福祉のあんない2026」をもとにした目安です。所得・年齢・施設の利用などの条件で使えないことや、ここに出ない制度が使えることもあります。申請の前に、必ず区の福祉保健センターなどの窓口で確認してください。",
+  "levels": {
+    "likely": "当てはまりそう",
+    "maybe": "条件しだい"
+  },
+  "benefits": [
+    {
+      "id": "tokuji",
+      "name": "特別児童扶養手当",
+      "category": "手当",
+      "summary": "障害のある20歳未満の子どもを育てている保護者に、国の手当が出ます。手帳の等級ではなく、医師の診断書などで障害の程度を判定します。",
+      "page": "104〜105",
+      "office": "区福祉保健センター・こども青少年局こども家庭課",
+      "incomeLimit": true,
+      "ageUnder": 20,
+      "heldKinds": ["特別児童扶養手当"],
+      "templateId": "apply-benefit-doctor",
+      "notes": [
+        "子どもが施設に入所しているときや、障害を理由とする年金を受けられるときは対象外です。",
+        "療育手帳A1・A2や、身体障害者手帳1級〜おおむね3級の一部の方は、診断書を省略できる場合があります（窓口で確認）。"
+      ],
+      "when": [
+        { "level": "maybe", "all": [{ "kind": "身体障害者手帳", "grades": ["1級", "2級", "3級"] }] },
+        { "level": "maybe", "all": [{ "kind": "療育手帳", "grades": ["A1", "A2", "B1"] }] },
+        { "level": "maybe", "all": [{ "kind": "精神障害者保健福祉手帳", "grades": ["1級", "2級"] }] }
+      ]
+    },
+    {
+      "id": "shojifukushi",
+      "name": "障害児福祉手当",
+      "category": "手当",
+      "summary": "日常生活でいつも介護が必要な、重い障害のある20歳未満の子ども本人に手当が出ます。",
+      "page": "105",
+      "office": "区福祉保健センター",
+      "incomeLimit": true,
+      "ageUnder": 20,
+      "heldKinds": ["障害児福祉手当"],
+      "templateId": "apply-benefit-doctor",
+      "notes": [
+        "目安は、身体障害者手帳1・2級程度、または知的障害が最重度の方などです。",
+        "施設に入所しているときや、障害を理由とする年金などを受けているときは対象外です。",
+        "手当用の診断書（所定の様式）が必要です。"
+      ],
+      "when": [
+        { "level": "maybe", "all": [{ "kind": "身体障害者手帳", "grades": ["1級", "2級"] }] },
+        { "level": "maybe", "all": [{ "kind": "療育手帳", "grades": ["A1"] }] },
+        { "level": "maybe", "all": [{ "kind": "精神障害者保健福祉手帳", "grades": ["1級"] }] }
+      ]
+    },
+    {
+      "id": "kanagawa-zaitaku",
+      "name": "神奈川県在宅重度障害者等手当",
+      "category": "手当",
+      "summary": "重い障害が重なっている方などに、神奈川県から年に1回手当が出ます。",
+      "page": "103",
+      "office": "区福祉保健センター",
+      "incomeLimit": true,
+      "heldKinds": [],
+      "templateId": "apply-benefit",
+      "notes": [
+        "申請は原則として毎年8月1日から9月10日までです。",
+        "県内に6か月以上住んでいることなどの条件があります。"
+      ],
+      "when": [
+        { "level": "likely", "count": 2, "of": [
+          { "kind": "身体障害者手帳", "grades": ["1級", "2級"] },
+          { "kind": "療育手帳", "grades": ["A1", "A2"] },
+          { "kind": "精神障害者保健福祉手帳", "grades": ["1級"] }
+        ] },
+        { "level": "likely", "all": [{ "kind": "障害児福祉手当" }] }
+      ]
+    },
+    {
+      "id": "judo-iryo",
+      "name": "重度障害者医療費の助成",
+      "category": "医療",
+      "summary": "病院などで払う医療費（保険診療の自己負担）を全額助成します。",
+      "page": "100",
+      "office": "区福祉保健センター 保険年金課 給付担当",
+      "incomeLimit": false,
+      "heldKinds": ["重度障害者医療証"],
+      "templateId": "apply-benefit",
+      "notes": [
+        "生活保護を受けている方は対象外です。",
+        "精神障害者保健福祉手帳1級の方は、入院の費用は対象外です。"
+      ],
+      "when": [
+        { "level": "likely", "all": [{ "kind": "身体障害者手帳", "grades": ["1級", "2級"] }] },
+        { "level": "likely", "all": [{ "kind": "療育手帳", "grades": ["A1", "A2"] }] },
+        { "level": "likely", "all": [
+          { "kind": "身体障害者手帳", "grades": ["3級"] },
+          { "kind": "療育手帳", "grades": ["B1"] }
+        ] },
+        { "level": "likely", "all": [{ "kind": "精神障害者保健福祉手帳", "grades": ["1級"] }] }
+      ]
+    },
+    {
+      "id": "ikusei",
+      "name": "自立支援医療（育成医療）",
+      "category": "医療",
+      "summary": "18歳未満で、手術などの治療で効果が期待できる体の障害があるとき、指定医療機関での医療費の自己負担が原則1割になります。",
+      "page": "99",
+      "office": "区福祉保健センター",
+      "incomeLimit": true,
+      "ageUnder": 18,
+      "heldKinds": ["自立支援医療受給者証"],
+      "templateId": "apply-benefit-doctor",
+      "notes": [
+        "治療の前に申請が必要です。",
+        "手帳の有無ではなく、病気・障害と治療の内容で決まります。",
+        "所得が一定以上の世帯は対象外です。"
+      ],
+      "when": [
+        { "level": "maybe", "all": [{ "kind": "身体障害者手帳" }] }
+      ]
+    },
+    {
+      "id": "tokubetsu-josha",
+      "name": "福祉特別乗車券",
+      "category": "外出",
+      "group": "外出の券（どれか1つ）",
+      "summary": "市内の路線バス・市営地下鉄・金沢シーサイドラインに、運賃を払わずに乗れる券です。利用者負担金がかかります（20歳未満は少なくなります）。",
+      "page": "59",
+      "office": "区福祉保健センター",
+      "incomeLimit": false,
+      "heldKinds": [],
+      "templateId": "apply-benefit",
+      "notes": [
+        "福祉タクシー利用券・障害者自動車燃料券とは、どれか1つを選びます。",
+        "使えるのは本人だけです。"
+      ],
+      "when": [
+        { "level": "likely", "all": [{ "kind": "身体障害者手帳", "grades": ["1級", "2級", "3級", "4級"] }] },
+        { "level": "likely", "all": [{ "kind": "療育手帳", "grades": ["A1", "A2", "B1", "B2"] }] },
+        { "level": "likely", "all": [{ "kind": "精神障害者保健福祉手帳", "grades": ["1級", "2級", "3級"] }] }
+      ]
+    },
+    {
+      "id": "fukushi-taxi",
+      "name": "福祉タクシー利用券",
+      "category": "外出",
+      "group": "外出の券（どれか1つ）",
+      "summary": "タクシー代の一部を助成する券が、毎年交付されます。",
+      "page": "60〜61",
+      "office": "区福祉保健センター",
+      "incomeLimit": false,
+      "heldKinds": [],
+      "templateId": "apply-benefit",
+      "notes": [
+        "福祉特別乗車券・障害者自動車燃料券とは、どれか1つを選びます。",
+        "使えるのは本人だけです（家族が一緒に乗るのはかまいません）。",
+        "身体障害者手帳は、下肢・体幹・視覚・内部・移動機能のいずれかの障害を含む場合が対象です。"
+      ],
+      "when": [
+        { "level": "likely", "all": [{ "kind": "身体障害者手帳", "grades": ["1級", "2級"], "types": ["視覚障害", "肢体不自由（下肢）", "肢体不自由（体幹）", "脳原性運動機能障害（移動機能）", "内部障害（心臓・じん臓・呼吸器など）"] }] },
+        { "level": "likely", "all": [{ "kind": "療育手帳", "grades": ["A1", "A2"] }] },
+        { "level": "likely", "all": [
+          { "kind": "身体障害者手帳", "grades": ["3級"], "types": ["視覚障害", "肢体不自由（下肢）", "肢体不自由（体幹）", "脳原性運動機能障害（移動機能）", "内部障害（心臓・じん臓・呼吸器など）"] },
+          { "kind": "療育手帳", "grades": ["B1"] }
+        ] },
+        { "level": "likely", "all": [{ "kind": "精神障害者保健福祉手帳", "grades": ["1級"] }] }
+      ]
+    },
+    {
+      "id": "nenryo",
+      "name": "障害者自動車燃料券",
+      "category": "外出",
+      "group": "外出の券（どれか1つ）",
+      "summary": "本人や家族などが持っている自家用車（二輪を除く）の燃料代を助成する券です。",
+      "page": "63",
+      "office": "区福祉保健センター",
+      "incomeLimit": false,
+      "heldKinds": [],
+      "templateId": "apply-benefit",
+      "notes": [
+        "福祉特別乗車券・福祉タクシー利用券とは、どれか1つを選びます。",
+        "身体障害者手帳は、下肢・体幹・視覚・内部・移動機能のいずれかの障害を含む場合が対象です。"
+      ],
+      "when": [
+        { "level": "likely", "all": [{ "kind": "身体障害者手帳", "grades": ["1級", "2級"], "types": ["視覚障害", "肢体不自由（下肢）", "肢体不自由（体幹）", "脳原性運動機能障害（移動機能）", "内部障害（心臓・じん臓・呼吸器など）"] }] },
+        { "level": "likely", "all": [{ "kind": "療育手帳", "grades": ["A1", "A2"] }] },
+        { "level": "likely", "all": [
+          { "kind": "身体障害者手帳", "grades": ["3級"], "types": ["視覚障害", "肢体不自由（下肢）", "肢体不自由（体幹）", "脳原性運動機能障害（移動機能）", "内部障害（心臓・じん臓・呼吸器など）"] },
+          { "kind": "療育手帳", "grades": ["B1"] }
+        ] },
+        { "level": "likely", "all": [{ "kind": "精神障害者保健福祉手帳", "grades": ["1級"] }] }
+      ]
+    },
+    {
+      "id": "yuryo-doro",
+      "name": "有料道路通行料金の割引",
+      "category": "外出",
+      "summary": "事前に登録すると、高速道路の料金が割引になります（最大5割）。子どもが乗って家族が運転する場合（介護運転）は、手帳に「第1種」と書かれている方が対象です。",
+      "page": "61〜62",
+      "office": "区福祉保健センター（ETCを使う場合はオンライン申請もできます）",
+      "incomeLimit": false,
+      "heldKinds": [],
+      "templateId": "apply-benefit",
+      "notes": [
+        "登録できる車は、本人か親族などが持っている車です。"
+      ],
+      "when": [
+        { "level": "likely", "all": [{ "kind": "身体障害者手帳", "fareClass": "第1種" }] },
+        { "level": "likely", "all": [{ "kind": "療育手帳", "fareClass": "第1種" }] }
+      ]
+    },
+    {
+      "id": "tetsudo",
+      "name": "鉄道・バスなどの運賃の割引",
+      "category": "外出",
+      "summary": "JR・私鉄・市営地下鉄・バスなどで手帳を見せると、本人の運賃が割引になります。「第1種」の方は、付き添いの人も割引になることがあります。",
+      "page": "56〜59",
+      "office": "各交通事業者",
+      "incomeLimit": false,
+      "noApplication": true,
+      "heldKinds": [],
+      "notes": [
+        "手帳に顔写真と「第1種／第2種」の表示が必要です。",
+        "会社によって、割引の内容や扱いが違います。"
+      ],
+      "when": [
+        { "level": "likely", "all": [{ "kind": "身体障害者手帳" }] },
+        { "level": "likely", "all": [{ "kind": "療育手帳" }] },
+        { "level": "likely", "all": [{ "kind": "精神障害者保健福祉手帳" }] }
+      ]
+    },
+    {
+      "id": "taxi-waribiki",
+      "name": "タクシー料金の割引（1割）",
+      "category": "外出",
+      "summary": "タクシー会社の制度で、乗るときに手帳などを見せると料金が1割引になります（一部対象外の会社があります）。",
+      "page": "60",
+      "office": "タクシー会社（問い合わせは県のタクシー協会など）",
+      "incomeLimit": false,
+      "noApplication": true,
+      "heldKinds": [],
+      "notes": [
+        "指定難病の受給者証による割引は、会社によって違います。乗る前にタクシー会社に確認してください。"
+      ],
+      "when": [
+        { "level": "likely", "all": [{ "kind": "身体障害者手帳" }] },
+        { "level": "likely", "all": [{ "kind": "療育手帳" }] },
+        { "level": "likely", "all": [{ "kind": "精神障害者保健福祉手帳" }] },
+        { "level": "maybe", "all": [{ "kind": "特定医療費（指定難病）受給者証" }] }
+      ]
+    },
+    {
+      "id": "zei-kojo",
+      "name": "所得税・住民税の障害者控除",
+      "category": "税金",
+      "summary": "手帳を持っている子どもを扶養していると、親の所得税・住民税が軽くなります。重い障害（特別障害者）にあたると、控除が大きくなります。",
+      "page": "114〜115",
+      "office": "勤務先（年末調整）・税務署（確定申告）・区役所税務課",
+      "incomeLimit": false,
+      "heldKinds": [],
+      "templateId": "tax-deduction",
+      "notes": [
+        "特別障害者の目安：身体障害者手帳1・2級、療育手帳A、精神障害者保健福祉手帳1級など。",
+        "障害者にあたるかどうかは、その年の12月31日の状態で決まります。"
+      ],
+      "when": [
+        { "level": "likely", "all": [{ "kind": "身体障害者手帳" }] },
+        { "level": "likely", "all": [{ "kind": "療育手帳" }] },
+        { "level": "likely", "all": [{ "kind": "精神障害者保健福祉手帳" }] }
+      ]
+    },
+    {
+      "id": "suido",
+      "name": "水道料金・下水道使用料の減免",
+      "category": "公共料金",
+      "summary": "水道料金と下水道使用料の、基本料金にあたる額が免除されます。",
+      "page": "120",
+      "office": "区福祉保健センター または 水道局お客さまサービスセンター",
+      "incomeLimit": false,
+      "heldKinds": [],
+      "templateId": "apply-benefit",
+      "notes": [
+        "対象の方が3か月以上施設に入所している場合は対象外です。",
+        "世帯の中の別の人とあわせて条件を満たす場合もあります（窓口で確認）。"
+      ],
+      "when": [
+        { "level": "likely", "all": [{ "kind": "身体障害者手帳", "grades": ["1級", "2級"] }] },
+        { "level": "likely", "all": [{ "kind": "療育手帳", "grades": ["A1", "A2"] }] },
+        { "level": "likely", "all": [{ "kind": "精神障害者保健福祉手帳", "grades": ["1級"] }] },
+        { "level": "likely", "all": [{ "kind": "特別児童扶養手当" }] },
+        { "level": "likely", "count": 2, "of": [
+          { "kind": "身体障害者手帳", "grades": ["3級"] },
+          { "kind": "精神障害者保健福祉手帳", "grades": ["2級"] },
+          { "kind": "療育手帳" }
+        ] }
+      ]
+    },
+    {
+      "id": "jidoshazei",
+      "name": "自動車税の減免",
+      "category": "税金",
+      "summary": "本人が運転する車や、生計を一にする家族が本人のために運転する車の自動車税が減免されます（上限があります）。",
+      "page": "116",
+      "office": "県税事務所 または 自動車税管理事務所",
+      "incomeLimit": false,
+      "heldKinds": [],
+      "templateId": "apply-benefit",
+      "notes": [
+        "対象になる等級が決まっています（窓口で確認）。",
+        "申請の期限があります（4月1日に車を持っている場合は、通常5月31日まで）。"
+      ],
+      "when": [
+        { "level": "maybe", "all": [{ "kind": "身体障害者手帳" }] },
+        { "level": "maybe", "all": [{ "kind": "療育手帳" }] },
+        { "level": "maybe", "all": [{ "kind": "精神障害者保健福祉手帳" }] }
+      ]
+    },
+    {
+      "id": "hosogu",
+      "name": "補装具費の支給",
+      "category": "用具",
+      "summary": "車いす・装具・補聴器など、体の働きを補う道具の購入・借受け・修理の費用が支給されます。自己負担は原則1割です。",
+      "page": "48",
+      "office": "区福祉保健センター",
+      "incomeLimit": true,
+      "heldKinds": [],
+      "templateId": "apply-benefit-doctor",
+      "notes": [
+        "買う前に申請が必要です。",
+        "手帳の障害の種類によって、対象になる道具が違います。",
+        "18歳未満は「補装具費支給意見書」が必要です。"
+      ],
+      "when": [
+        { "level": "maybe", "all": [{ "kind": "身体障害者手帳" }] },
+        { "level": "maybe", "all": [{ "kind": "特定医療費（指定難病）受給者証" }] }
+      ]
+    },
+    {
+      "id": "nichijo-yogu",
+      "name": "日常生活用具の給付",
+      "category": "用具",
+      "summary": "重い障害のある方に、特殊寝台・入浴補助用具など、日常生活に必要な用具を給付します。自己負担は原則1割です。",
+      "page": "45",
+      "office": "区福祉保健センター",
+      "incomeLimit": false,
+      "heldKinds": [],
+      "templateId": "apply-benefit",
+      "notes": [
+        "用具ごとに、対象になる障害と程度が決まっています。"
+      ],
+      "when": [
+        { "level": "maybe", "all": [{ "kind": "身体障害者手帳" }] },
+        { "level": "maybe", "all": [{ "kind": "療育手帳" }] },
+        { "level": "maybe", "all": [{ "kind": "精神障害者保健福祉手帳" }] },
+        { "level": "maybe", "all": [{ "kind": "特定医療費（指定難病）受給者証" }] }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@
 //   gas/Shared.gs        … GAS版で使うデータ定義と共通ロジック
 //   guide/データ定義書.md … 人が読むためのデータ定義書（schema.json から自動生成）
 //   sample/sample-data.json … 架空のサンプルデータ（読み込みの確認用）
+//   guide/制度の目安一覧.md … 「使えるかもしれない制度」の一覧（benefits.json から自動生成。毎年の見直し用）
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -22,6 +23,7 @@ const write = (p, s) => {
 const pkg = JSON.parse(read('package.json'));
 const schema = JSON.parse(read('src/schema.json'));
 const templates = JSON.parse(read('src/templates.json'));
+const benefits = JSON.parse(read('src/benefits.json'));
 const logic = read('src/logic.js');
 const app = read('src/app.js');
 const sync = read('src/drive-sync.js');
@@ -41,7 +43,7 @@ for (const [name, s] of [['logic.js', logic], ['app.js', app], ['drive-sync.js',
   if (/<\/script/i.test(s)) throw new Error(`${name} に </script> が含まれています`);
 }
 const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
-const data = `window.__CONFIG__=${json(config)};\nwindow.__SCHEMA__=${json(schema)};\nwindow.__TEMPLATES__=${json(templates)};\nwindow.__BUILD__=${json(build)};`;
+const data = `window.__CONFIG__=${json(config)};\nwindow.__SCHEMA__=${json(schema)};\nwindow.__TEMPLATES__=${json(templates)};\nwindow.__BENEFITS__=${json(benefits)};\nwindow.__BUILD__=${json(build)};`;
 
 // GitHub Pages版だけ：画面のいちばん下に、アプリの説明とプライバシーポリシーへのリンクを置く
 // （JavaScriptを使わずに読めるように、HTMLにそのまま書く。Googleの審査でホームページに必要）
@@ -106,7 +108,7 @@ let md = `# ${schema.title}\n\n` +
 for (const [key, c] of Object.entries(schema.collections)) {
   md += `## ${c.label}（\`${key}\`）\n\nスプレッドシートのシート名：「${c.sheet}」\n\n` + (c.description ? c.description + '\n\n' : '') +
     '| キー | 項目名 | 種類 | 必須 | 選択肢・つながり | 説明 |\n|---|---|---|---|---|---|\n' +
-    c.fields.map((f) => `| \`${f.key}\` | ${f.label} | ${typeLabel[f.type] || f.type} | ${f.required ? '○' : ''} | ${f.ref ? '→ ' + schema.collections[f.ref].label : opts(f)} | ${(f.help || '') + (f.hidden ? '（画面には出さず自動で入る）' : '')} |`).join('\n') + '\n\n';
+    c.fields.map((f) => `| \`${f.key}\` | ${f.label} | ${typeLabel[f.type] || f.type} | ${f.required ? '○' : ''} | ${f.ref ? '→ ' + schema.collections[f.ref].label : opts(f)} | ${(f.help || '') + (f.hidden ? '（画面には出さず自動で入る）' : '') + (f.showIf ? `（${f.showIf.in.join('・')}のときだけ表示）` : '')} |`).join('\n') + '\n\n';
 }
 md += '## 書き出しファイルの形\n\n```json\n{\n  "format": "task-a-remind-export",\n  "schemaVersion": ' + schema.schemaVersion +
   ',\n  "exportedAt": "2026-09-28T13:00:00.000Z",\n  "collections": {\n    "children": [ { "id": "…", "nickname": "…" } ],\n    "tasks": [ … ]\n  }\n}\n```\n\n' +
@@ -115,6 +117,40 @@ md += '## 書き出しファイルの形\n\n```json\n{\n  "format": "task-a-remi
   '2. 項目の**名前を変える・消す・意味を変える**ときは、`schemaVersion` を1つ上げ、`src/logic.js` の `migrate()` に古い形から新しい形への変換を書く。\n' +
   '3. `key`（英字）は一度決めたら変えない。画面に出る名前（`label`）は自由に変えてよい。\n';
 write('guide/データ定義書.md', md);
+
+// ---- 制度の目安一覧（benefits.json の中身を人が確かめるための表） ----
+{
+  const tplName = (id) => (templates.templates.find((x) => x.id === id) || {}).name || id || '';
+  const ids = new Set();
+  const cond = (c) => c.kind + (c.grades ? ' ' + c.grades.join('・') : '') + (c.types ? '（' + c.types.join('／') + '）' : '') + (c.fareClass ? '（' + c.fareClass + '）' : '');
+  const when = (w) => (w.all ? w.all.map(cond).join(' かつ ') : `次のうち${w.count}つ以上：` + w.of.map(cond).join('／')) + `　→ ${benefits.levels[w.level] || w.level}`;
+  const ages = (b) => (b.ageUnder ? `${b.ageUnder}歳未満` : '');
+  for (const b of benefits.benefits) {
+    if (ids.has(b.id)) throw new Error('benefits.json の id が重複しています: ' + b.id);
+    ids.add(b.id);
+    if (b.templateId && !templates.templates.some((x) => x.id === b.templateId)) throw new Error(`benefits.json の ${b.id} の templateId が templates.json にありません: ${b.templateId}`);
+    for (const w of b.when || []) for (const c of w.all || w.of || []) {
+      const kinds = schema.collections.certificates.fields.find((f) => f.key === 'kind').options;
+      if (!kinds.includes(c.kind)) throw new Error(`benefits.json の ${b.id} の kind が定義にありません: ${c.kind}`);
+      for (const g of c.grades || []) if (!schema.options.handbookGrades.some((o) => o.value === g)) throw new Error(`benefits.json の ${b.id} の等級が定義にありません: ${g}`);
+      for (const x of c.types || []) if (!schema.options.physicalTypes.includes(x)) throw new Error(`benefits.json の ${b.id} の障害の種類が定義にありません: ${x}`);
+    }
+  }
+  const s = benefits.source;
+  let bm = `# 制度の目安一覧（${benefits.area}）\n\n` +
+    '> このファイルは `src/benefits.json` から自動で作られます。直すときは benefits.json を直してください。\n\n' +
+    `- 出典：${s.publisher}「${s.title}」（${s.asOf} 時点、正誤表 ${s.errataAsOf} 現在）。横浜市のホームページで「${s.searchWord}」と検索\n` +
+    `- 見直しの期限：${benefits.reviewBy}（これを過ぎると、画面に「情報が古いかもしれません」と出ます）\n` +
+    `- 画面の注意書き：${benefits.caution}\n\n` +
+    '## 毎年の見直しのしかた\n\n' +
+    '1. 新しい冊子の「新旧対照表」と「正誤表」を見て、下の表の制度に変更がないか確かめる\n' +
+    '2. 変更があれば `src/benefits.json` の `when`（対象の条件）・`notes`・`page` を直す（金額は持たない）\n' +
+    '3. `source` の `title`・`asOf`・`errataAsOf` と `reviewBy` を新しくする\n' +
+    '4. `npm test` を実行する（条件の書き間違いはビルドで止まります）\n\n' +
+    '## 一覧\n\n| 制度 | 分類 | 頁 | 対象の目安（手帳など） | 年齢 | 所得制限 | 手続きの型 |\n|---|---|---|---|---|---|---|\n' +
+    benefits.benefits.map((b) => `| ${b.name}<br>\`${b.id}\` | ${b.category} | ${b.page} | ${(b.when || []).map(when).join('<br>')}${(b.heldKinds || []).length ? `<br>（${b.heldKinds.join('・')}を登録済みなら出さない）` : ''} | ${ages(b)} | ${b.incomeLimit ? 'あり' : ''} | ${b.noApplication ? '申請なし（見せるだけ）' : tplName(b.templateId)} |`).join('\n') + '\n';
+  write('guide/制度の目安一覧.md', bm);
+}
 
 // ---- サンプルデータ（毎回同じ内容になるよう、日付とIDを固定する） ----
 let seq = 0;
