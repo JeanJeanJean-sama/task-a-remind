@@ -34,6 +34,14 @@
       "本人・家族の意向": ["家族の願い", "本人の希望", "目標"],
       "その他": []
     },
+    "handbookGrades": [
+      { "value": "1級", "label": "1級（身体・精神）" }, { "value": "2級", "label": "2級（身体・精神）" }, { "value": "3級", "label": "3級（身体・精神）" },
+      { "value": "4級", "label": "4級（身体）" }, { "value": "5級", "label": "5級（身体）" }, { "value": "6級", "label": "6級（身体）" },
+      { "value": "A1", "label": "A1（療育手帳・最重度）" }, { "value": "A2", "label": "A2（療育手帳・重度）" },
+      { "value": "B1", "label": "B1（療育手帳・中度）" }, { "value": "B2", "label": "B2（療育手帳・軽度）" }
+    ],
+    "physicalTypes": ["視覚障害", "聴覚・平衡機能障害", "音声・言語・そしゃく機能障害", "肢体不自由（上肢）", "肢体不自由（下肢）", "肢体不自由（体幹）",
+      "脳原性運動機能障害（上肢機能）", "脳原性運動機能障害（移動機能）", "内部障害（心臓・じん臓・呼吸器など）"],
     "milestoneSuggestions": ["追視", "首すわり", "寝返り", "ずりばい", "おすわり", "ハイハイ", "つかまり立ち", "伝い歩き", "ひとり歩き", "歯の生え始め", "指さし", "初めての言葉", "二語文", "スプーンで食べる", "コップで飲む", "トイレでおしっこ"]
   },
   "collections": {
@@ -194,13 +202,20 @@
       "fields": [
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
         { "key": "kind", "label": "種類", "type": "select", "required": true, "default": "療育手帳",
-          "options": ["健康保険証", "小児医療証（子ども医療証）", "療育手帳", "身体障害者手帳", "障害児通所受給者証", "障害福祉サービス受給者証", "小児慢性特定疾病医療受給者証", "重度障害者医療証", "特別児童扶養手当", "その他"] },
+          "options": ["健康保険証", "小児医療証（子ども医療証）", "療育手帳", "身体障害者手帳", "精神障害者保健福祉手帳", "障害児通所受給者証", "障害福祉サービス受給者証", "小児慢性特定疾病医療受給者証", "特定医療費（指定難病）受給者証", "自立支援医療受給者証", "重度障害者医療証", "特別児童扶養手当", "障害児福祉手当", "その他"] },
         { "key": "status", "label": "状態", "type": "select", "default": "取得済み", "options": ["取得済み", "申請中", "未取得・取得予定"] },
         { "key": "name", "label": "自治体での呼び名", "type": "string", "help": "例：愛の手帳（東京都）" },
         { "key": "issuerNumber", "label": "公費負担者番号・保険者番号", "type": "string" },
         { "key": "issuerName", "label": "発行元・保険者の名前", "type": "string" },
         { "key": "number", "label": "番号（受給者番号・記号番号など）", "type": "string" },
-        { "key": "grade", "label": "区分・等級・種別", "type": "string" },
+        { "key": "grade", "label": "区分・等級・種別（書いてあるとおり）", "type": "string" },
+        { "key": "gradeCode", "label": "手帳の等級（選ぶ）", "type": "select", "optionsRef": "handbookGrades", "showIf": { "key": "kind", "in": ["身体障害者手帳", "療育手帳", "精神障害者保健福祉手帳"] },
+          "help": "等級を選ぶと「使えるかもしれない制度」の目安を出します。療育手帳は、自治体の呼び名がちがっても近いものを選びます。" },
+        { "key": "disabilityType", "label": "障害の種類（身体障害者手帳）", "type": "select", "optionsRef": "physicalTypes", "showIf": { "key": "kind", "in": ["身体障害者手帳"] },
+          "help": "手帳に書かれている障害のうち、主なものを選びます。" },
+        { "key": "disabilityType2", "label": "障害の種類（2つ目があれば）", "type": "select", "optionsRef": "physicalTypes", "showIf": { "key": "kind", "in": ["身体障害者手帳"] } },
+        { "key": "fareClass", "label": "旅客運賃の割引の種別", "type": "select", "options": ["第1種", "第2種"], "showIf": { "key": "kind", "in": ["身体障害者手帳", "療育手帳", "精神障害者保健福祉手帳"] },
+          "help": "手帳の「旅客鉄道株式会社旅客運賃減額」の欄に書かれています。" },
         { "key": "disease", "label": "対象の疾患名", "type": "string" },
         { "key": "copay", "label": "自己負担（上限額・割合）", "type": "text" },
         { "key": "issuedOn", "label": "取得日", "type": "date" },
@@ -208,6 +223,20 @@
         { "key": "renewalNote", "label": "更新の決まり", "type": "text", "help": "例：毎年更新、文書料が必要、自動更新" },
         { "key": "templateId", "label": "更新に使う手続きの型", "type": "template" },
         { "key": "note", "label": "メモ", "type": "text" }
+      ]
+    },
+    "benefitChecks": {
+      "label": "制度の確認",
+      "sheet": "制度の確認",
+      "display": "benefitName",
+      "description": "「使えるかもしれない制度（目安）」を、利用者が確かめた結果。ここに記録した制度は、候補の一覧から外れる。",
+      "fields": [
+        { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
+        { "key": "benefitId", "label": "制度のID", "type": "string", "hidden": true, "help": "src/benefits.json の id" },
+        { "key": "benefitName", "label": "制度の名前", "type": "string", "required": true },
+        { "key": "status", "label": "状態", "type": "select", "required": true, "default": "利用している", "options": ["手続き中", "利用している", "対象外だった", "今は使わない"] },
+        { "key": "checkedOn", "label": "確認した日", "type": "date" },
+        { "key": "note", "label": "メモ", "type": "text", "help": "例：窓口で、所得の条件にあてはまらないと言われた" }
       ]
     },
     "contacts": {

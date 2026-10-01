@@ -156,4 +156,87 @@ test('プライバシーポリシーのページ（Google Cloud の同意画面�
   for (const sc of scope) assert.ok(pp.includes(sc.replace('https://www.googleapis.com/', '')), '同期で使う権限はすべてポリシーに書いてある：' + sc);
 });
 
+// ---------- 使えるかもしれない制度（目安） ----------
+const B = JSON.parse(fs.readFileSync(root + 'src/benefits.json', 'utf8'));
+// 架空の子どもと証明書から db を作る
+const mkDb = (certs, child = {}, checks = []) => ({
+  children: [Object.assign({ id: 'c1', nickname: '架空', birthDate: '2020-04-01', prefecture: '神奈川県', municipality: '横浜市○○区', deleted: false }, child)],
+  certificates: certs.map((c, i) => Object.assign({ id: 'k' + i, childId: 'c1', status: '取得済み', deleted: false }, c)),
+  benefitChecks: checks.map((c, i) => Object.assign({ id: 'b' + i, childId: 'c1', deleted: false }, c)),
+  tasks: []
+});
+const ids = (r) => r.items.map((x) => x.benefit.id);
+const lv = (r, id) => (r.items.find((x) => x.benefit.id === id) || {}).level;
+
+test('手帳の等級を読む（選ぶ欄が優先、書いてある欄は1つだけ読めるときだけ）', () => {
+  assert.equal(L.certGrade({ kind: '身体障害者手帳', gradeCode: '2級', grade: '1級' }), '2級');
+  assert.equal(L.certGrade({ kind: '身体障害者手帳', grade: '（架空）１級' }), '1級');
+  assert.equal(L.certGrade({ kind: '療育手帳', grade: 'Ａ２' }), 'A2');
+  assert.equal(L.certGrade({ kind: '身体障害者手帳', grade: '下肢4級・体幹3級' }), '', '2つ読めたら使わない');
+  assert.equal(L.certGrade({ kind: '小児慢性特定疾病医療受給者証', grade: '1級' }), '', '手帳以外は読まない');
+});
+
+test('等級で制度の目安が変わる', () => {
+  const r1 = L.suggestBenefits(mkDb([{ kind: '身体障害者手帳', gradeCode: '1級', disabilityType: '肢体不自由（下肢）', fareClass: '第1種' }]), B, 'c1', '2026-10-01');
+  for (const id of ['tokuji', 'shojifukushi', 'judo-iryo', 'fukushi-taxi', 'nenryo', 'tokubetsu-josha', 'yuryo-doro', 'suido']) assert.ok(ids(r1).includes(id), id + ' が出る');
+  assert.equal(lv(r1, 'judo-iryo'), 'likely');
+  assert.equal(lv(r1, 'tokuji'), 'maybe', '手当は「条件しだい」までしか言わない');
+  const r5 = L.suggestBenefits(mkDb([{ kind: '身体障害者手帳', gradeCode: '5級' }]), B, 'c1', '2026-10-01');
+  for (const id of ['tokuji', 'judo-iryo', 'fukushi-taxi', 'tokubetsu-josha', 'suido']) assert.ok(!ids(r5).includes(id), id + ' は5級では出ない');
+  assert.ok(ids(r5).includes('tetsudo') && ids(r5).includes('zei-kojo'), '手帳があれば出るものは出る');
+});
+
+test('障害の種類・第1種が足りないときは「条件しだい」にする', () => {
+  const r = L.suggestBenefits(mkDb([{ kind: '身体障害者手帳', gradeCode: '2級' }]), B, 'c1', '2026-10-01');
+  assert.equal(lv(r, 'fukushi-taxi'), 'maybe');
+  assert.match(r.items.find((x) => x.benefit.id === 'fukushi-taxi').why.join(), /障害の種類が入っていません/);
+  assert.equal(lv(r, 'yuryo-doro'), 'maybe');
+  const hearing = L.suggestBenefits(mkDb([{ kind: '身体障害者手帳', gradeCode: '2級', disabilityType: '聴覚・平衡機能障害', fareClass: '第2種' }]), B, 'c1', '2026-10-01');
+  assert.ok(!ids(hearing).includes('fukushi-taxi'), '対象外の種類なら出さない');
+  assert.ok(!ids(hearing).includes('yuryo-doro'), '第2種なら介護運転の割引は出さない');
+  const two = L.suggestBenefits(mkDb([{ kind: '身体障害者手帳', gradeCode: '2級', disabilityType: '聴覚・平衡機能障害', disabilityType2: '肢体不自由（体幹）' }]), B, 'c1', '2026-10-01');
+  assert.equal(lv(two, 'fukushi-taxi'), 'likely', '2つ目の種類も見る');
+});
+
+test('手帳の組み合わせ（かつ・2つ以上）', () => {
+  const both = L.suggestBenefits(mkDb([{ kind: '身体障害者手帳', gradeCode: '3級' }, { kind: '療育手帳', gradeCode: 'B1' }]), B, 'c1', '2026-10-01');
+  assert.equal(lv(both, 'judo-iryo'), 'likely', '身体3級かつ療育B1');
+  assert.equal(lv(both, 'suido'), 'likely', '身体3級と療育手帳の2つ');
+  const one = L.suggestBenefits(mkDb([{ kind: '身体障害者手帳', gradeCode: '3級' }]), B, 'c1', '2026-10-01');
+  assert.ok(!ids(one).includes('judo-iryo') && !ids(one).includes('suido'));
+  const ken = L.suggestBenefits(mkDb([{ kind: '身体障害者手帳', gradeCode: '1級' }, { kind: '療育手帳', gradeCode: 'A1' }]), B, 'c1', '2026-10-01');
+  assert.equal(lv(ken, 'kanagawa-zaitaku'), 'likely');
+});
+
+test('登録ずみ・確認ずみ・年齢・地域・取得前の手帳', () => {
+  const base = [{ kind: '身体障害者手帳', gradeCode: '1級' }];
+  const held = L.suggestBenefits(mkDb(base.concat([{ kind: '特別児童扶養手当' }])), B, 'c1', '2026-10-01');
+  assert.ok(!ids(held).includes('tokuji'), '受給者証を登録ずみなら出さない');
+  assert.equal(lv(held, 'suido'), 'likely', '特別児童扶養手当の受給で水道の減免');
+  const checked = L.suggestBenefits(mkDb(base, {}, [{ benefitId: 'judo-iryo', benefitName: 'x', status: '対象外だった' }]), B, 'c1', '2026-10-01');
+  assert.ok(!ids(checked).includes('judo-iryo'));
+  assert.equal(checked.checked.length, 1);
+  const adult = L.suggestBenefits(mkDb(base, { birthDate: '2005-01-01' }), B, 'c1', '2026-10-01');
+  assert.ok(!ids(adult).includes('tokuji') && !ids(adult).includes('ikusei'), '20歳以上には子どもの手当を出さない');
+  const tokyo = L.suggestBenefits(mkDb(base, { prefecture: '東京都', municipality: '○○市' }), B, 'c1', '2026-10-01');
+  assert.equal(tokyo.area, 'other');
+  assert.equal(tokyo.items.length, 0, '横浜市以外では出さない');
+  const unset = L.suggestBenefits(mkDb(base, { prefecture: '', municipality: '' }), B, 'c1', '2026-10-01');
+  assert.equal(unset.area, 'unset');
+  assert.ok(unset.items.length > 0, '市区町村が空なら目安として出す');
+  const plan = L.suggestBenefits(mkDb([{ kind: '身体障害者手帳', gradeCode: '1級', status: '未取得・取得予定' }]), B, 'c1', '2026-10-01');
+  assert.equal(plan.items.length, 0, '取得前の手帳では出さない');
+  assert.equal(L.suggestBenefits(mkDb(base), B, 'c1', '2027-08-01').stale, true, '見直しの期限を過ぎたら知らせる');
+});
+
+test('サンプル（架空）でも目安が出て、通知には制度の名前が出ない', () => {
+  const s = L.buildSample('2026-10-01', T);
+  const r = L.suggestBenefits(s.collections, B, s.childId, '2026-10-01');
+  assert.ok(r.items.length > 0);
+  assert.ok(r.checked.some((x) => x.benefit.id === 'tetsudo'));
+  const text = L.buildDigestText(s.collections, '2026-10-01', { appUrl: 'https://example.com/app' });
+  for (const b of B.benefits) assert.ok(!text.includes(b.name), b.name + ' が通知に入っている');
+  for (const w of ['3級', '内部障害', '第2種']) assert.ok(!text.includes(w), w + ' が通知に入っている');
+});
+
 console.log(`ロジックのテスト：${n}件すべて成功`);

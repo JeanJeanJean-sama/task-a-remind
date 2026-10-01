@@ -8,7 +8,7 @@
     "build": "node build.mjs",
     "test": "node build.mjs && node test/logic.test.mjs && node test/gas.test.mjs",
     "test:ui": "node test/smoke.cjs && node test/gas-ui.cjs && node test/sync.cjs",
-    "check:generated": "node build.mjs && git diff --exit-code -- docs gas guide/データ定義書.md sample",
+    "check:generated": "node build.mjs && git diff --exit-code -- docs gas guide/データ定義書.md guide/制度の目安一覧.md sample",
     "serve": "node scripts/serve.mjs",
     "gas:push": "node build.mjs && clasp push",
     "gas:open": "clasp open"

@@ -59,6 +59,30 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   await page.waitForSelector('text=次は「判定（発達検査）の予約を電話でとる」');
   ok(true, '工程を完了すると次の工程を案内する');
 
+  // 使えるかもしれない制度（目安）：サンプルは横浜市・身体障害者手帳3級（架空）
+  const ben = page.locator('.card:has-text("使えるかもしれない制度（目安）")');
+  ok(await ben.isVisible(), '手続きの画面に「使えるかもしれない制度（目安）」が出る');
+  ok(await ben.locator('summary:has-text("福祉特別乗車券")').isVisible(), '等級に合う制度が出る');
+  ok(!(await ben.locator('summary:has-text("福祉タクシー利用券")').count()), '等級に合わない制度は出ない');
+  ok(!(await ben.locator('summary:has-text("鉄道・バスなどの運賃の割引")').count()), '確認ずみの制度は候補に出ない');
+  await ben.locator('summary:has-text("福祉特別乗車券")').click();
+  ok(await ben.locator('text=出典：障害福祉のあんない2026 59頁').isVisible(), '出典のページが出る');
+  await shot('03b_制度の目安');
+  await ben.locator('details[open] >> text=手続きにする').click();
+  ok(await page.isVisible('.sheet .hint:has-text("福祉特別乗車券")'), '制度から申請の流れを作る画面が開く');
+  ok((await page.inputValue('.sheet select[name=templateId]')) === 'apply-benefit', '申請の手続きの型が選ばれている');
+  await page.click('.sheet button[type=submit]');
+  await page.waitForSelector('text=手続きを登録しました');
+  ok(await page.isVisible('.proc-name >> text=福祉特別乗車券の申請'), '制度の申請を手続きにできる');
+  ok(!(await ben.locator('summary:has-text("福祉特別乗車券")').count()), '手続きにした制度は候補から外れる');
+  await ben.locator('summary:has-text("所得税・住民税の障害者控除")').click();
+  await ben.locator('details[open] >> button:has-text("使っている")').click();
+  ok((await page.inputValue('.sheet select[name=status]')) === '利用している', '「使っている」を記録する画面が開く');
+  await page.click('.sheet button[type=submit]');
+  await page.waitForSelector('text=保存しました');
+  await ben.locator('button:has-text("表示する")').click();
+  ok(await ben.locator('.item:has-text("所得税・住民税の障害者控除")').isVisible() && await ben.locator('.item:has-text("福祉特別乗車券")').isVisible(), '確認ずみの一覧に入る');
+
   // 子どもの情報：履歴
   await page.click('button[data-tab=info]');
   ok(await page.isVisible('text=本人の情報'), '本人の基本情報（氏名・生年月日・年齢）が出る');
@@ -105,6 +129,15 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   ok((await page.locator('.card:has-text("○○こども病院") .dept').count()) === 2, '同じ病院の診療科がまとめて出る');
   await page.click('button[data-tab=certificates]');
   ok(await page.isVisible('text=手続き中') && await page.isVisible('text=未取得・取得予定'), '受給者証の状態（手続き中・未取得）が分かる');
+  await page.click('text=＋ 保険証・受給者証・手帳を追加');
+  await page.selectOption('.sheet select[name=kind]', '健康保険証');
+  ok(!(await page.isVisible('.sheet select[name=gradeCode]')), '保険証のときは手帳の等級の欄を出さない');
+  await page.selectOption('.sheet select[name=kind]', '身体障害者手帳');
+  ok(await page.isVisible('.sheet select[name=gradeCode]') && await page.isVisible('.sheet select[name=disabilityType]'), '身体障害者手帳のときは等級と障害の種類を選べる');
+  await page.selectOption('.sheet select[name=kind]', '療育手帳');
+  ok(await page.isVisible('.sheet select[name=gradeCode]') && !(await page.isVisible('.sheet select[name=disabilityType]')), '療育手帳のときは障害の種類の欄を出さない');
+  await shot('05b_手帳の入力');
+  await page.click('.sheet button:has-text("やめる")');
 
   // 手順書
   await page.click('button[data-tab=care]');

@@ -185,6 +185,118 @@ var Logic = (function () {
     return r;
   }
 
+  // ---------- 使えるかもしれない制度（目安） ----------
+  // 制度の一覧（src/benefits.json）と、子どもの手帳・受給者証を照らし合わせる。
+  // 言い切らない：結果は「当てはまりそう（likely）」か「条件しだい（maybe）」の2段階だけ。
+  // 医療の情報を含むので、通知（Discord）の文面には使わない。
+  var HANDBOOK_KINDS = ['身体障害者手帳', '療育手帳', '精神障害者保健福祉手帳'];
+  var Z2H = { '０': '0', '１': '1', '２': '2', '３': '3', '４': '4', '５': '5', '６': '6', '７': '7', '８': '8', '９': '9', 'Ａ': 'A', 'Ｂ': 'B', 'ａ': 'A', 'ｂ': 'B' };
+
+  /** 手帳の等級を「1級」「A1」などの形で返す。選ぶ欄が空なら、書いてある欄から読み取れるときだけ使う */
+  function certGrade(c) {
+    if (!c) return '';
+    if (c.gradeCode) return c.gradeCode;
+    if (HANDBOOK_KINDS.indexOf(c.kind) < 0) return '';
+    var s = String(c.grade || '').replace(/[０-９ＡＢａｂ]/g, function (ch) { return Z2H[ch]; });
+    var found = [];
+    var re = /([1-6])\s*級/g, m;
+    while ((m = re.exec(s))) found.push(m[1] + '級');
+    re = /([ABab])\s*([12])/g;
+    while ((m = re.exec(s))) found.push(m[1].toUpperCase() + m[2]);
+    // 2つ以上読み取れたときは、どれか分からないので使わない
+    var uniq = found.filter(function (x, i) { return found.indexOf(x) === i; });
+    return uniq.length === 1 ? uniq[0] : '';
+  }
+
+  function ageYears(birth, today) {
+    var b = parseYmd(birth), t = parseYmd(today);
+    if (!b || !t) return null;
+    var y = t.getFullYear() - b.getFullYear();
+    if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) y -= 1;
+    return y;
+  }
+
+  /** 1つの条件を、持っている証明書と照らす → 'yes' / 'unknown'（情報が足りない）/ 'no' */
+  function evalCond(cond, certs, why) {
+    var best = 'no', note = '';
+    certs.forEach(function (c) {
+      if (c.kind !== cond.kind || best === 'yes') return;
+      var r = 'yes', miss = [];
+      if (cond.grades) {
+        var g = certGrade(c);
+        if (!g) { r = 'unknown'; miss.push('等級'); }
+        else if (cond.grades.indexOf(g) < 0) r = 'no';
+      }
+      if (r !== 'no' && cond.types) {
+        var ts = [c.disabilityType, c.disabilityType2].filter(Boolean);
+        if (!ts.length) { r = 'unknown'; miss.push('障害の種類'); }
+        else if (!ts.some(function (x) { return cond.types.indexOf(x) >= 0; })) r = 'no';
+      }
+      if (r !== 'no' && cond.fareClass) {
+        if (!c.fareClass) { r = 'unknown'; miss.push('第1種・第2種'); }
+        else if (c.fareClass !== cond.fareClass) r = 'no';
+      }
+      if (r === 'yes' || (r === 'unknown' && best === 'no')) {
+        best = r;
+        var g2 = certGrade(c);
+        note = c.kind + (g2 ? ' ' + g2 : '') + (r === 'unknown' ? '（' + miss.join('・') + 'が入っていません）' : '');
+      }
+    });
+    if (best !== 'no' && note) why.push(note);
+    return best;
+  }
+
+  /** when の1行（all：すべて／count：of のうち count 個以上）を評価 */
+  function evalWhen(w, certs) {
+    var why = [];
+    var results = (w.all || w.of || []).map(function (cond) { return evalCond(cond, certs, why); });
+    var yes = results.filter(function (r) { return r === 'yes'; }).length;
+    var unk = results.filter(function (r) { return r === 'unknown'; }).length;
+    var need = w.all ? results.length : (w.count || 1);
+    var r = yes >= need ? 'yes' : yes + unk >= need ? 'unknown' : 'no';
+    return { result: r, why: why };
+  }
+
+  /**
+   * 子どもに「使えるかもしれない制度」を出す。
+   * 戻り値：{ area: 'match' | 'other' | 'unset', stale, items: [{ benefit, level, why }], checked: [{ benefit, check }] }
+   *   area：子どもの市区町村が一覧の地域か（'unset' は未入力。目安として出す）
+   *   stale：一覧の見直し期限（reviewBy）を過ぎているか
+   */
+  function suggestBenefits(db, data, childId, today) {
+    var out = { area: 'unset', stale: false, items: [], checked: [] };
+    if (!data || !data.benefits) return out;
+    today = today || ymd();
+    out.stale = !!(data.reviewBy && today > data.reviewBy);
+    var child = alive(db.children).filter(function (c) { return c.id === childId; })[0] || {};
+    var place = String(child.municipality || '') + String(child.prefecture || '');
+    if (place) {
+      out.area = (data.areaKeywords || []).some(function (k) { return place.indexOf(k) >= 0; }) ? 'match' : 'other';
+      if (out.area === 'other') return out;
+    }
+    var certs = alive(db.certificates).filter(function (c) {
+      return c.childId === childId && (!c.status || c.status === '取得済み');
+    });
+    var checks = {};
+    alive(db.benefitChecks).forEach(function (r) { if (r.childId === childId && r.benefitId) checks[r.benefitId] = r; });
+    var age = child.birthDate ? ageYears(child.birthDate, today) : null;
+    data.benefits.forEach(function (b) {
+      if (checks[b.id]) { out.checked.push({ benefit: b, check: checks[b.id] }); return; }
+      if (b.ageUnder && age !== null && age >= b.ageUnder) return;
+      if ((b.heldKinds || []).some(function (k) { return certs.some(function (c) { return c.kind === k; }); })) return;
+      var level = '', why = [];
+      (b.when || []).forEach(function (w) {
+        var e = evalWhen(w, certs);
+        if (e.result === 'no') return;
+        var lv = e.result === 'yes' ? (w.level || 'maybe') : 'maybe';
+        if (!level || (level === 'maybe' && lv === 'likely')) { level = lv; why = e.why; }
+      });
+      if (level) out.items.push({ benefit: b, level: level, why: why });
+    });
+    out.items.sort(function (a, b) { return (a.level === b.level ? 0 : a.level === 'likely' ? -1 : 1); });
+    return out;
+  }
+
   // ---------- 通知の文面（病名など医療の情報は載せない） ----------
   function contactLine(t, contactsById) {
     var c = t.contactId && contactsById[t.contactId];
@@ -361,7 +473,7 @@ var Logic = (function () {
     function rec(o) { o.id = uuid(); o.createdAt = now; o.updatedAt = now; o.deleted = false; return o; }
     var birth = addDays(today, -640);
     var child = rec({ nickname: 'さくら（サンプル）', fullName: '見本 さくら', furigana: 'みほん さくら', birthDate: birth,
-      prefecture: '東京都', municipality: '○○市', address: '〒000-0000 東京都○○市○○町1-2-3（架空）', phone: '', note: 'これは架空のサンプルです' });
+      prefecture: '神奈川県', municipality: '横浜市○○区（架空）', address: '〒000-0000 神奈川県横浜市○○区○○町1-2-3（架空）', phone: '', note: 'これは架空のサンプルです' });
     var cid = child.id;
 
     function fam(relation, name, order, extra) {
@@ -424,7 +536,7 @@ var Logic = (function () {
       c('訪問看護', '○○訪問看護ステーション', '', '03-0000-0800', '', { person: '△△さん', visitPattern: '週1回、体調の確認とチューブ交換' }),
       c('療育', '○○療育センター', '理学療法', '03-0000-1111', '平日 9:00〜16:00', { visitPattern: '月2回、運動の訓練' }),
       c('相談支援', '○○相談支援センター', '', '03-0000-2222', '平日 9:00〜17:00', { person: '△△さん' }),
-      c('役所', '○○市役所 障害福祉課', '', '03-0000-3333', '平日 8:30〜17:15'),
+      c('役所', '○○区福祉保健センター（架空）', '障害者支援担当', '045-000-3333', '平日 8:45〜17:00'),
       c('医療機器業者', '○○メディカル', '在宅酸素', '0120-000-000', '24時間', { person: '△△さん', note: '災害時・停電時に連絡' })
     ];
     var byKind = {};
@@ -437,7 +549,7 @@ var Logic = (function () {
     var certs = [
       cert('健康保険証', null, '', { issuerName: '（架空）○○健康保険組合', issuerNumber: '00000000' }),
       cert('小児医療証（子ども医療証）', null, '', { renewalNote: '毎年自動で更新' }),
-      cert('身体障害者手帳', 400, 'generic', { grade: '（架空）3級' }),
+      cert('身体障害者手帳', 400, 'shintai-recheck', { grade: '（架空）3級', gradeCode: '3級', disabilityType: '内部障害（心臓・じん臓・呼吸器など）', fareClass: '第2種', renewalNote: '再認定の期日あり' }),
       cert('小児慢性特定疾病医療受給者証', 70, 'shoman-renew', { disease: '（架空）心臓の病気', copay: '月額上限 ○○円・2割', renewalNote: '毎年更新。文書料が必要' }),
       cert('療育手帳', null, 'ryouiku-renew', { status: '未取得・取得予定', number: '', note: '2歳以降に取得予定' })
     ];
@@ -497,7 +609,8 @@ var Logic = (function () {
       childId: cid,
       collections: {
         children: [child], family: family, profile: profile, schedule: schedule, diagnoses: diagnoses, contacts: contacts,
-        certificates: certs, careProcedures: [proc, o2], careSteps: steps, visits: visits, milestones: milestones, tasks: tasks
+        certificates: certs, careProcedures: [proc, o2], careSteps: steps, visits: visits, milestones: milestones, tasks: tasks,
+        benefitChecks: [rec({ childId: cid, benefitId: 'tetsudo', benefitName: '鉄道・バスなどの運賃の割引', status: '利用している', checkedOn: addDays(today, -200), note: '（架空）' })]
       }
     };
   }
@@ -509,6 +622,7 @@ var Logic = (function () {
     nowIso: nowIso, uuid: uuid, alive: alive, indexById: indexById,
     isActionable: isActionable, dueLabel: dueLabel, findTemplate: findTemplate, planProcess: planProcess,
     certificateAlerts: certificateAlerts, summarize: summarize,
+    certGrade: certGrade, ageYears: ageYears, suggestBenefits: suggestBenefits,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,
     makeExport: makeExport, migrate: migrate, upgradeCollections: upgradeCollections, mergeImport: mergeImport, buildSample: buildSample
   };
