@@ -294,4 +294,45 @@ test('新しい手続きの型（所得状況届）から工程を作る', () =>
   assert.ok(tasks[0].script.includes('9月11日'));
 });
 
+test('毎年くり返す型：最後の工程が終わったら、期限を1年先にした来年の分の案を出す', () => {
+  assert.equal(L.addYears('2026-09-11', 1), '2027-09-11');
+  assert.equal(L.addYears('2028-02-29', 1), '2029-02-28');
+  assert.equal(L.nextYearName('特別児童扶養手当の所得状況届（2026年）'), '特別児童扶養手当の所得状況届（2027年）');
+  assert.equal(L.nextYearName('就学奨励（2026年度）'), '就学奨励（2027年度）');
+  const tpl = L.findTemplate(T, 'tokuji-shotoku');
+  // 案内が遅れて届き、最初の工程が今日に詰められても、期限は正しく推し量れる
+  const tasks = L.planProcess(tpl, '2026-09-11', { childId: 'c1', certificateId: 'cert1', today: '2026-08-20', processName: '特別児童扶養手当の所得状況届（2026年）' });
+  assert.equal(tasks[0].dueDate, '2026-08-20');
+  assert.equal(L.processDeadline(tasks, tpl), '2026-09-11');
+  const db = { tasks };
+  const pid = tasks[0].processId;
+  assert.equal(L.nextRepeat(db, pid, T), null, 'まだ終わっていない工程があるときは出さない');
+  tasks.forEach((t) => { t.status = 'done'; });
+  const rep = L.nextRepeat(db, pid, T);
+  assert.equal(rep.templateId, 'tokuji-shotoku');
+  assert.equal(rep.deadline, '2027-09-11');
+  assert.equal(rep.lastDeadline, '2026-09-11');
+  assert.equal(rep.name, '特別児童扶養手当の所得状況届（2027年）');
+  assert.equal(rep.childId, 'c1');
+  assert.equal(rep.certificateId, 'cert1');
+  // 飛ばした工程（skipped）があっても、終わったものとして扱う
+  tasks[1].status = 'skipped';
+  assert.ok(L.nextRepeat(db, pid, T));
+  // 来年の分をもう始めていれば出さない（ほかの子どもの分は関係しない）
+  const other = L.planProcess(tpl, '2027-09-11', { childId: 'c2', today: '2026-09-12' });
+  db.tasks = tasks.concat(other);
+  assert.ok(L.nextRepeat(db, pid, T), 'ほかの子どもの分は関係しない');
+  const next = L.planProcess(tpl, rep.deadline, { childId: 'c1', today: '2026-09-12' });
+  db.tasks = tasks.concat(other, next);
+  assert.equal(L.nextRepeat(db, pid, T), null, '来年の分を始めたら出さない');
+  // 来年の分を削除したら、また出す
+  next.forEach((t) => { t.deleted = true; });
+  assert.ok(L.nextRepeat(db, pid, T));
+  // くり返さない型では出さない
+  const once = L.planProcess(L.findTemplate(T, 'ryouiku-renew'), '2026-12-27', { childId: 'c1', today: '2026-09-28' });
+  once.forEach((t) => { t.status = 'done'; });
+  assert.equal(L.nextRepeat({ tasks: once }, once[0].processId, T), null);
+  assert.equal(L.nextRepeat({ tasks: [] }, '', T), null);
+});
+
 console.log(`ロジックのテスト：${n}件すべて成功`);

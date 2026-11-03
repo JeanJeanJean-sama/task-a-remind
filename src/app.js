@@ -347,12 +347,32 @@
       var byId = L.indexById(S.db.tasks);
       var next = all('tasks').find(function (x) { return (x.dependsOn || []).indexOf(id) >= 0 && L.isActionable(x, byId); });
       toast(next ? '完了！次は「' + next.title + '」です' : '完了しました');
-      var restTodo = t.processId && all('tasks').some(function (x) { return x.processId === t.processId && x.status === 'todo'; });
-      if (t.certificateId && t.processId && !restTodo) {
-        var c = get('certificates', t.certificateId);
-        if (c && !c.deleted) openForm('certificates', c, { hint: '手続きが終わりました。新しい有効期限に直しておくと、次の更新もお知らせできます。' });
-      }
+      afterStepDone(t);
     });
+  }
+
+  /** 工程が終わったあと：手続きの最後の工程なら、来年の分（毎年くり返す型）か、受給者証の期限の見直しをすすめる */
+  function afterStepDone(t) {
+    if (!t.processId) return;
+    var restTodo = all('tasks').some(function (x) { return x.processId === t.processId && x.status === 'todo'; });
+    if (restTodo) return;
+    var tpl = L.findTemplate(TEMPLATES, t.templateId);
+    if (tpl && tpl.repeat === 'yearly') {
+      // 毎年の届出は、受給者証の有効期限（＝再認定の期限）とは別なので、期限の見直しはすすめない
+      var rep = L.nextRepeat(S.db, t.processId, TEMPLATES);
+      if (rep) openRepeatForm(rep);
+      return;
+    }
+    if (t.certificateId) {
+      var c = get('certificates', t.certificateId);
+      if (c && !c.deleted) openForm('certificates', c, { hint: '手続きが終わりました。新しい有効期限に直しておくと、次の更新もお知らせできます。' });
+    }
+  }
+
+  /** 「来年の分も始めますか」：期限を1年先にした「手続きを始める」の画面を出す */
+  function openRepeatForm(rep) {
+    S.form = { kind: 'startProcess', templateId: rep.templateId, certificateId: rep.certificateId, deadline: rep.deadline, name: rep.name, childId: rep.childId, repeat: '1' };
+    render();
   }
 
   // ---------------------------------------------------------------- 手続き
@@ -458,6 +478,8 @@
       '<span class="proc-name">' + h(g.name) + '</span><span class="muted">' + g.done + '/' + g.tasks.length + '</span></button>' +
       '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
       (next && !open ? '<div class="item-sub">次：' + h(next.title) + ' ' + duePill(next) + '</div>' : '');
+    var rep = !g.active && !g.single && L.nextRepeat(S.db, g.key, TEMPLATES);
+    if (rep) html += '<div class="row-end">' + btn('来年の分を始める', 'repeatProcess', { key: g.key }, 'sm') + '</div>';
     if (open) {
       html += '<ol class="steps">' + g.tasks.map(function (t) {
         var st = t.status === 'done' ? 'done' : t.status === 'skipped' ? 'skip' : L.isActionable(t, byId) ? 'now' : 'wait';
@@ -499,19 +521,23 @@
     }).join('');
     var tpl = L.findTemplate(TEMPLATES, f.templateId) || TEMPLATES.templates[0];
     var ben = f.benefitId && findBenefit(f.benefitId);
-    return sheet('手続きを始める',
+    var repeat = !!f.repeat;
+    return sheet(repeat ? '来年の分も始めますか' : '手続きを始める',
       '<form data-form="startProcess" class="fields">' +
+      (f.childId ? '<input type="hidden" name="childId" value="' + h(f.childId) + '">' : '') +
+      (repeat ? '<input type="hidden" name="repeat" value="1"><p class="hint repeat-hint">毎年くり返す手続きです。来年の分も、いま始めておきますか？<br>' +
+        '期限は1年先の日にしてあります。来年の案内が届いて締め切りがわかったら、期限を直してください（工程を開いて、目安の日を直せます）。</p>' : '') +
       (ben ? '<input type="hidden" name="benefitId" value="' + h(ben.id) + '"><p class="hint">「' + h(ben.name) + '」の申請の流れを作ります。窓口：' + h(ben.office) + '。目安なので、最初の工程で対象になるかを窓口に確かめてください。</p>' : '') +
       '<label class="field"><span class="lbl">手続きの型 <b class="req">必須</b></span><select name="templateId" data-change="tplPreview">' + tplOpts + '</select></label>' +
       '<div class="preview"><p class="small muted">この型の工程：</p><ol class="small">' + tpl.steps.map(function (s) {
         return '<li>' + h(s.title) + (s.window === 'day' ? ' <span class="pill">昼</span>' : '') + '</li>';
       }).join('') + '</ol>' + templateSource(tpl) + '</div>' +
       '<label class="field"><span class="lbl">関係する受給者証・手帳</span><select name="certificateId">' + certOpts + '</select></label>' +
-      '<label class="field"><span class="lbl">' + (ben ? '申請を終えたい日' : '期限（有効期限など）') + ' <b class="req">必須</b></span><input type="date" name="deadline" required value="' + h(f.deadline || '') + '">' +
+      '<label class="field"><span class="lbl">' + (ben ? '申請を終えたい日' : repeat ? '期限（来年の締め切りの見込み）' : '期限（有効期限など）') + ' <b class="req">必須</b></span><input type="date" name="deadline" required value="' + h(f.deadline || '') + '">' +
       '<span class="help">この日から逆算して、工程ごとの目安日を決めます。</span></label>' +
       '<label class="field"><span class="lbl">手続きの名前</span><input type="text" name="name" placeholder="' + h(tpl.name) + '" value="' + h(f.name || '') + '"></label>' +
       '<p class="small muted">' + h(TEMPLATES.caution) + '</p>' +
-      '<div class="sheet-actions"><span class="spacer"></span>' + btn('やめる', 'closeForm', {}, 'ghost') + '<button type="submit" class="btn primary">始める</button></div>' +
+      '<div class="sheet-actions"><span class="spacer"></span>' + btn(repeat ? '今はしない' : 'やめる', 'closeForm', {}, 'ghost') + '<button type="submit" class="btn primary">' + (repeat ? '来年の分を始める' : '始める') + '</button></div>' +
       '</form>');
   }
 
@@ -525,7 +551,7 @@
     var byKind = {};
     mine('contacts').forEach(function (c) { if (!byKind[c.kind]) byKind[c.kind] = c.id; });
     var tasks = L.planProcess(tpl, deadline, {
-      childId: S.childId, certificateId: certId, today: today(), contactIdsByKind: byKind,
+      childId: fd.get('childId') || S.childId, certificateId: certId, today: today(), contactIdsByKind: byKind,
       processName: String(fd.get('name') || '').trim() || (cert ? (cert.name || cert.kind) + 'の更新' : fd.get('benefitId') && findBenefit(fd.get('benefitId')) ? findBenefit(fd.get('benefitId')).name + 'の申請' : tpl.name)
     });
     var items = tasks.map(function (t) { return { col: 'tasks', rec: t }; });
@@ -534,7 +560,8 @@
     S.form = null;
     S.tab = 'process';
     S.openProcess[tasks[0].processId] = true;
-    saveMany(items).then(function () { toast('手続きを登録しました。今やれる工程は「今日」に出ます'); });
+    var repeat = !!fd.get('repeat');
+    saveMany(items).then(function () { toast(repeat ? '来年の分を登録しました。工程は目安の日が近づくと「今日」に出ます' : '手続きを登録しました。今やれる工程は「今日」に出ます'); });
   }
 
   // ---------------------------------------------------------------- 子どもの情報
@@ -1078,9 +1105,11 @@
     }
     if (f.col === 'tasks' && rec.status === 'done' && !rec.doneAt) rec.doneAt = today();
     if (f.col === 'tasks' && rec.status === 'todo') rec.doneAt = '';
+    var justDone = f.col === 'tasks' && !f.isNew && f.rec.status === 'todo' && rec.status === 'done';
     S.form = null;
     saveMany(items).then(function () {
       toast('保存しました');
+      if (justDone) afterStepDone(rec);
     });
     var saved = items[items.length - 1].rec;
     if (f.isNew && f.col === 'children') { S.childId = saved.id; saveUi(); }
@@ -1441,6 +1470,7 @@
     gotoBenefits: function () { S.tab = 'process'; S.form = null; saveUi(); render(); var el = document.querySelector('details.benefit'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center' }); },
     toggleProcess: function (d) { S.openProcess[d.key] = !S.openProcess[d.key]; render(); },
     toggleDone: function () { S.showDone = !S.showDone; render(); },
+    repeatProcess: function (d) { var rep = L.nextRepeat(S.db, d.key, TEMPLATES); if (rep) openRepeatForm(rep); },
     deleteProcess: function (d) {
       var g = processGroups().find(function (x) { return x.key === d.key; });
       if (!g || !window.confirm('「' + g.name + '」の工程をすべて削除しますか？')) return;
@@ -1543,7 +1573,7 @@
     else if (kind === 'tplPreview') {
       var form = el.form;
       var fd = new FormData(form);
-      S.form = { kind: 'startProcess', templateId: fd.get('templateId'), certificateId: fd.get('certificateId'), deadline: fd.get('deadline'), name: fd.get('name'), benefitId: fd.get('benefitId') || '' };
+      S.form = { kind: 'startProcess', templateId: fd.get('templateId'), certificateId: fd.get('certificateId'), deadline: fd.get('deadline'), name: fd.get('name'), benefitId: fd.get('benefitId') || '', childId: fd.get('childId') || '', repeat: fd.get('repeat') || '' };
       render();
     }
     if (el.form && el.form.getAttribute('data-form') === 'record') updateShowIf(el.form);

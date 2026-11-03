@@ -1607,7 +1607,7 @@ var TEMPLATES = {
           "title": "控えを保管する",
           "window": "night",
           "daysBefore": 0,
-          "script": "提出した書類の写真かコピーを保管箱へ。次の年も同じ時期（8月12日〜9月11日）に届出がある。受給者証・手帳の「有効期限」は変えない（有効期限には再認定の期限だけを入れる）。次の年の分は、この手続きを終えたあとに始める"
+          "script": "提出した書類の写真かコピーを保管箱へ。次の年も同じ時期（8月12日〜9月11日）に届出がある。受給者証・手帳の「有効期限」は変えない（有効期限には再認定の期限だけを入れる）。この工程を「完了」にすると、来年の分も始めるかをアプリが聞く"
         }
       ]
     },
@@ -1688,7 +1688,7 @@ var TEMPLATES = {
           "title": "控えを保管する",
           "window": "night",
           "daysBefore": 0,
-          "script": "提出した書類の写真かコピーを保管箱へ。次の年も同じ時期（8月12日〜9月11日）に届出がある。受給者証・手帳の「有効期限」は変えない（有効期限には再認定の期限だけを入れる）。次の年の分は、この手続きを終えたあとに始める"
+          "script": "提出した書類の写真かコピーを保管箱へ。次の年も同じ時期（8月12日〜9月11日）に届出がある。受給者証・手帳の「有効期限」は変えない（有効期限には再認定の期限だけを入れる）。この工程を「完了」にすると、来年の分も始めるかをアプリが聞く"
         }
       ]
     },
@@ -2142,7 +2142,7 @@ var TEMPLATES = {
           "title": "見直しを終える",
           "window": "night",
           "daysBefore": 0,
-          "script": "この工程を「完了」にした日が、見直した日として残る。次の年も同じ時期に見直す"
+          "script": "この工程を「完了」にした日が、見直した日として残る。次の年も同じ時期に見直す（「完了」にすると、来年の分も始めるかをアプリが聞く）"
         }
       ]
     },
@@ -2256,6 +2256,14 @@ var Logic = (function () {
     var da = parseYmd(a), db = parseYmd(b);
     if (!da || !db) return null;
     return Math.round((db.getTime() - da.getTime()) / 86400000);
+  }
+  /** n 年先の同じ日（2/29 は、うるう年でなければ 2/28） */
+  function addYears(s, n) {
+    var d = parseYmd(s);
+    if (!d) return '';
+    var y = d.getFullYear() + n, m = d.getMonth();
+    var last = new Date(y, m + 1, 0).getDate();
+    return ymd(new Date(y, m, Math.min(d.getDate(), last)));
   }
   function fmtMD(s) {
     var d = parseYmd(s);
@@ -2378,6 +2386,64 @@ var Logic = (function () {
       prev = t;
     });
     return out;
+  }
+
+  /**
+   * 手続き（同じ processId の工程）を始めたときの期限を、工程の目安日から推し量る。
+   * 目安日＝期限−daysBefore（今日より前なら今日に詰める）なので、「目安日＋daysBefore」の最小が期限になる。
+   */
+  function processDeadline(tasks, template) {
+    var steps = (template && template.steps) || [];
+    var best = '';
+    (tasks || []).forEach(function (t) {
+      if (!t.dueDate) return;
+      var st = steps[(Number(t.stepNo) || 0) - 1];
+      var d = addDays(t.dueDate, (st && st.daysBefore) || 0);
+      if (d && (!best || d < best)) best = d;
+    });
+    return best;
+  }
+
+  /** 名前の中の「2026年」「2026年度」を1年先にする */
+  function nextYearName(name) {
+    return String(name || '').replace(/(\d{4})(?=年)/g, function (y) { return String(+y + 1); });
+  }
+
+  /**
+   * 毎年くり返す型（repeat: "yearly"）の手続きで、工程がすべて終わっていれば、
+   * 来年の分を始めるための案（型・期限を1年先にした日・名前・受給者証）を返す。
+   * くり返さない型、まだ終わっていない工程がある、来年の分をもう始めている、のときは null。
+   */
+  function nextRepeat(db, processId, templates) {
+    if (!processId) return null;
+    var all = alive(db.tasks);
+    var mine = all.filter(function (t) { return t.processId === processId; });
+    if (!mine.length) return null;
+    if (mine.some(function (t) { return t.status === 'todo'; })) return null;
+    var first = mine[0];
+    var tpl = findTemplate(templates, first.templateId);
+    if (!tpl || tpl.repeat !== 'yearly') return null;
+    var deadline = processDeadline(mine, tpl);
+    // 同じ子どもで、同じ型の、もっと先の期限の手続きがあれば、来年の分はもう始めている
+    var others = {};
+    all.forEach(function (t) {
+      if (t.processId && t.processId !== processId && t.templateId === tpl.id && t.childId === first.childId) {
+        (others[t.processId] = others[t.processId] || []).push(t);
+      }
+    });
+    var started = Object.keys(others).some(function (k) {
+      var d = processDeadline(others[k], tpl);
+      return !deadline || !d || d > deadline;
+    });
+    if (started) return null;
+    return {
+      templateId: tpl.id,
+      childId: first.childId || '',
+      certificateId: first.certificateId || '',
+      lastDeadline: deadline,
+      deadline: deadline ? addYears(deadline, 1) : '',
+      name: nextYearName(first.processName || tpl.name)
+    };
   }
 
   /** 期限が近いのに、更新の手続きをまだ始めていない受給者証・手帳 */
@@ -2855,6 +2921,7 @@ var Logic = (function () {
     ymd: ymd, parseYmd: parseYmd, addDays: addDays, diffDays: diffDays, fmtMD: fmtMD, fmtDate: fmtDate, fmtYm: fmtYm, ageText: ageText,
     nowIso: nowIso, uuid: uuid, alive: alive, indexById: indexById,
     isActionable: isActionable, dueLabel: dueLabel, findTemplate: findTemplate, groupTemplates: groupTemplates, planProcess: planProcess,
+    addYears: addYears, processDeadline: processDeadline, nextYearName: nextYearName, nextRepeat: nextRepeat,
     certificateAlerts: certificateAlerts, summarize: summarize,
     certGrade: certGrade, ageYears: ageYears, suggestBenefits: suggestBenefits,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,

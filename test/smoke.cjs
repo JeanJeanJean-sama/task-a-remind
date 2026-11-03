@@ -64,6 +64,39 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   await page.waitForSelector('text=次は「判定（発達検査）の予約を電話でとる」');
   ok(true, '工程を完了すると次の工程を案内する');
 
+  // 毎年くり返す型：最後の工程を終えると「来年の分も始めますか」と聞く
+  const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const due = new Date(); due.setDate(due.getDate() + 60);
+  const dueNext = new Date(due); dueNext.setFullYear(due.getFullYear() + 1);
+  await page.click('text=＋ 手続きを始める');
+  await page.selectOption('select[name=templateId]', 'tokuji-shotoku');
+  await page.fill('input[name=deadline]', ymd(due));
+  await page.fill('input[name=name]', 'テストの所得状況届（2026年）');
+  await page.click('.sheet button[type=submit]');
+  await page.waitForSelector('text=手続きを登録しました');
+  const yearly = page.locator('.proc:has(.proc-name:text-is("テストの所得状況届（2026年）"))');
+  for (let i = 1; i <= 4; i++) {
+    await yearly.locator('.step.now button:has-text("完了")').click();
+    if (i < 4) await yearly.locator('.step.done').nth(i - 1).waitFor();
+  }
+  await page.waitForSelector('.sheet h2:has-text("来年の分も始めますか")');
+  ok((await page.inputValue('.sheet select[name=templateId]')) === 'tokuji-shotoku', '最後の工程を終えると「来年の分も始めますか」と聞く');
+  ok((await page.inputValue('.sheet input[name=deadline]')) === ymd(dueNext), '期限が1年先になっている');
+  ok((await page.inputValue('.sheet input[name=name]')) === 'テストの所得状況届（2027年）', '名前の年も1年先になる');
+  ok(!(await page.isVisible('.sheet[aria-label="保険証・受給者証・手帳を編集"]')), '毎年の届出では、有効期限の見直しの画面は出さない');
+  await shot('03a_来年の分');
+  await page.click('.sheet button:has-text("今はしない")');
+  const doneCard = page.locator('.card:has-text("終わった手続き")');
+  await doneCard.locator('button:has-text("表示する")').click();
+  await doneCard.locator('button:has-text("来年の分を始める")').click();
+  await page.waitForSelector('.sheet h2:has-text("来年の分も始めますか")');
+  ok(true, '「今はしない」を選んでも、終わった手続きからあとで始められる');
+  await page.click('.sheet button[type=submit]');
+  await page.waitForSelector('text=来年の分を登録しました');
+  ok(await page.isVisible('.proc-name >> text=テストの所得状況届（2027年）'), '来年の分の工程ができる');
+  ok(!(await doneCard.locator('button:has-text("来年の分を始める")').count()), '来年の分を始めたら、ボタンは消える');
+  await doneCard.locator('button:has-text("閉じる")').click();
+
   // 使えるかもしれない制度（目安）：サンプルは横浜市・身体障害者手帳3級（架空）
   const ben = page.locator('.card:has-text("使えるかもしれない制度（目安）")');
   ok(await ben.isVisible(), '手続きの画面に「使えるかもしれない制度（目安）」が出る');
