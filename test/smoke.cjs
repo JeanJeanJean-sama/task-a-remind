@@ -48,6 +48,11 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   // 手続きを始める
   await page.click('button[data-tab=process]');
   await page.click('text=＋ 手続きを始める');
+  const groupLabels = await page.$$eval('.sheet select[name=templateId] optgroup', (o) => o.map((x) => x.label));
+  ok(groupLabels[0] === '更新・申請' && groupLabels.includes('毎年の届出') && groupLabels[groupLabels.length - 1] === 'その他', '手続きの型が組ごとに分かれている');
+  await page.selectOption('select[name=templateId]', 'tokuji-shotoku');
+  await page.waitForSelector('.sheet .tpl-source summary:has-text("に確認")');
+  ok(true, '型を選ぶと出典と確かめた日が出る');
   await page.selectOption('select[name=templateId]', 'ryouiku-renew');
   await page.fill('input[name=deadline]', '2027-01-15');
   await page.click('.sheet button[type=submit]');

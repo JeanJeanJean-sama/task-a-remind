@@ -468,16 +468,32 @@
           (t.status === 'done' ? '<span class="muted small">' + h(L.fmtMD(t.doneAt)) + ' 完了</span>' : (t.dueDate ? '<span class="muted small">目安 ' + h(L.fmtMD(t.dueDate)) + '</span>' : '')) +
           '</span>' + (st === 'now' ? btn('完了', 'done', { id: t.id }, 'primary sm') : '') + '</li>';
       }).join('') + '</ol>';
+      html += templateSource(L.findTemplate(TEMPLATES, g.tasks[0] && g.tasks[0].templateId));
       html += '<div class="row-end">' + btn('この手続きを削除', 'deleteProcess', { key: g.key }, 'sm ghost danger') + '</div>';
     }
     return html + '</div>';
   }
 
+  /** 手続きの型の選択肢（group ごとに <optgroup> で分ける） */
+  function templateOptions(selectedId) {
+    return L.groupTemplates(TEMPLATES).map(function (g) {
+      return '<optgroup label="' + h(g.label) + '">' + g.templates.map(function (t) {
+        return '<option value="' + h(t.id) + '"' + (t.id === selectedId ? ' selected' : '') + '>' + h(t.name) + '</option>';
+      }).join('') + '</optgroup>';
+    }).join('');
+  }
+  /** 手続きの型の出典と、確かめた日（小さく出す） */
+  function templateSource(tpl) {
+    if (!tpl || (!tpl.source && !tpl.checkedOn)) return '';
+    var head = '出典' + (tpl.checkedOn ? '（' + L.fmtDate(tpl.checkedOn) + 'に確認）' : '');
+    return '<details class="tpl-source small muted"><summary>' + h(head) + '</summary>' +
+      (tpl.source ? '<p>' + h(tpl.source) + '</p>' : '') +
+      '<p>制度は変わることがあります。くわしくは窓口で確かめてください。</p></details>';
+  }
+
   function startProcessForm(f) {
     var certs = mine('certificates');
-    var tplOpts = TEMPLATES.templates.map(function (t) {
-      return '<option value="' + h(t.id) + '"' + (t.id === f.templateId ? ' selected' : '') + '>' + h(t.name) + '</option>';
-    }).join('');
+    var tplOpts = templateOptions(f.templateId);
     var certOpts = '<option value="">（なし）</option>' + certs.map(function (c) {
       return '<option value="' + h(c.id) + '"' + (c.id === f.certificateId ? ' selected' : '') + '>' + h((c.name || c.kind) + (c.validUntil ? '（期限 ' + L.fmtMD(c.validUntil) + '）' : '')) + '</option>';
     }).join('');
@@ -489,7 +505,7 @@
       '<label class="field"><span class="lbl">手続きの型 <b class="req">必須</b></span><select name="templateId" data-change="tplPreview">' + tplOpts + '</select></label>' +
       '<div class="preview"><p class="small muted">この型の工程：</p><ol class="small">' + tpl.steps.map(function (s) {
         return '<li>' + h(s.title) + (s.window === 'day' ? ' <span class="pill">昼</span>' : '') + '</li>';
-      }).join('') + '</ol></div>' +
+      }).join('') + '</ol>' + templateSource(tpl) + '</div>' +
       '<label class="field"><span class="lbl">関係する受給者証・手帳</span><select name="certificateId">' + certOpts + '</select></label>' +
       '<label class="field"><span class="lbl">' + (ben ? '申請を終えたい日' : '期限（有効期限など）') + ' <b class="req">必須</b></span><input type="date" name="deadline" required value="' + h(f.deadline || '') + '">' +
       '<span class="help">この日から逆算して、工程ごとの目安日を決めます。</span></label>' +
@@ -865,7 +881,7 @@
         '<label class="field"><span class="lbl">昼タスクの通知</span>' + hours('dayHour', st.dayHour) + '</label></div>' +
         '<label class="field"><span class="lbl">期限を何日前から知らせるか</span><input type="number" name="certAlertDays" min="7" max="365" value="' + h(st.certAlertDays || 120) + '"></label>' +
         '<label class="field"><span class="lbl">通知に載せるアプリのURL</span><input type="url" name="appUrl" value="' + h(st.appUrl || '') + '"><span class="help">空欄なら、このWebアプリのURLを自動で使います。</span></label>' +
-        '<p class="small muted">通知には、手続き名・期限・連絡先だけを載せ、病名や医療の内容は載せません。</p>' +
+        '<p class="small muted">通知には、工程の名前・期限・連絡先だけを載せ、病名・障害の種類・等級などの医療の内容は載せません。ただし工程の名前には、「特別児童扶養手当の所得状況届を出す」のように<b>制度の名前</b>が入ることがあります。Discordは、<b>自分と家族だけのサーバー</b>で使ってください。</p>' +
         '<div class="sheet-actions">' + btn('テスト送信', 'testNotify', {}, 'ghost') + btn('今夜のまとめを今すぐ送る', 'sendDigestNow', {}, 'ghost') + '<span class="spacer"></span><button type="submit" class="btn primary">保存</button></div></form>');
     } else {
       html += card('通知（この端末版）',
@@ -1021,9 +1037,7 @@
         }).join('') + '</select>';
         break;
       case 'template':
-        input = '<select' + name + '><option value="">（なし）</option>' + TEMPLATES.templates.map(function (t) {
-          return '<option value="' + h(t.id) + '"' + (t.id === val ? ' selected' : '') + '>' + h(t.name) + '</option>';
-        }).join('') + '</select>';
+        input = '<select' + name + '><option value="">（なし）</option>' + templateOptions(val) + '</select>';
         break;
       default:
         var list = fd.suggestFrom ? ' list="sugg-' + h(fd.key) + '" autocomplete="off"' : '';

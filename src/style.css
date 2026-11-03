@@ -178,6 +178,10 @@ body:has(.site-foot) .main { padding-bottom: 8px; }
 .sheet-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
 .preview { background: var(--bg); border-radius: 10px; padding: 8px 12px; }
 .preview ol { margin: 4px 0; padding-left: 1.4em; }
+.tpl-source { margin: 6px 0 2px; }
+.tpl-source > summary { cursor: pointer; }
+.tpl-source p { margin: 4px 0 0; line-height: 1.5; overflow-wrap: anywhere; }
+.proc .tpl-source { padding: 0 4px 6px; }
 .notice p { margin: 8px 0; }
 
 .toast {

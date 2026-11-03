@@ -2320,6 +2320,19 @@ var Logic = (function () {
     return 'あと' + d + '日';
   }
 
+  /** 手続きの型を group ごとに分ける（画面の <optgroup> 用）。group のない型は「更新・申請」、汎用の型は「その他」 */
+  var TEMPLATE_GROUPS = ['更新・申請', '毎年の届出', '期限のあるもの', '年齢の節目', '災害の備え', 'その他'];
+  function groupTemplates(templates) {
+    var list = (templates && templates.templates) || templates || [];
+    var by = {};
+    list.forEach(function (t) {
+      var g = t.group || (t.id === 'generic' ? 'その他' : '更新・申請');
+      (by[g] = by[g] || []).push(t);
+    });
+    var order = TEMPLATE_GROUPS.concat(Object.keys(by).filter(function (g) { return TEMPLATE_GROUPS.indexOf(g) < 0; }));
+    return order.filter(function (g) { return by[g]; }).map(function (g) { return { label: g, templates: by[g] }; });
+  }
+
   function findTemplate(templates, id) {
     var list = (templates && templates.templates) || templates || [];
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
@@ -2841,7 +2854,7 @@ var Logic = (function () {
     EXPORT_FORMAT: EXPORT_FORMAT,
     ymd: ymd, parseYmd: parseYmd, addDays: addDays, diffDays: diffDays, fmtMD: fmtMD, fmtDate: fmtDate, fmtYm: fmtYm, ageText: ageText,
     nowIso: nowIso, uuid: uuid, alive: alive, indexById: indexById,
-    isActionable: isActionable, dueLabel: dueLabel, findTemplate: findTemplate, planProcess: planProcess,
+    isActionable: isActionable, dueLabel: dueLabel, findTemplate: findTemplate, groupTemplates: groupTemplates, planProcess: planProcess,
     certificateAlerts: certificateAlerts, summarize: summarize,
     certGrade: certGrade, ageYears: ageYears, suggestBenefits: suggestBenefits,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,

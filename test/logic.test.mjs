@@ -267,6 +267,17 @@ test('手続きの型が決まりに合っている（選択肢・工程の日�
   assert.equal(T.templates[T.templates.length - 1].id, 'generic', '汎用の型は最後');
 });
 
+test('手続きの型を group ごとに分ける（group なしは「更新・申請」、汎用は「その他」で最後）', () => {
+  const gs = L.groupTemplates(T);
+  const labels = gs.map((g) => g.label);
+  assert.equal(labels[0], '更新・申請');
+  assert.equal(labels[labels.length - 1], 'その他');
+  assert.deepEqual([...gs[gs.length - 1].templates.map((t) => t.id)], ['generic']);
+  assert.equal(gs.reduce((a, g) => a + g.templates.length, 0), T.templates.length, 'すべての型がどこかの組に入る');
+  for (const g of gs) for (const t of g.templates) if (t.group) assert.equal(t.group, g.label, t.id);
+  assert.ok(gs[0].templates.some((t) => t.id === 'ryouiku-renew'));
+});
+
 test('毎年くり返す型の最後の工程で、有効期限に毎年の締め切りを入れさせない', () => {
   for (const t of T.templates.filter((x) => x.repeat === 'yearly')) {
     const last = t.steps[t.steps.length - 1];
