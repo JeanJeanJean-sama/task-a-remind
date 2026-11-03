@@ -239,4 +239,48 @@ test('サンプル（架空）でも目安が出て、通知には制度の名�
   for (const w of ['3級', '内部障害', '第2種']) assert.ok(!text.includes(w), w + ' が通知に入っている');
 });
 
+test('手続きの型が決まりに合っている（選択肢・工程の日数・group・repeat・checkedOn）', () => {
+  const S = JSON.parse(fs.readFileSync(root + 'src/schema.json', 'utf8'));
+  const opts = (col, key) => S.collections[col].fields.find((f) => f.key === key).options;
+  const contactKinds = opts('contacts', 'kind');
+  const certKinds = opts('certificates', 'kind');
+  const groups = ['毎年の届出', '期限のあるもの', '年齢の節目', '災害の備え'];
+  const ids = new Set();
+  for (const t of T.templates) {
+    assert.ok(!ids.has(t.id), t.id + ' が2つある');
+    ids.add(t.id);
+    assert.ok(t.name && t.steps.length > 0, t.id);
+    for (const k of t.certificateKinds || []) assert.ok(certKinds.includes(k), `${t.id} の certificateKinds「${k}」が選択肢にない`);
+    if (t.group !== undefined) assert.ok(groups.includes(t.group), `${t.id} の group「${t.group}」`);
+    if (t.repeat !== undefined) assert.equal(t.repeat, 'yearly', t.id);
+    if (t.checkedOn !== undefined) assert.match(t.checkedOn, /^\d{4}-\d{2}-\d{2}$/, t.id);
+    let prev = Infinity;
+    for (const st of t.steps) {
+      assert.ok(st.title, t.id);
+      assert.ok(['day', 'night'].includes(st.window), `${t.id}「${st.title}」の window`);
+      assert.ok(Number.isInteger(st.daysBefore) && st.daysBefore >= 0, `${t.id}「${st.title}」の daysBefore`);
+      assert.ok(st.daysBefore <= prev, `${t.id}「${st.title}」の日数が前の工程より大きい`);
+      prev = st.daysBefore;
+      if (st.contactKind) assert.ok(contactKinds.includes(st.contactKind), `${t.id} の contactKind「${st.contactKind}」が選択肢にない`);
+    }
+  }
+  assert.equal(T.templates[T.templates.length - 1].id, 'generic', '汎用の型は最後');
+});
+
+test('毎年くり返す型の最後の工程で、有効期限に毎年の締め切りを入れさせない', () => {
+  for (const t of T.templates.filter((x) => x.repeat === 'yearly')) {
+    const last = t.steps[t.steps.length - 1];
+    assert.ok(!/期限をアプリに入れる|期限を入れる/.test(last.title + (last.script || '')), t.id + ' の最後の工程');
+  }
+});
+
+test('新しい手続きの型（所得状況届）から工程を作る', () => {
+  const tpl = L.findTemplate(T, 'tokuji-shotoku');
+  const tasks = L.planProcess(tpl, '2027-09-11', { childId: 'c1', today: '2027-07-01', contactIdsByKind: { '役所': 'k9' } });
+  assert.equal(tasks.length, 4);
+  assert.equal(tasks[0].dueDate, '2027-08-12');
+  assert.equal(tasks[2].contactId, 'k9');
+  assert.ok(tasks[0].script.includes('9月11日'));
+});
+
 console.log(`ロジックのテスト：${n}件すべて成功`);
