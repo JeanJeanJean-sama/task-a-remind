@@ -415,7 +415,7 @@ test('取り込み：貼り付けた文からJSONを取り出す', () => {
 
 test('取り込み：番号・定義にない項目・自動で入る項目は捨てる', () => {
   const [it] = check([{ type: 'certificates', from: 'C:\\Users\\someone\\保管箱\\2026-04-01_受給者証_〇〇市.pdf',
-    data: { kind: '療育手帳', number: '000000', issuerNumber: '000000', childId: 'x', id: 'y', sourceFile: 'z', foo: 'bar', validUntil: '2028-03-31' } }]);
+    data: { kind: '身体障害者手帳', number: '000000', issuerNumber: '000000', childId: 'x', id: 'y', sourceFile: 'z', foo: 'bar', validUntil: '2028-03-31' } }]);
   assert.equal(it.rec.number, undefined);
   assert.equal(it.rec.issuerNumber, undefined);
   assert.equal(it.rec.childId, undefined);
@@ -452,7 +452,7 @@ test('取り込み：未来の日付・生まれる前の日付', () => {
     { type: 'visits', data: { date: '2024-04-10', summary: 'a' } },
     { type: 'diagnoses', data: { name: 'a', diagnosedOn: '2024-03' } },
     { type: 'diagnoses', data: { name: 'b', diagnosedOn: '2026-12' } },
-    { type: 'certificates', data: { kind: '療育手帳', validUntil: '2030-01-01', issuedOn: '2024-05-01' } }
+    { type: 'certificates', data: { kind: '身体障害者手帳', validUntil: '2030-01-01', issuedOn: '2024-05-01' } }
   ]);
   assert.deepEqual(codes(items[0]), ['future']);
   assert.deepEqual(codes(items[1]), ['beforeBirth']);
@@ -555,6 +555,93 @@ test('取り込み：チェックしたものだけ保存の形にする', () =>
   assert.equal(L.applyImport(items, 'c1', T, TODAY, { db }).filter((x) => x.col === 'visits').length, 1);
 });
 
+// ---------- 3-4：診断名・受給者証・子どもの情報 ----------
+test('取り込み：種類に合わない項目（手帳の等級など）は捨てる', () => {
+  const [a, b] = check([
+    { type: 'certificates', data: { kind: '健康保険証', gradeCode: 'x', disabilityType: 'y', fareClass: '第1種', issuerName: '〇〇（架空）' } },
+    { type: 'certificates', data: { kind: '身体障害者手帳', fareClass: '第1種', grade: '（架空）' } }
+  ], { childId: 'c2' });
+  assert.deepEqual(a.dropped.map((d) => d.key + ':' + d.reason).sort(), ['disabilityType:showIf', 'fareClass:showIf', 'gradeCode:showIf']);
+  assert.equal(a.rec.gradeCode, undefined);
+  assert.equal(a.rec.issuerName, '〇〇（架空）');
+  assert.ok(a.checked, '捨てただけならチェックは外さない');
+  assert.equal(b.rec.fareClass, '第1種', '種類に合う項目は取り込む');
+  assert.deepEqual(b.dropped, []);
+});
+
+test('取り込み：同じ種類の受給者証・手帳がある（新しい証かもしれない）', () => {
+  const db = DB();
+  db.certificates.push({ id: 'z3', childId: 'c1', kind: '身体障害者手帳', validUntil: '2027-03-31' });
+  const items = check([
+    { type: 'certificates', data: { kind: '身体障害者手帳', validUntil: '2031-03-31' } },
+    { type: 'certificates', data: { kind: '身体障害者手帳', validUntil: '2027-03-31' } },
+    { type: 'certificates', data: { kind: '障害児通所受給者証', validUntil: '2027-06-30' } },
+    { type: 'certificates', data: { kind: '障害児通所受給者証', validUntil: '2028-06-30' } }
+  ], { db });
+  assert.deepEqual(codes(items[0]), ['sameKind']);
+  assert.match(items[0].problems[0].message, /すでに同じ種類（身体障害者手帳 有効期限 2027-03-31）があります。新しい証なら、取り込んだあとに古いほうを消すか直してください/);
+  assert.equal(items[0].problems[0].key, 'kind');
+  assert.ok(items[0].canImport && !items[0].checked, '印を付けて、最初はチェックを外す');
+  assert.deepEqual(codes(items[1]), ['duplicate'], '有効期限も同じなら「同じものがありそう」だけ');
+  assert.deepEqual(codes(items[2]), [], '初めての種類は印なし');
+  assert.deepEqual(codes(items[3]), ['sameKind'], 'ファイルの中の同じ種類');
+  assert.match(items[3].problems[0].message, /このファイルの中に、同じ種類/);
+  const other = check([{ type: 'certificates', data: { kind: '身体障害者手帳', validUntil: '2031-03-31' } }], { db, childId: 'c2' });
+  assert.deepEqual(codes(other[0]), [], 'ほかの子どもの受給者証とは比べない');
+});
+
+test('取り込み：同じ項目の子どもの情報があり、内容がちがう', () => {
+  const db = DB();
+  db.profile.push(
+    { id: 'p2', childId: 'c1', category: '食事', label: 'ミルクの量', value: '120ml', validTo: '' },
+    { id: 'p3', childId: 'c1', category: '食事', label: '食べ方', value: 'スプーン', validTo: '2025-01-01' }
+  );
+  const items = check([
+    { type: 'profile', data: { category: '食事', label: 'ミルクの量', value: '160ml' } },
+    { type: 'profile', data: { category: '食事', label: 'ミルクの量', value: '120 ml' } },
+    { type: 'profile', data: { category: '食事', label: '食べ方', value: '手づかみ' } },
+    { type: 'profile', data: { category: '食事', label: 'ミルクの量', value: '100ml', validTo: '2024-12-31' } },
+    { type: 'profile', data: { category: '睡眠', label: '寝る時間', value: '20時' } },
+    { type: 'profile', data: { category: '睡眠', label: '寝る時間', value: '21時' } },
+    { type: 'profile', data: { category: '医療・服薬', label: 'ミルクの量', value: '160ml' } }
+  ], { db });
+  assert.deepEqual(codes(items[0]), ['sameLabel']);
+  assert.match(items[0].problems[0].message, /同じ項目（食事／ミルクの量）の今の情報があります（120ml）。内容が変わったなら、取り込んだあとに古いほうの「いつまで」を入れてください/);
+  assert.ok(items[0].canImport && !items[0].checked);
+  assert.deepEqual(codes(items[1]), ['duplicate'], '内容も同じなら「同じものがありそう」');
+  assert.deepEqual(codes(items[2]), [], '「いつまで」が入った過去の情報とは比べない');
+  assert.deepEqual(codes(items[3]), [], '取り込むほうが過去の情報（いつまでが入っている）なら比べない');
+  assert.deepEqual(codes(items[4]), []);
+  assert.deepEqual(codes(items[5]), ['sameLabel'], 'ファイルの中の同じ項目');
+  assert.deepEqual(codes(items[6]), [], '分類がちがえば別');
+});
+
+test('取り込み：手続きを、同じファイルで取り込む受給者証につなぐ', () => {
+  const db = DB();
+  db.certificates = db.certificates.filter((c) => c.kind !== '特別児童扶養手当');
+  const recs = [
+    { type: 'process', data: { templateId: 'tokuji-shotoku', deadline: '2027-08-31' } },
+    { type: 'certificates', data: { kind: '特別児童扶養手当', issuerName: '〇〇市（架空）' } }
+  ];
+  const items = check(recs, { db });
+  assert.equal(items[0].certificateId, 'import:1', '型に合う受給者証がファイルの中に1つだけなら、選んでおく（後ろにあってもよい）');
+  const choices = plain(L.importCertificateChoices(items, db, 'c1', T, items[0]));
+  assert.deepEqual(choices.map((c) => c.id + ':' + c.fromFile), ['import:1:true']);
+  const out = L.applyImport(items, 'c1', T, TODAY, { db });
+  const cert = out.find((x) => x.col === 'certificates').rec;
+  const tasks = out.filter((x) => x.col === 'tasks').map((x) => x.rec);
+  assert.ok(tasks.length && tasks.every((t) => t.certificateId === cert.id), '取り込んだ受給者証のIDにつなぐ');
+  items[1].checked = false;
+  const out2 = L.applyImport(items, 'c1', T, TODAY, { db });
+  assert.ok(out2.filter((x) => x.col === 'tasks').every((t) => t.rec.certificateId === ''), '受給者証を取り込まないなら、つながない');
+  // 今のデータにもあるとき（更新された証など）は、どちらか決められないので選ばない
+  const both = check(recs, { db: DB() });
+  assert.equal(both[0].certificateId, '');
+  assert.deepEqual(plain(L.importCertificateChoices(both, DB(), 'c1', T, both[0])).map((c) => c.id), ['z1', 'import:1']);
+  const onlyDb = check([recs[0]], { db: DB() });
+  assert.equal(onlyDb[0].certificateId, 'z1', '今のデータに1つだけなら、それを選ぶ');
+});
+
 test('取り込み：sample/ の架空の取り込み用ファイルは、すべて取り込める', () => {
   const data = L.parseImportText(fs.readFileSync(root + 'sample/sample-import.json', 'utf8'));
   const items = L.checkImport(data, S, {}, T, { today: TODAY });
@@ -603,6 +690,9 @@ test('AIへの指示書：取り込める種類・項目・選択肢・過去の
     if (type !== 'process') {
       const data = {};
       for (const f of want) data[f.key] = f.type === 'date' ? '2020-01-01' : f.type === 'month' ? '2020-01' : 'x';
+      // 「種類が…のときだけ」の欄（showIf）がすべて出る値にする（例：身体障害者手帳）
+      const conds = want.filter((f) => f.showIf).sort((a, b) => a.showIf.in.length - b.showIf.in.length);
+      for (const f of conds) if (!f.showIf.in.includes(data[f.showIf.key])) data[f.showIf.key] = f.showIf.in[0];
       const [it] = L.checkImport({ records: [{ type, data }] }, S, {}, T, { today: '2026-11-04' });
       assert.deepEqual(plain(it.dropped), [], type + '：指示書の項目は、取り込みで捨てられない');
     }

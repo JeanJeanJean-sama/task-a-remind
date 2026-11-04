@@ -183,6 +183,37 @@ test('決めた時刻だけ、1日1回だけDiscordに送る', () => {
   assert.ok(posts[1].body.content.includes(t.title));
 });
 
+test('AIで読み取ったデータ（7種類）を取り込んで、シートから同じ値で読み込める', () => {
+  const S = JSON.parse(fs.readFileSync(root + 'src/schema.json', 'utf8'));
+  const db = ctx.api_loadAll();
+  const childId = db.children[0].id;
+  const data = ctx.Logic.parseImportText(fs.readFileSync(root + 'sample/sample-import.json', 'utf8'));
+  const items = ctx.Logic.checkImport(data, S, db, T, { childId, today });
+  items.forEach((it) => { if (it.canImport) it.checked = true; });
+  const out = ctx.Logic.applyImport(items, childId, T, today, { db });
+  assert.deepEqual([...new Set(out.map((x) => x.col))].sort(), ['certificates', 'contacts', 'diagnoses', 'milestones', 'profile', 'tasks', 'visits']);
+  ctx.api_putMany(JSON.parse(JSON.stringify(out)));
+  const db2 = ctx.api_loadAll();
+  for (const { col, rec } of out) {
+    const got = db2[col].find((r) => r.id === rec.id);
+    assert.ok(got, col + ' が保存されている');
+    for (const [k, v] of Object.entries(rec)) {
+      if (Array.isArray(v)) assert.equal(JSON.stringify(got[k]), JSON.stringify(v), `${col}.${k}`);
+      else assert.equal(String(got[k]), String(v), `${col}.${k}`);
+    }
+  }
+  for (const col of ['visits', 'milestones', 'diagnoses', 'certificates', 'contacts', 'profile']) {
+    const sh = ss.getSheetByName(S.collections[col].sheet);
+    assert.ok(sh.cells[0].includes('sourceFile'), col + '：シートに「元の書類」の列がある');
+  }
+  const cert = out.find((x) => x.col === 'certificates').rec;
+  assert.ok(out.filter((x) => x.col === 'tasks').every((x) => x.rec.certificateId === cert.id), '手続きは一緒に取り込んだ受給者証につながる');
+  // 夜のまとめ通知に、診断名などの医療の情報は出ない
+  const text = ctx.Logic.buildDigestText(db2, today, ctx.digestOpts_(ctx.readSettings_()));
+  assert.ok(text.includes('今夜のまとめ'));
+  assert.ok(!text.includes('（架空の診断名）'), '通知の文に診断名が出ない');
+});
+
 test('長い通知は分けて送る', () => {
   posts.length = 0;
   ctx.postDiscord_('https://discord.com/api/webhooks/1/abc', Array.from({ length: 200 }, (_, i) => '・とても長い行その' + i).join('\n'));

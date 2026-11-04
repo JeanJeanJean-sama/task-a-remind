@@ -1442,8 +1442,7 @@
   //   2. Logic.parseImportText → Logic.checkImport の結果を、確認の画面（importReview）に出す
   //   3. チェックしたものだけ Logic.applyImport で保存できる形にして保存する
   // =====================================================================
-  /** 確認の画面で取り込める種類。diagnoses・certificates・profile は 3-4 で足す（ロジックはできている） */
-  var IMPORT_UI_TYPES = ['visits', 'milestones', 'contacts', 'process'];
+  // 取り込める種類は Logic.IMPORT_TYPES（7種類すべて。3-4 で diagnoses・certificates・profile も画面から取り込めるようにした）
 
   /** 「AIへの指示書」の説明とボタン（設定の「データ」のカードと、貼り付けの画面に出す） */
   function aiGuideBlock() {
@@ -1525,15 +1524,7 @@
   /** 選んでいる子どもで、取り込み用データを調べ直す（子どもを選び直したときも呼ぶ） */
   function checkImportItems() {
     var f = S.form;
-    var items = L.checkImport(f.data, SCHEMA, S.db, TEMPLATES, { childId: f.childId, today: today() });
-    items.forEach(function (it) {
-      if (it.canImport && IMPORT_UI_TYPES.indexOf(it.type) < 0) {
-        it.problems.push({ level: 'block', code: 'notYet', key: '', message: 'この種類（' + it.label + '）は、まだ取り込めません。次の版で取り込めるようにします' });
-        it.canImport = false;
-        it.checked = false;
-      }
-    });
-    f.items = items;
+    f.items = L.checkImport(f.data, SCHEMA, S.db, TEMPLATES, { childId: f.childId, today: today() });
   }
 
   function importCheckedCount() {
@@ -1585,24 +1576,33 @@
         if (fd.key === 'sourceFile' || !(fd.key in it.rec)) return;
         var v = it.rec[fd.key];
         if (fd.type === 'select') v = optLabel(fd, v) || v;
+        if (fd.type === 'template') { var tp = L.findTemplate(TEMPLATES, v); if (tp) v = tp.name; }
         row(fd.label, v, fd.key);
       });
     }
     return '<table class="imp-fields">' + rows.join('') + '</table>';
   }
 
-  /** 手続き：型の受給者証の種類に合う、この子どもの受給者証を選べるようにする */
+  function fieldLabel(type, key) {
+    var def = SCHEMA.collections[type];
+    var fd = def && def.fields.filter(function (x) { return x.key === key; })[0];
+    return fd ? fd.label : key;
+  }
+
+  /** 手続き：型の受給者証の種類に合う、この子どもの受給者証（と、このファイルで取り込む受給者証）を選べるようにする */
   function importCertSelect(it) {
     var tpl = L.findTemplate(TEMPLATES, it.rec.templateId);
     var kinds = (tpl && tpl.certificateKinds) || [];
     if (!kinds.length) return '';
-    var certs = all('certificates').filter(function (c) { return c.childId === S.form.childId && kinds.indexOf(c.kind) >= 0; });
+    var certs = L.importCertificateChoices(S.form.items, S.db, S.form.childId, TEMPLATES, it);
     var opts = '<option value="">（なし）</option>' + certs.map(function (c) {
-      return '<option value="' + h(c.id) + '"' + (c.id === it.certificateId ? ' selected' : '') + '>' + h((c.name || c.kind) + (c.validUntil ? '（期限 ' + L.fmtMD(c.validUntil) + '）' : '')) + '</option>';
+      return '<option value="' + h(c.id) + '"' + (c.id === it.certificateId ? ' selected' : '') + '>' + h((c.fromFile ? 'このファイルで取り込む：' : '') + c.text) + '</option>';
     }).join('');
+    var help = !certs.length ? '「' + h(kinds.join('・')) + '」がまだ登録されていません。なしのままでも取り込めます。'
+      : certs.some(function (c) { return c.fromFile; }) ? '「このファイルで取り込む」受給者証は、その受給者証にもチェックを付けて取り込むときだけ、つながります。' : '';
     return '<label class="field imp-cert"><span class="lbl">関係する受給者証・手帳</span>' +
       '<select data-change="importCert" data-index="' + it.index + '"' + (it.canImport ? '' : ' disabled') + '>' + opts + '</select>' +
-      (certs.length ? '' : '<span class="help">「' + h(kinds.join('・')) + '」がまだ登録されていません。なしのままでも取り込めます。</span>') + '</label>';
+      (help ? '<span class="help">' + help + '</span>' : '') + '</label>';
   }
 
   function importItemView(it) {
@@ -1628,6 +1628,8 @@
       list(infos, 'info') +
       (it.dropped.some(function (d) { return d.reason === 'unknown' || d.reason === 'badValue'; })
         ? '<p class="small muted">取り込まない項目：' + h(it.dropped.filter(function (d) { return d.reason === 'unknown' || d.reason === 'badValue'; }).map(function (d) { return d.key; }).join('、')) + '（TRMにない項目、または値の形が違うもの）</p>' : '') +
+      (it.dropped.some(function (d) { return d.reason === 'showIf'; })
+        ? '<p class="small muted">種類に合わないので取り込まない項目：' + h(it.dropped.filter(function (d) { return d.reason === 'showIf'; }).map(function (d) { return fieldLabel(it.type, d.key); }).join('、')) + '</p>' : '') +
       '</details>' +
       (it.type === 'process' ? importCertSelect(it) : '') +
       '</div>';

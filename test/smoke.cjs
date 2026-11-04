@@ -282,19 +282,24 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   const visitBox = impRow('受診・入院の記録').locator('input[data-change=importCheck]');
   ok(!(await visitBox.isChecked()) && (await visitBox.isEnabled()) && (await impRow('受診・入院の記録').textContent()).includes('AIが自信がない'), 'AIが自信がない項目のある記録は、印が付き最初はチェックが外れている');
   ok(await impRow('医療機関・関係機関').locator('input[data-change=importCheck]').isChecked(), '問題のない記録は、最初からチェックが付いている');
-  const diagRow = impRow('診断名');
-  ok((await diagRow.locator('input[data-change=importCheck]').isDisabled()) && (await diagRow.textContent()).includes('まだ取り込めません'), '診断名などは、まだ取り込めない（3-4 で対応）');
+  for (const type of ['診断名', '保険証・受給者証・手帳', '子どもの情報']) {
+    const box = impRow(type).locator('input[data-change=importCheck]');
+    ok((await box.isEnabled()) && (await box.isChecked()), type + 'も取り込める（3-4）');
+  }
+  ok((await impRow('保険証・受給者証・手帳').textContent()).includes('特別児童扶養手当'), '受給者証の中身が出る');
   ok((await impRow('手続きを始める').textContent()).includes('特別児童扶養手当の所得状況届') && (await impRow('手続きを始める').locator('select[data-change=importCert]').count()) === 1, '手続きは、型の受給者証を選べる');
+  const certSel = impRow('手続きを始める').locator('select[data-change=importCert]');
+  ok((await certSel.locator('option:checked').textContent()).startsWith('このファイルで取り込む：特別児童扶養手当'), '同じファイルで取り込む受給者証を、手続きに最初からつないでおく');
   ok((await impRow('受診・入院の記録').textContent()).includes('元の書類：2026-03-10_退院療養計画書'), '元の書類の名前とAIのひとことを見られる');
   await shot('12_取り込みの確認');
   // 上の「毎年くり返す型」のテストで同じ型の手続きが始まっているので、重なりの印が付く
   const procBox = impRow('手続きを始める').locator('input[data-change=importCheck]');
   ok(!(await procBox.isChecked()) && (await impRow('手続きを始める').textContent()).includes('もう始まっています'), '同じ型の手続きがもう始まっていれば、印が付き最初はチェックが外れている');
   await visitBox.check();
-  ok((await page.textContent('.sheet [data-act=importApply]')).includes('3件'), 'チェックを付けると、取り込む件数が変わる');
+  ok((await page.textContent('.sheet [data-act=importApply]')).includes('6件'), 'チェックを付けると、取り込む件数が変わる');
   await procBox.check();
   await page.click('.sheet [data-act=importApply]');
-  await page.waitForSelector('text=4件を取り込みました');
+  await page.waitForSelector('text=7件を取り込みました');
   ok(true, 'チェックしたものだけを取り込める');
   await page.click('button[data-tab=info]');
   await page.click('.seg button:has-text("医療機関・関係機関")');
@@ -303,6 +308,12 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   await page.click('text=肺炎で入院（架空の例）');
   ok((await page.inputValue('.sheet [name=sourceFile]')).startsWith('2026-03-10_退院療養計画書'), '取り込んだ記録の「元の書類」に、読み取った書類の名前が入る');
   await page.click('.sheet button:has-text("やめる")');
+  ok(await page.isVisible('.item-title:text-is("（架空の診断名）")'), '取り込んだ診断名が出る');
+  await page.click('.seg button:has-text("保険証・受給者証")');
+  const tokujiItem = page.locator('.item:has(.item-title:text-is("特別児童扶養手当"))');
+  ok((await tokujiItem.count()) === 1 && (await tokujiItem.textContent()).includes('手続き中'), '取り込んだ受給者証が出て、一緒に取り込んだ手続きにつながっている');
+  await page.click('.seg button:has-text("本人")');
+  ok(await page.isVisible('text=手すりにつかまって階段をのぼれる（架空の例）'), '取り込んだ子どもの情報が出る');
   await page.click('button[data-tab=process]');
   ok(await page.isVisible('.proc-name >> text=特別児童扶養手当の所得状況届（2026年）'), '取り込んだ手続きの工程ができる');
   // 同じものをもう一度取り込もうとすると、重なりの印が付く

@@ -697,8 +697,9 @@ var Logic = (function () {
     var child = childId ? indexById(alive(db.children))[childId] : null;
     var birth = child && isRealDate(String(child.birthDate || '')) ? child.birthDate : '';
     var seen = {}; // ファイルの中での重なり：type|鍵 → [{ index, rec }]
+    var similarSeen = {}; // ファイルの中での似たもの（同じ種類の受給者証・同じ項目の子どもの情報）
 
-    return ((data && data.records) || []).map(function (raw, index) {
+    var items = ((data && data.records) || []).map(function (raw, index) {
       raw = raw && typeof raw === 'object' ? raw : {};
       var type = String(raw.type || '').trim();
       var item = {
@@ -731,6 +732,11 @@ var Logic = (function () {
         if (v == null || v === '') return;
         if (typeof v === 'object') { item.dropped.push({ key: k, reason: 'badValue' }); return; }
         rec[k] = typeof v === 'string' ? v.trim() : (f.type === 'number' ? v : String(v));
+      });
+      // 1-2. 種類に合わない項目（showIf。例：健康保険証の「手帳の等級」）は捨てる。ふだんの入力でも出ない欄のため
+      def.fields.forEach(function (f) {
+        if (!f.showIf || !(f.key in rec)) return;
+        if (f.showIf.in.indexOf(rec[f.showIf.key]) < 0) { delete rec[f.key]; item.dropped.push({ key: f.key, reason: 'showIf' }); }
       });
       if (item.dropped.some(function (d) { return d.reason === 'number'; })) {
         problem('info', 'numberDropped', '番号の項目は取り込みません。必要なら、取り込んだあとに手で入れてください');
@@ -812,11 +818,6 @@ var Logic = (function () {
             return t.templateId === tpl.id && t.childId === childId && t.status === 'todo';
           });
           if (running.length) item.duplicateOf = { col: 'tasks', id: running[0].processId, index: -1, text: duplicateText('process', running[0]) };
-          // 型の受給者証の種類に合うものが1つだけなら、最初から選んでおく
-          var certs = alive(db.certificates).filter(function (c) {
-            return c.childId === childId && (tpl.certificateKinds || []).indexOf(c.kind) >= 0;
-          });
-          if (certs.length === 1) item.certificateId = certs[0].id;
         }
         var pkey = rec.templateId ? 'process|' + rec.templateId : '';
         if (!item.duplicateOf && pkey && seen[pkey]) item.duplicateOf = { col: '', id: '', index: seen[pkey][0].index, text: duplicateText('process', seen[pkey][0].rec) };
@@ -842,15 +843,84 @@ var Logic = (function () {
         problem('warn', 'duplicate', item.duplicateOf.index >= 0
           ? 'このファイルの中に、同じものがもう1つあります（' + item.duplicateOf.text + '）'
           : 'すでに同じものがありそうです（' + item.duplicateOf.text + '）');
+      } else {
+        similarCheck(item, type, rec);
       }
       return finish(item);
     });
+
+    // 8. 手続き：型の受給者証の種類に合うものが、今のデータとこのファイルを合わせて1つだけなら、最初から選んでおく。
+    //    このファイルで取り込む受給者証は 'import:何件目' で指す（applyImport で、取り込んだ記録のIDに置き換える）
+    items.forEach(function (item) {
+      if (item.type !== 'process' || !item.canImport) return;
+      var opts2 = importCertificateChoices(items, db, childId, templates, item);
+      if (opts2.length === 1) item.certificateId = opts2[0].id;
+    });
+    return items;
+
+    /**
+     * 重なりではないが、似たものがあるときの印（3-4。最初はチェックを外す）
+     *   受給者証・手帳：同じ種類がある（新しい証なら、古いほうを消すか直してもらう）
+     *   子どもの情報：同じ分類・項目名の「今の情報」があり、内容がちがう（履歴にするのは、取り込んだあとに手で）
+     */
+    function similarCheck(item, type, rec) {
+      var n = importNorm;
+      var k, hit, prev, list;
+      if (type === 'certificates' && rec.kind) {
+        k = 'kind|' + n(rec.kind);
+        hit = alive(db.certificates).filter(function (c) { return c.childId === childId && n(c.kind) === n(rec.kind); })[0];
+        prev = (similarSeen[type + '|' + k] || [])[0];
+        (similarSeen[type + '|' + k] = similarSeen[type + '|' + k] || []).push({ index: item.index, rec: rec });
+        if (hit) {
+          problem2(item, 'sameKind', 'kind', 'すでに同じ種類（' + duplicateText(type, hit) + '）があります。新しい証なら、取り込んだあとに古いほうを消すか直してください');
+        } else if (prev) {
+          problem2(item, 'sameKind', 'kind', 'このファイルの中に、同じ種類（' + duplicateText(type, prev.rec) + '）がもう1つあります');
+        }
+      }
+      if (type === 'profile' && rec.label && !rec.validTo) {
+        k = n(rec.category) + '|' + n(rec.label);
+        list = alive(db.profile).filter(function (p) {
+          return p.childId === childId && !p.validTo && n(p.category) + '|' + n(p.label) === k && n(p.value) !== n(rec.value);
+        });
+        prev = (similarSeen[type + '|' + k] || []).filter(function (x) { return n(x.rec.value) !== n(rec.value); })[0];
+        (similarSeen[type + '|' + k] = similarSeen[type + '|' + k] || []).push({ index: item.index, rec: rec });
+        if (list.length) {
+          problem2(item, 'sameLabel', 'label', '同じ項目（' + rec.category + '／' + rec.label + '）の今の情報があります（' + list[0].value + '）。内容が変わったなら、取り込んだあとに古いほうの「いつまで」を入れてください');
+        } else if (prev) {
+          problem2(item, 'sameLabel', 'label', 'このファイルの中に、同じ項目（' + rec.category + '／' + rec.label + '）で内容のちがうものがもう1つあります');
+        }
+      }
+    }
+    function problem2(item, code, key, message) { item.problems.push({ level: 'warn', code: code, key: key, message: message }); }
 
     function finish(item) {
       item.canImport = !item.problems.some(function (p) { return p.level === 'block'; });
       item.checked = item.canImport && !item.problems.some(function (p) { return p.level === 'warn'; });
       return item;
     }
+  }
+
+  /** このファイルで取り込む受給者証を、手続きの certificateId で指すときの頭の文字（'import:何件目'） */
+  var IMPORT_REF = 'import:';
+
+  /**
+   * 手続き（process）の「関係する受給者証・手帳」に選べるもの。
+   * 型の certificateKinds に合う、今のデータの受給者証（その子どもの）と、このファイルで取り込める受給者証。
+   * 返す形：[{ id, text, fromFile }]。fromFile のものの id は 'import:何件目'
+   */
+  function importCertificateChoices(items, db, childId, templates, item) {
+    var tpl = findTemplate(templates, item && item.rec && item.rec.templateId);
+    var kinds = (tpl && tpl.certificateKinds) || [];
+    if (!kinds.length) return [];
+    var out = alive((db || {}).certificates).filter(function (c) {
+      return c.childId === childId && kinds.indexOf(c.kind) >= 0;
+    }).map(function (c) { return { id: c.id, text: duplicateText('certificates', c), fromFile: false }; });
+    (items || []).forEach(function (it) {
+      if (it.type === 'certificates' && it.canImport && kinds.indexOf(it.rec.kind) >= 0) {
+        out.push({ id: IMPORT_REF + it.index, text: duplicateText('certificates', it.rec), fromFile: true });
+      }
+    });
+    return out;
   }
 
   /**
@@ -861,6 +931,7 @@ var Logic = (function () {
    *   today     … 'YYYY-MM-DD'（手続きの工程の目安日を、今日より前にしないため）
    *   opts      … { db: 今のデータ }（工程の連絡先・子どもの情報の並び順に使う）
    * process は planProcess() で工程ごとのタスクにする。手続きの受給者証は item.certificateId（画面で選ぶ）。
+   * certificateId が 'import:何件目' なら、このファイルで取り込む受給者証のIDにする（その受給者証を取り込まないなら、つながない）。
    */
   function applyImport(items, childId, templates, today, opts) {
     opts = opts || {};
@@ -870,12 +941,14 @@ var Logic = (function () {
     var mine = function (col) { return alive(db[col]).filter(function (r) { return r.childId === childId; }); };
     var picked = (items || []).filter(function (it) { return it && it.checked && it.canImport; });
     var order = mine('profile').reduce(function (m, p) { return Math.max(m, Number(p.order) || 0); }, 0);
+    var newIdByIndex = {};
     // 先に記録を作る（同じファイルの医療機関を、手続きの連絡先に使えるように）
     picked.forEach(function (it) {
       if (it.type === 'process') return;
       var rec = { id: uuid(), createdAt: now, updatedAt: now, deleted: false, childId: childId };
       Object.keys(it.rec).forEach(function (k) { rec[k] = it.rec[k]; });
       if (it.type === 'profile') rec.order = ++order;
+      newIdByIndex[it.index] = rec.id;
       out.push({ col: it.type, rec: rec });
     });
     var byKind = {};
@@ -885,9 +958,11 @@ var Logic = (function () {
       if (it.type !== 'process') return;
       var tpl = findTemplate(templates, it.rec.templateId);
       if (!tpl || !it.rec.deadline) return;
+      var certId = String(it.certificateId || '');
+      if (certId.indexOf(IMPORT_REF) === 0) certId = newIdByIndex[certId.slice(IMPORT_REF.length)] || '';
       planProcess(tpl, it.rec.deadline, {
         childId: childId, today: today || ymd(), contactIdsByKind: byKind,
-        certificateId: it.certificateId || '', processName: it.rec.name || tpl.name
+        certificateId: certId, processName: it.rec.name || tpl.name
       }).forEach(function (t) { out.push({ col: 'tasks', rec: t }); });
     });
     return out;
@@ -1173,7 +1248,7 @@ var Logic = (function () {
     certGrade: certGrade, ageYears: ageYears, suggestBenefits: suggestBenefits,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,
     makeExport: makeExport, migrate: migrate, upgradeCollections: upgradeCollections, mergeImport: mergeImport, buildSample: buildSample,
-    IMPORT_FORMAT: IMPORT_FORMAT, IMPORT_TYPES: IMPORT_TYPES, parseImportText: parseImportText, checkImport: checkImport, applyImport: applyImport,
+    IMPORT_FORMAT: IMPORT_FORMAT, IMPORT_TYPES: IMPORT_TYPES, parseImportText: parseImportText, checkImport: checkImport, applyImport: applyImport, importCertificateChoices: importCertificateChoices,
     buildAiGuide: buildAiGuide
   };
 })();

@@ -100,6 +100,6 @@
 - **同期の改善**：開いている間の自動取り込み、変わったときだけ取り込む、アカウント切り替え
 - **制度の提案**：→ 作りました（v0.4.0）。`src/benefits.json`（横浜市・16制度）と `Logic.suggestBenefits()`。横浜市の一覧は毎年 Jean=Summer が見直す。ほかの手帳・受給資格も今後足していく
 - **AIによる読み取り・書類づくり**：
-  - A：利用者が自分で外のAIに書類を読ませ、取り込み用JSONを作ってTRMで確認して取り込む
+  - A：利用者が自分で外のAIに書類を読ませ、取り込み用JSONを作ってTRMで確認して取り込む → 作りました（未リリース）。`Logic.parseImportText()`・`checkImport()`・`applyImport()`、確認の画面は `src/app.js`、AIへの指示書は `Logic.buildAiGuide()`。取り込めるのは7種類（`Logic.IMPORT_TYPES`）
   - B：パソコンのChromeに入っているAI（端末の中だけで動く）で読み取る。使える端末だけボタンを出す
   - どちらも、保存の前に必ず人が確認する画面を通す
