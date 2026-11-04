@@ -144,6 +144,9 @@ test('プライバシーポリシーのページ（Google Cloud の同意画面�
   assert.ok(pp.includes('auth/drive.appdata'), '使う権限（drive.appdata）を説明している');
   assert.ok(pp.includes('api-services-user-data-policy'), 'Googleのユーザーデータのポリシー（限定使用）に触れている');
   assert.ok(pp.includes('task-a-remind') && !pp.includes('tasuka-remind'), '英字表記は task-a-remind');
+  const ai = pp.slice(pp.indexOf('id="ai"'), pp.indexOf('<h2>5.'));
+  assert.ok(pp.includes('id="ai"'), '外のAIを使うときの注意の節がある（アプリから #ai でつなぐ）');
+  for (const w of ['AIに送りません', '番号', '住所', '隠す', '学習に使わせない']) assert.ok(ai.includes(w), '外のAIを使うときの注意に「' + w + '」がある');
   const index = fs.readFileSync(root + 'docs/index.html', 'utf8');
   assert.match(index, /<footer class="site-foot[^>]*>[\s\S]*href="privacy\.html"/, 'Web版のHTMLに、JavaScriptなしでも読めるポリシーへのリンクがある');
   const gas = fs.readFileSync(root + 'gas/Index.html', 'utf8');
@@ -559,6 +562,68 @@ test('取り込み：sample/ の架空の取り込み用ファイルは、すべ
   assert.ok(items.every((x) => x.canImport));
   assert.deepEqual([...new Set(items.map((x) => x.type))].sort(), [...L.IMPORT_TYPES].sort(), 'すべての種類の例がある');
   assert.ok(!/"(number|issuerNumber)"/.test(JSON.stringify(data)), '例に番号の項目を入れない（AIへの例になるため）');
+});
+
+// ---- AIへの指示書（3-3）：定義から作られていて、古くなっていないこと ----
+test('AIへの指示書：guide/ のファイルと、アプリに入れた中身が、今の定義から作ったものと同じ', () => {
+  const sampleText = fs.readFileSync(root + 'src/sample-import.json', 'utf8');
+  const guide = L.buildAiGuide(S, T, sampleText);
+  assert.equal(fs.readFileSync(root + 'guide/AI読み取りの指示書.md', 'utf8'), guide, 'guide/AI読み取りの指示書.md が古い（npm run build をしてコミットする）');
+  const embedded = 'window.__AI_GUIDE__=' + JSON.stringify(guide).replace(/</g, '\\u003c') + ';';
+  for (const f of ['docs/index.html', 'gas/Index.html']) {
+    assert.ok(fs.readFileSync(root + f, 'utf8').includes(embedded), f + ' の指示書が古い（npm run build をしてコミットする）');
+  }
+});
+
+test('AIへの指示書：取り込める種類・項目・選択肢・過去の日付の印が、定義どおりに書いてある', () => {
+  const guide = L.buildAiGuide(S, T, fs.readFileSync(root + 'src/sample-import.json', 'utf8'));
+  const section = (type) => {
+    const a = guide.indexOf('### `' + type + '`');
+    assert.ok(a >= 0, '種類 ' + type + ' の節がある');
+    const b = guide.indexOf('\n### ', a + 1);
+    return guide.slice(a, b < 0 ? undefined : b);
+  };
+  const rows = (sec) => Object.fromEntries([...sec.matchAll(/^\| `([A-Za-z0-9]+)` \| (.*)$/gm)].map((m) => [m[1], m[2]]));
+  const skip = ['visibility', 'note'];
+  for (const type of L.IMPORT_TYPES) {
+    const r = rows(section(type));
+    const fields = type === 'process'
+      ? [{ key: 'templateId', required: true }, { key: 'deadline', type: 'date', required: true }, { key: 'name' }]
+      : S.collections[type].fields;
+    const want = fields.filter((f) => !f.hidden && f.type !== 'ref' && f.key !== 'sourceFile' && !['number', 'issuerNumber'].includes(f.key) && !skip.includes(f.key));
+    assert.deepEqual(Object.keys(r), want.map((f) => f.key), type + '：取り込める項目がすべて、定義の順に並ぶ');
+    for (const f of want) {
+      const row = r[f.key];
+      assert.equal(row.includes('**過去の日付**'), !!f.pastOnly, `${type}.${f.key}：「過去の日付だけ」の印のある欄にだけ「過去の日付」と書く`);
+      assert.equal(/\| ○ \|/.test(row), !!f.required, `${type}.${f.key}：必須の印`);
+      const src = f.optionsRef ? S.options[f.optionsRef] : f.options;
+      for (const o of src || []) assert.ok(row.includes(typeof o === 'string' ? o : o.value), `${type}.${f.key}：選択肢「${typeof o === 'string' ? o : o.value}」がある`);
+    }
+    // 指示書に書いた項目は、取り込みで捨てられない
+    if (type !== 'process') {
+      const data = {};
+      for (const f of want) data[f.key] = f.type === 'date' ? '2020-01-01' : f.type === 'month' ? '2020-01' : 'x';
+      const [it] = L.checkImport({ records: [{ type, data }] }, S, {}, T, { today: '2026-11-04' });
+      assert.deepEqual(plain(it.dropped), [], type + '：指示書の項目は、取り込みで捨てられない');
+    }
+  }
+  assert.ok(!/^\| `(number|issuerNumber|sourceFile|childId|visibility|note)` \|/m.test(guide), '番号・自動で入る項目・利用者が決める欄は、項目の表に書かない');
+  for (const f of S.collections.certificates.fields.filter((x) => ['number', 'issuerNumber'].includes(x.key))) {
+    assert.ok(guide.includes('**番号は書かない**') && guide.includes(f.label), '「番号は書かない」に「' + f.label + '」がある');
+  }
+});
+
+test('AIへの指示書：使える templateId と例が、templates.json と sample-import.json から入っている', () => {
+  const sampleText = fs.readFileSync(root + 'src/sample-import.json', 'utf8');
+  const guide = L.buildAiGuide(S, T, sampleText);
+  const ids = [...guide.slice(guide.indexOf('### 使える手続きの型')).matchAll(/^\| `([a-z0-9-]+)` \|/gm)].map((m) => m[1]);
+  assert.deepEqual(ids.slice().sort(), T.templates.map((t) => t.id).sort(), 'templates.json の型がすべて、1回ずつ並ぶ');
+  const ex = guide.slice(guide.indexOf('## 例'));
+  assert.ok(ex.includes(sampleText.trim()), '例は src/sample-import.json のまま');
+  const items = L.checkImport(L.parseImportText(ex), S, {}, T, { today: '2026-11-04' });
+  assert.ok(items.length && items.every((x) => x.canImport), '指示書の例をそのまま貼っても取り込める');
+  assert.ok(guide.includes('"format": "' + L.IMPORT_FORMAT + '"') && guide.includes('"schemaVersion": ' + S.schemaVersion), 'ファイルの形に、今の format と schemaVersion');
+  assert.ok(guide.includes('AIに送りません') && guide.includes('学習に使わせない'), '使う人への注意がある');
 });
 
 console.log(`ロジックのテスト：${n}件すべて成功`);

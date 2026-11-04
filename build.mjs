@@ -8,6 +8,7 @@
 //   guide/データ定義書.md … 人が読むためのデータ定義書（schema.json から自動生成）
 //   sample/sample-data.json … 架空のサンプルデータ（読み込みの確認用）
 //   sample/sample-import.json … 架空の取り込み用ファイル（AIで読み取った書類のデータの例。元は src/sample-import.json）
+//   guide/AI読み取りの指示書.md … AIに書類を読ませるときに渡す指示書（schema.json・templates.json・sample-import.json から自動生成。アプリから書き出すものと同じ）
 //   guide/制度の目安一覧.md … 「使えるかもしれない制度」の一覧（benefits.json から自動生成。毎年の見直し用）
 import fs from 'node:fs';
 import path from 'node:path';
@@ -43,8 +44,19 @@ const build = { version: pkg.version };
 for (const [name, s] of [['logic.js', logic], ['app.js', app], ['drive-sync.js', sync]]) {
   if (/<\/script/i.test(s)) throw new Error(`${name} に </script> が含まれています`);
 }
+// 共通ロジックを読み込む（AIへの指示書・サンプルデータを作るのに使う）
+let seq = 0;
+const fixedUuid = () => '00000000-0000-4000-8000-' + String(++seq).padStart(12, '0');
+const ctx = { crypto: { randomUUID: fixedUuid }, console };
+vm.createContext(ctx);
+vm.runInContext(logic + '\nthis.Logic = Logic;', ctx);
+// AIへの指示書：schema.json・templates.json から作り、例は src/sample-import.json をそのまま入れる
+// （guide/AI読み取りの指示書.md と、アプリの「AIへの指示書」ボタンで書き出す中身は同じ）
+const sampleImportText = read('src/sample-import.json');
+const aiGuide = ctx.Logic.buildAiGuide(schema, templates, sampleImportText);
+
 const json = (o) => JSON.stringify(o).replace(/</g, '\\u003c');
-const data = `window.__CONFIG__=${json(config)};\nwindow.__SCHEMA__=${json(schema)};\nwindow.__TEMPLATES__=${json(templates)};\nwindow.__BENEFITS__=${json(benefits)};\nwindow.__BUILD__=${json(build)};`;
+const data = `window.__CONFIG__=${json(config)};\nwindow.__SCHEMA__=${json(schema)};\nwindow.__TEMPLATES__=${json(templates)};\nwindow.__BENEFITS__=${json(benefits)};\nwindow.__BUILD__=${json(build)};\nwindow.__AI_GUIDE__=${json(aiGuide)};`;
 
 // GitHub Pages版だけ：画面のいちばん下に、アプリの説明とプライバシーポリシーへのリンクを置く
 // （JavaScriptを使わずに読めるように、HTMLにそのまま書く。Googleの審査でホームページに必要）
@@ -157,11 +169,6 @@ write('guide/データ定義書.md', md);
 }
 
 // ---- サンプルデータ（毎回同じ内容になるよう、日付とIDを固定する） ----
-let seq = 0;
-const fixedUuid = () => '00000000-0000-4000-8000-' + String(++seq).padStart(12, '0');
-const ctx = { crypto: { randomUUID: fixedUuid }, console };
-vm.createContext(ctx);
-vm.runInContext(logic + '\nthis.Logic = Logic;', ctx);
 const SAMPLE_DATE = '2026-10-01';
 const STAMP = '2026-10-01T00:00:00.000Z';
 const sample = ctx.Logic.buildSample(SAMPLE_DATE, templates);
@@ -173,11 +180,14 @@ write('sample/sample-data.json', JSON.stringify(exp, null, 1) + '\n');
 // ---- 取り込み用ファイルの例（AIで読み取った書類のデータ。すべて架空） ----
 // 元は src/sample-import.json。取り込めない記録（日付の形が壊れているなど）があればビルドを止める
 {
-  const text = read('src/sample-import.json');
+  const text = sampleImportText;
   const imp = ctx.Logic.parseImportText(text);
   const items = ctx.Logic.checkImport(imp, schema, sample.collections, templates, { childId: sample.collections.children[0].id, today: SAMPLE_DATE });
   const bad = items.filter((x) => !x.canImport);
   if (bad.length) throw new Error('src/sample-import.json に取り込めない記録があります: ' + bad.map((x) => `${x.index + 1}件目 ${x.problems.map((p) => p.message).join('／')}`).join('、'));
   write('sample/sample-import.json', text);
 }
+
+// ---- AIへの指示書（人が読む用。アプリから書き出すものと同じ中身） ----
+write('guide/AI読み取りの指示書.md', aiGuide);
 console.log('完了');

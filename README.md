@@ -72,13 +72,13 @@ Node.js 20（`.nvmrc`）を使います。
 
 ```bash
 npm ci               # 依存パッケージ（画面の確認用の Playwright）を入れる
-npm run build        # src/ から docs/・gas/・guide/データ定義書.md・sample/ を作る
+npm run build        # src/ から docs/・gas/・guide/データ定義書.md・guide/AI読み取りの指示書.md・sample/ を作る
 npm test             # ビルド＋ロジックのテスト＋GAS版のテスト（Googleを模擬）
 npm run test:ui      # 画面の動作確認（かんたん版・Google版）
 npm run serve        # http://localhost:8080 でWeb版を表示
 ```
 
-**自動で作られるファイル（`docs/`、`gas/Index.html`、`gas/Shared.gs`、`guide/データ定義書.md`、`sample/`）は直接編集せず、`src/` を直して `npm run build` してください。** 作ったファイルも一緒にコミットします（作り直し忘れは自動テストが見つけます）。
+**自動で作られるファイル（`docs/`、`gas/Index.html`、`gas/Shared.gs`、`guide/データ定義書.md`、`guide/制度の目安一覧.md`、`guide/AI読み取りの指示書.md`、`sample/`）は直接編集せず、`src/` を直して `npm run build` してください。** 作ったファイルも一緒にコミットします（作り直し忘れは自動テストが見つけます）。
 
 main にマージすると、テストが通ればWeb版は自動で公開されます。
 

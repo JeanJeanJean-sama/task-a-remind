@@ -2858,7 +2858,7 @@ var Logic = (function () {
   }
 
   // ---------- AIで読み取った書類のデータの取り込み（取り込み用ファイル） ----------
-  // 取り込み用ファイルの形は guide/AI読み取りの指示書.md（3-3 で自動生成）と、提案書A（2026-10-21）の 3-1。
+  // 取り込み用ファイルの形は guide/AI読み取りの指示書.md（buildAiGuide() から自動生成）と、提案書A（2026-10-21）の 3-1。
   // ID・作成日時・子どもはファイルに書かず、取り込むときにTRMが付ける。
   var IMPORT_FORMAT = 'task-a-remind-import';
   var IMPORT_FORMAT_VERSION = 1;
@@ -3329,6 +3329,123 @@ var Logic = (function () {
     };
   }
 
+  // ---------- AIへの指示書（3-3） ----------
+  // build.mjs が src/schema.json・src/templates.json・src/sample-import.json から作り、
+  // guide/AI読み取りの指示書.md と、アプリから書き出す用（window.__AI_GUIDE__）に入れる。
+  // 項目・選択肢・型が変わっても、ビルドし直せば指示書も変わる（古くならない）。
+  /** 指示書に載せない項目：利用者が決める欄（AIに書かせない）。checkImport では取り込める */
+  var AI_GUIDE_SKIP = ['visibility', 'note'];
+  var AI_GUIDE_FORMS = {
+    string: '短い文', text: '文章', date: 'YYYY-MM-DD', month: 'YYYY-MM', tel: '電話番号', url: 'URL', number: '数',
+    template: '手続きの型の templateId（下の一覧から）'
+  };
+
+  /** 指示書に載せる項目（checkImport が取り込む項目から、番号・利用者が決める欄を除いたもの） */
+  function aiGuideFields(def) {
+    return def.fields.filter(function (f) {
+      return !f.hidden && f.type !== 'ref' && f.type !== 'refs' && f.key !== 'sourceFile' &&
+        IMPORT_NUMBER_KEYS.indexOf(f.key) < 0 && AI_GUIDE_SKIP.indexOf(f.key) < 0;
+    });
+  }
+
+  /**
+   * AIへの指示書（Markdown）を作る。
+   *   schema    … src/schema.json
+   *   templates … src/templates.json
+   *   sampleText … src/sample-import.json の中身（文字のまま。例として入れる）
+   */
+  function buildAiGuide(schema, templates, sampleText) {
+    var cols = schema.collections || {};
+    var cell = function (s) { return String(s == null ? '' : s).replace(/\|/g, '｜').replace(/\r?\n/g, ' '); };
+    var numberLabels = [];
+    IMPORT_TYPES.forEach(function (t) {
+      ((cols[t] || {}).fields || []).forEach(function (f) {
+        if (IMPORT_NUMBER_KEYS.indexOf(f.key) >= 0 && numberLabels.indexOf(f.label) < 0) numberLabels.push(f.label);
+      });
+    });
+    var lines = [];
+    lines.push('# たすかReマインド：書類の読み取りの指示書', '');
+    lines.push('> 取り込み用ファイル 第' + IMPORT_FORMAT_VERSION + '版／データ定義 第' + schema.schemaVersion + '版。' +
+      'この指示書は、アプリの定義（src/schema.json・src/templates.json）から自動で作られます。アプリを更新したら、指示書も書き出し直してください。', '');
+
+    lines.push('## 使う人へ（AIに渡す前に読んでください）', '');
+    lines.push('- この指示書と、読み取りたい書類（スキャンしたPDFや写真）を、**あなたが自分で使っているAI**（チャットのAI）に渡します。AIが作った答えを、たすかReマインドの「設定」→「読み取ったデータを取り込む」に貼り付けます。');
+    lines.push('- **たすかReマインドは、書類も入力した情報も、AIに送りません。** AIに渡すかどうか・何を渡すかは、あなたが決めます。AIとのやりとりは、そのAIのサービスの決まりに従います。');
+    lines.push('- AIに渡す前に、**受給者番号・保険証の番号・住所・名前**など、読み取りに要らないところを隠す（黒くぬる・切り取る）とよいです。');
+    lines.push('- AIの設定で、**会話をAIの学習に使わせないようにできるか**確かめてください。');
+    lines.push('- 取り込む前に、確認の画面で中身を1件ずつ見てください。番号の項目は取り込みません。AIは日付や名前を読み間違えることがあります。');
+    lines.push('', '---', '');
+
+    lines.push('## AIへ：あなたの役目', '');
+    lines.push('あなたの役目は、渡された書類（スキャンしたPDFや写真）を読んで、「たすかReマインド」（障害のある子どもや医療的ケアが必要な子どもの情報をまとめるアプリ）に取り込むための **JSON を1つ** 作ることです。', '');
+
+    lines.push('## 守ること', '');
+    var rules = [
+      '書類に書いてあることだけを書く。推測で埋めない。読めない項目は書かない',
+      '自信のない項目は、値を書いたうえで `"unclear"` にその項目の名前を入れる',
+      '日付は西暦にする。日付の欄は `YYYY-MM-DD`、月の欄は `YYYY-MM`。和暦（令和・平成など）は西暦に直し、書類での書き方を `"memo"` に書く。日がはっきりしないときは、その日付の欄を書かず、分かる範囲を `"memo"` に書く',
+      '「**過去の日付**」と書いた欄は、すでに起きたことの日付です。今日より後の日付にはなりません。未来の日付になったら、読み間違い（和暦の直し間違いなど）がないか見直す',
+      '**番号は書かない**：' + numberLabels.join('、') + '、マイナンバー、保険証の記号・番号。書類に書いてあっても書かない',
+      '子どもや家族の**名前・家の住所・生年月日**は書かない（病院や役所など、機関の住所・電話番号は書いてよい）',
+      '選択肢のある項目は、下の選択肢の中から、書いてあるとおりの言葉で選ぶ。合うものがなければ「その他」',
+      '下の表にない項目は書かない',
+      '1つの書類から、いくつの記録を作ってもよい（例：入院の記録と、その病院の連絡先）',
+      '`"from"` には、書類のファイル名（ファイル名だけ。フォルダの名前は書かない）を入れる',
+      '`"madeOn"` には今日の日付を入れる',
+      '答えは、JSON を1つだけ、コードブロック（```json 〜 ```）で出す。説明は、そのあとに短く'
+    ];
+    rules.forEach(function (r, i) { lines.push((i + 1) + '. ' + r); });
+    lines.push('');
+
+    lines.push('## ファイルの形', '');
+    lines.push('```json');
+    lines.push(JSON.stringify({
+      format: IMPORT_FORMAT, formatVersion: IMPORT_FORMAT_VERSION, schemaVersion: schema.schemaVersion,
+      madeBy: '読み取りに使ったAIの名前（任意）', madeOn: 'YYYY-MM-DD',
+      records: [{ type: '記録の種類', from: '書類のファイル名', data: { '項目': '値' }, unclear: ['自信のない項目'], memo: 'ひとこと（任意）' }]
+    }, null, 2));
+    lines.push('```', '');
+    lines.push('- `format`・`formatVersion`・`schemaVersion` は、上のとおりに書く');
+    lines.push('- `records` の1件が1つの記録。`type` は下の「記録の種類」から選ぶ');
+    lines.push('- `data` には、項目の名前（英字）と値を書く。値はすべて文字（`"…"`）で書く');
+    lines.push('- `unclear`・`memo` は、なければ書かなくてよい', '');
+
+    lines.push('## 記録の種類と項目', '');
+    IMPORT_TYPES.forEach(function (type) {
+      var def = type === 'process' ? { label: '手続きを始める', fields: PROCESS_FIELDS } : cols[type];
+      if (!def) return;
+      lines.push('### `' + type + '`：' + def.label, '');
+      if (type === 'process') lines.push('届いた案内などから、これから行う手続きを始めるときに使います。`templateId` は下の「使える手続きの型」から選びます。', '');
+      else if (def.description) lines.push(def.description, '');
+      lines.push('| 項目 | 意味 | 必須 | 形・選択肢 |', '|---|---|---|---|');
+      aiGuideFields(def).forEach(function (f) {
+        var form;
+        var vals = optionValues(f, schema);
+        if (vals) form = '次から選ぶ：' + vals.join('／');
+        else form = AI_GUIDE_FORMS[f.type] || '';
+        if (f.pastOnly) form += '（**過去の日付**）';
+        var mean = f.label;
+        if (f.help) mean += '。' + f.help;
+        if (f.showIf) mean += '（' + cols[type].fields.filter(function (x) { return x.key === f.showIf.key; })[0].label + 'が「' + f.showIf.in.join('」「') + '」のときだけ）';
+        lines.push('| `' + f.key + '` | ' + cell(mean) + ' | ' + (f.required ? '○' : '') + ' | ' + cell(form) + ' |');
+      });
+      lines.push('');
+    });
+
+    lines.push('### 使える手続きの型（`templateId`）', '');
+    lines.push('| templateId | 手続き | 組 |', '|---|---|---|');
+    groupTemplates(templates).forEach(function (g) {
+      g.templates.forEach(function (t) { lines.push('| `' + t.id + '` | ' + cell(t.name) + ' | ' + cell(g.label) + ' |'); });
+    });
+    lines.push('');
+
+    lines.push('## 例（すべて架空）', '');
+    lines.push('```json');
+    lines.push(String(sampleText || '').replace(/\s+$/, ''));
+    lines.push('```', '');
+    return lines.join('\n');
+  }
+
   return {
     CURRENT_SCHEMA_VERSION: CURRENT_SCHEMA_VERSION,
     EXPORT_FORMAT: EXPORT_FORMAT,
@@ -3341,6 +3458,7 @@ var Logic = (function () {
     certGrade: certGrade, ageYears: ageYears, suggestBenefits: suggestBenefits,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,
     makeExport: makeExport, migrate: migrate, upgradeCollections: upgradeCollections, mergeImport: mergeImport, buildSample: buildSample,
-    IMPORT_FORMAT: IMPORT_FORMAT, IMPORT_TYPES: IMPORT_TYPES, parseImportText: parseImportText, checkImport: checkImport, applyImport: applyImport
+    IMPORT_FORMAT: IMPORT_FORMAT, IMPORT_TYPES: IMPORT_TYPES, parseImportText: parseImportText, checkImport: checkImport, applyImport: applyImport,
+    buildAiGuide: buildAiGuide
   };
 })();

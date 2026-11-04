@@ -11,6 +11,7 @@
   var TEMPLATES = window.__TEMPLATES__;
   var BENEFITS = window.__BENEFITS__ || null; // 使えるかもしれない制度（横浜市・目安）
   var BUILD = window.__BUILD__ || {};
+  var AI_GUIDE = window.__AI_GUIDE__ || ''; // AIへの指示書（build.mjs が schema.json・templates.json から作る。guide/AI読み取りの指示書.md と同じ）
   var CONFIG = Object.assign({}, window.__CONFIG__ || {}, window.__CONFIG_OVERRIDE__ || {});
   var COLS = Object.keys(SCHEMA.collections);
   var L = Logic;
@@ -968,7 +969,8 @@
       '<div class="stack">' + btn('データを書き出す（バックアップ・移行用）', 'exportJson', {}, 'block') +
       '<label class="btn block file-btn">書き出したデータを読み込む<input type="file" accept=".json,application/json" data-change="import" hidden></label>' +
       btn('読み取ったデータを取り込む（AIで作ったデータ）', 'importAi', {}, 'block') +
-      btn('サンプル（架空のデータ）を追加する', 'loadSample', {}, 'block ghost') + '</div>');
+      btn('サンプル（架空のデータ）を追加する', 'loadSample', {}, 'block ghost') + '</div>' +
+      aiGuideBlock());
 
     html += card('このアプリについて',
       '<dl class="dl"><dt>保存先</dt><dd>' + h(S.store.label) + '</dd><dt>アプリ</dt><dd>' + h(BUILD.version || '') + '</dd><dt>データ定義</dt><dd>第' + h(SCHEMA.schemaVersion) + '版</dd></dl>' +
@@ -1443,6 +1445,50 @@
   /** 確認の画面で取り込める種類。diagnoses・certificates・profile は 3-4 で足す（ロジックはできている） */
   var IMPORT_UI_TYPES = ['visits', 'milestones', 'contacts', 'process'];
 
+  /** 「AIへの指示書」の説明とボタン（設定の「データ」のカードと、貼り付けの画面に出す） */
+  function aiGuideBlock() {
+    return '<div class="ai-guide">' +
+      '<p class="sub-head">AIへの指示書</p>' +
+      '<p class="small">書類と一緒にAIに渡す説明です。AIは、これを読んでTRMに取り込める形でデータを作ります。</p>' +
+      '<div class="stack">' + btn('AIへの指示書を書き出す（ファイル）', 'aiGuideSave', {}, 'block') +
+      btn('AIへの指示書をコピーする', 'aiGuideCopy', {}, 'block') + '</div>' +
+      '<p class="small muted">TRMは、書類も入力した情報もAIに送りません。AIに渡す前に、番号・住所・名前など要らないところを隠し、AIの設定で会話を学習に使わせないようにできるか確かめてください。' +
+      '<a href="' + PRIVACY_URL() + '#ai" target="_blank" rel="noopener">くわしく</a></p></div>';
+  }
+
+  /** 貼り付けの画面で、知らせ（toast）で画面を作り直しても、貼った文が消えないようにする */
+  function keepImportText() {
+    var ta = S.form && S.form.kind === 'importPaste' && document.querySelector('.sheet textarea[name=importText]');
+    if (ta) S.form.text = ta.value;
+  }
+
+  function saveAiGuide() {
+    saveOut('たすかReマインド_AIへの指示書.md', AI_GUIDE, 'text/markdown').catch(function (e) { showNotice('書き出せませんでした', errMsg(e)); });
+  }
+
+  /** 指示書をコピーする。使えないとき（GAS版の枠の中など）は、古いやり方でコピーする */
+  function copyAiGuide() {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = AI_GUIDE;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      document.body.appendChild(ta);
+      ta.select();
+      var done = false;
+      try { done = document.execCommand('copy'); } catch (e) { done = false; }
+      ta.remove();
+      if (done) toast('AIへの指示書をコピーしました。AIのチャットに貼り付けてください');
+      else showNotice('コピーできませんでした', 'この画面ではコピーが使えないようです。「AIへの指示書を書き出す（ファイル）」でファイルにして、AIに渡してください。');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(AI_GUIDE).then(function () {
+        toast('AIへの指示書をコピーしました。AIのチャットに貼り付けてください');
+      }, fallback);
+    } else fallback();
+  }
+
   function openImportPaste(text, error) {
     S.form = { kind: 'importPaste', text: text || '', error: error || '' };
     render();
@@ -1453,6 +1499,7 @@
       '<div class="fields">' +
       '<p class="hint">AI（チャットのAI）に書類を読ませて作った<b>取り込み用のデータ</b>を、TRMに入れます。<br>' +
       'AIの答えを<b>そのまま貼り付ける</b>か、保存したファイルを選んでください。次の画面で、1件ずつ中身を確かめてから取り込みます。</p>' +
+      aiGuideBlock() +
       (f.error ? '<p class="warn import-error" role="alert">' + br(f.error) + '</p>' : '') +
       '<label class="field"><span class="lbl">AIの答えを貼り付ける</span><textarea name="importText" rows="8" placeholder="{ &quot;format&quot;: &quot;task-a-remind-import&quot;, … }" spellcheck="false">' + h(f.text) + '</textarea>' +
       '<span class="help">説明の文がまじっていてもかまいません。{ 〜 } の部分を探して読みます。</span></label>' +
@@ -1747,6 +1794,8 @@
     },
     exportJson: exportJson,
     importAi: function () { openImportPaste(''); },
+    aiGuideSave: function () { keepImportText(); saveAiGuide(); },
+    aiGuideCopy: function () { keepImportText(); copyAiGuide(); },
     importRead: function () {
       var ta = document.querySelector('.sheet textarea[name=importText]');
       startImportReview(ta ? ta.value : (S.form && S.form.text) || '');

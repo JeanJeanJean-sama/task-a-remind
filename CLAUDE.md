@@ -70,7 +70,8 @@
 | データの項目 | `src/schema.json`（データ定義書 第2版。画面の入力欄・シートの列・`guide/データ定義書.md` はここから自動で作る） |
 | 手続きの型 | `src/templates.json` |
 | 使えるかもしれない制度（横浜市の目安） | `src/benefits.json`（毎年見直す。手順は `guide/制度の目安一覧.md`） |
-| AIで読み取ったデータの取り込み用ファイルの例（架空） | `src/sample-import.json`（ビルドで確かめて `sample/sample-import.json` に写す） |
+| AIで読み取ったデータの取り込み用ファイルの例（架空） | `src/sample-import.json`（ビルドで確かめて `sample/sample-import.json` に写す。AIへの指示書の例にも入る） |
+| AIへの指示書 | `src/logic.js` の `buildAiGuide()`（`schema.json`・`templates.json`・`sample-import.json` から作る。ビルドで `guide/AI読み取りの指示書.md` とアプリの書き出し用になる） |
 | 工程の計算・通知の文面 | `src/logic.js`（ブラウザとGASの両方で使う。DOMやGoogleのサービスを使わない） |
 | 画面 | `src/app.js`・`src/style.css` |
 | Googleドライブ同期 | `src/drive-sync.js` |
@@ -79,7 +80,7 @@
 | テスト | `test/` |
 | 手順書・設計メモ | `guide/`（`03_設計メモ.md` に経緯） |
 
-自動で作られるファイル：`docs/`、`gas/Index.html`、`gas/Shared.gs`、`guide/データ定義書.md`、`guide/制度の目安一覧.md`、`sample/`
+自動で作られるファイル：`docs/`、`gas/Index.html`、`gas/Shared.gs`、`guide/データ定義書.md`、`guide/制度の目安一覧.md`、`guide/AI読み取りの指示書.md`、`sample/`
 
 ## 6. 作業するとき（GitHub を更新する側）
 

@@ -250,7 +250,23 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   // AIで読み取ったデータの取り込み（確認の画面）：架空の取り込み用ファイル sample/sample-import.json を使う
   const aiText = fs.readFileSync(path.join(__dirname, '..', 'sample', 'sample-import.json'), 'utf8');
   await page.click('button[data-tab=settings]');
+  // AIへの指示書（3-3）：設定の「データ」から書き出す・コピーする。中身は guide/AI読み取りの指示書.md と同じ
+  const guideText = fs.readFileSync(path.join(__dirname, '..', 'guide', 'AI読み取りの指示書.md'), 'utf8');
+  const [gdl] = await Promise.all([page.waitForEvent('download'), page.click('.card .ai-guide >> text=AIへの指示書を書き出す（ファイル）')]);
+  const gfile = path.join(out, 'ai-guide.md');
+  await gdl.saveAs(gfile);
+  ok(fs.readFileSync(gfile, 'utf8') === guideText, '設定から、AIへの指示書を書き出せる（guide/ のファイルと同じ中身）');
+  await page.evaluate(() => { window.__copied = null; navigator.clipboard.writeText = (t) => { window.__copied = t; return Promise.resolve(); }; });
+  await page.click('.card .ai-guide >> text=AIへの指示書をコピーする');
+  await page.waitForSelector('text=AIへの指示書をコピーしました');
+  ok((await page.evaluate(() => window.__copied)) === guideText, '設定から、AIへの指示書をコピーできる');
+  ok(await page.isVisible('.card .ai-guide a[href="privacy.html#ai"]'), '指示書のボタンの近くに、外のAIを使うときの注意とポリシーへのリンクがある');
   await page.click('text=読み取ったデータを取り込む（AIで作ったデータ）');
+  await page.fill('.sheet textarea[name=importText]', '貼りかけの文');
+  await page.click('.sheet .ai-guide >> text=AIへの指示書をコピーする');
+  await page.waitForSelector('text=AIへの指示書をコピーしました');
+  ok((await page.inputValue('.sheet textarea[name=importText]')) === '貼りかけの文', '貼り付けの画面からも指示書をコピーでき、貼りかけの文は消えない');
+  await shot('13_取り込みの貼り付け');
   await page.fill('.sheet textarea[name=importText]', 'こんにちは。うまく読めませんでした。');
   await page.click('.sheet button:has-text("読み取る")');
   await page.waitForSelector('.sheet .import-error');
