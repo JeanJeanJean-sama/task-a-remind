@@ -364,4 +364,201 @@ test('毎年くり返す型：最後の工程が終わったら、期限を1年�
   assert.equal(L.nextRepeat({ tasks: [] }, '', T), null);
 });
 
+// ---------- AIで読み取った書類のデータの取り込み（提案書A 3-1） ----------
+const S = JSON.parse(fs.readFileSync(root + 'src/schema.json', 'utf8'));
+const imp = (records) => ({ format: 'task-a-remind-import', formatVersion: 1, schemaVersion: 2, records });
+// vm の中で作った配列は assert.deepEqual で比べられないので、ふつうの値に直す
+const plain = (x) => JSON.parse(JSON.stringify(x));
+const codes = (it) => plain(it.problems.map((p) => p.code)).sort();
+const TODAY = '2026-11-04';
+const DB = () => ({
+  children: [{ id: 'c1', nickname: 'A', birthDate: '2024-04-10' }, { id: 'c2', nickname: 'B' }],
+  visits: [{ id: 'v1', childId: 'c1', date: '2025-05-01', facility: '〇〇病院（架空）', summary: '受診' }],
+  contacts: [{ id: 'k1', childId: 'c1', kind: '病院', name: '〇〇病院（架空）', department: '小児科' }],
+  milestones: [], diagnoses: [], profile: [{ id: 'p1', childId: 'c1', order: 3 }],
+  certificates: [{ id: 'z1', childId: 'c1', kind: '特別児童扶養手当' }, { id: 'z2', childId: 'c1', kind: '療育手帳' }],
+  tasks: []
+});
+const check = (records, opts) => plain(L.checkImport(imp(records), S, (opts && opts.db) || DB(), T, Object.assign({ childId: 'c1', today: TODAY }, opts)));
+
+test('取り込み：データ定義に「元の書類」と「過去の日付だけ」の印がある', () => {
+  for (const c of ['visits', 'milestones', 'diagnoses', 'certificates', 'contacts', 'profile']) {
+    const f = S.collections[c].fields.find((x) => x.key === 'sourceFile');
+    assert.ok(f && f.notPrinted && !f.hidden, c + ' に sourceFile がある');
+  }
+  for (const c of ['children', 'family', 'tasks', 'careProcedures', 'careSteps', 'schedule', 'benefitChecks']) {
+    assert.ok(!S.collections[c].fields.some((x) => x.key === 'sourceFile'), c + ' には sourceFile を足さない');
+  }
+  assert.equal(S.schemaVersion, 2, '項目を足すだけなので schemaVersion は上げない');
+  const past = (c, k) => !!S.collections[c].fields.find((x) => x.key === k).pastOnly;
+  assert.ok(past('visits', 'date') && past('milestones', 'achievedOn') && past('diagnoses', 'diagnosedOn') && past('certificates', 'issuedOn'));
+  assert.ok(!past('certificates', 'validUntil') && !past('tasks', 'dueDate') && !past('visits', 'endDate'), '未来が正しい欄には付けない');
+});
+
+test('取り込み：貼り付けた文からJSONを取り出す', () => {
+  const json = JSON.stringify(imp([]));
+  assert.equal(L.parseImportText(json).format, 'task-a-remind-import');
+  assert.equal(L.parseImportText('\uFEFF' + json).records.length, 0);
+  const answer = '読み取りました。\n\n```json\n' + JSON.stringify(imp([{ type: 'milestones', data: { item: '首すわり' } }]), null, 2) + '\n```\n\n日付は書類に書いてありませんでした。';
+  assert.equal(L.parseImportText(answer).records[0].data.item, '首すわり', 'コードブロックの中を読む');
+  assert.equal(L.parseImportText('はい、どうぞ ' + json + ' 以上です').records.length, 0, '前後の説明を飛ばす');
+  assert.throws(() => L.parseImportText(''), /空です/);
+  assert.throws(() => L.parseImportText('{ "format": "task-a-remind-import", '), /読み取れませんでした/, '途中で切れている');
+  assert.throws(() => L.parseImportText(JSON.stringify({ format: 'task-a-remind-export', collections: {} })), /書き出したデータ/);
+  assert.throws(() => L.parseImportText(JSON.stringify({ format: 'other', records: [] })), /取り込み用ファイルではありません/);
+  assert.throws(() => L.parseImportText(JSON.stringify(Object.assign(imp([]), { formatVersion: 2 }))), /アプリを更新/);
+  assert.throws(() => L.parseImportText(JSON.stringify({ format: 'task-a-remind-import' })), /records/);
+});
+
+test('取り込み：番号・定義にない項目・自動で入る項目は捨てる', () => {
+  const [it] = check([{ type: 'certificates', from: 'C:\\Users\\someone\\保管箱\\2026-04-01_受給者証_〇〇市.pdf',
+    data: { kind: '療育手帳', number: '000000', issuerNumber: '000000', childId: 'x', id: 'y', sourceFile: 'z', foo: 'bar', validUntil: '2028-03-31' } }]);
+  assert.equal(it.rec.number, undefined);
+  assert.equal(it.rec.issuerNumber, undefined);
+  assert.equal(it.rec.childId, undefined);
+  assert.equal(it.rec.foo, undefined);
+  assert.deepEqual(it.dropped.map((d) => d.key + ':' + d.reason).sort(), ['childId:auto', 'foo:unknown', 'id:unknown', 'issuerNumber:number', 'number:number', 'sourceFile:auto']);
+  assert.ok(codes(it).includes('numberDropped'));
+  assert.equal(it.rec.sourceFile, '2026-04-01_受給者証_〇〇市.pdf', 'フォルダの名前は残さない');
+  assert.equal(it.rec.validUntil, '2028-03-31', '有効期限は未来でよい');
+  assert.ok(it.checked, '番号を捨てただけならチェックは外さない');
+});
+
+test('取り込み：日付の形が壊れているものは取り込めない', () => {
+  const items = check([
+    { type: 'visits', data: { date: '令和3年2月28日', summary: 'a' } },
+    { type: 'visits', data: { date: 'R3.2.28', summary: 'a' } },
+    { type: 'visits', data: { date: '2021/02/28', summary: 'a' } },
+    { type: 'visits', data: { date: '2021-02-30', summary: 'a' } },
+    { type: 'diagnoses', data: { name: 'a', diagnosedOn: '2021-02-01' } },
+    { type: 'visits', data: { date: '２０２１-０２-２８', summary: 'a' } },
+    { type: 'diagnoses', data: { name: 'b', diagnosedOn: '2025-02' } }
+  ]);
+  assert.deepEqual(items.map((x) => x.canImport), [false, false, false, false, false, true, true]);
+  assert.deepEqual(codes(items[0]), ['wareki']);
+  assert.deepEqual(codes(items[1]), ['wareki']);
+  assert.deepEqual(codes(items[2]), ['badDate']);
+  assert.ok(items.slice(0, 5).every((x) => !x.checked));
+  assert.equal(items[5].rec.date, '2021-02-28', '全角の数字は半角にする');
+});
+
+test('取り込み：未来の日付・生まれる前の日付', () => {
+  const items = check([
+    { type: 'visits', data: { date: '2026-11-05', summary: 'a' } },
+    { type: 'milestones', data: { item: 'a', achievedOn: '2024-04-01' } },
+    { type: 'visits', data: { date: '2024-04-10', summary: 'a' } },
+    { type: 'diagnoses', data: { name: 'a', diagnosedOn: '2024-03' } },
+    { type: 'diagnoses', data: { name: 'b', diagnosedOn: '2026-12' } },
+    { type: 'certificates', data: { kind: '療育手帳', validUntil: '2030-01-01', issuedOn: '2024-05-01' } }
+  ]);
+  assert.deepEqual(codes(items[0]), ['future']);
+  assert.deepEqual(codes(items[1]), ['beforeBirth']);
+  assert.match(items[1].problems[0].message, /生まれる前の日付です。妊娠中の記録ならこのままで大丈夫です/);
+  assert.deepEqual(codes(items[2]), [], '生まれた日は大丈夫');
+  assert.deepEqual(codes(items[3]), ['beforeBirth'], '月の欄も調べる');
+  assert.deepEqual(codes(items[4]), ['future']);
+  assert.deepEqual(codes(items[5]), [], '有効期限は調べない');
+  assert.ok(items[0].canImport && !items[0].checked, '印を付けて、最初はチェックを外す');
+  const noBirth = check([{ type: 'milestones', data: { item: 'a', achievedOn: '2000-01-01' } }], { childId: 'c2' });
+  assert.deepEqual(codes(noBirth[0]), [], '生年月日がなければ調べない');
+});
+
+test('取り込み：自信がない・選択肢にない・必須がない・種類が使えない', () => {
+  const items = check([
+    { type: 'visits', data: { kind: '通院', date: '2025-06-01', summary: 'a' }, unclear: ['summary', 'doctor', 'nope'] },
+    { type: 'contacts', data: { kind: '病院' } },
+    { type: 'children', data: { nickname: 'x' } },
+    { type: 'milestones' },
+    { type: 'visits', data: { date: '2025-06-02', summary: 'b' } }
+  ]);
+  assert.deepEqual(codes(items[0]), ['notInOptions', 'unclear']);
+  assert.deepEqual(items[0].unclear, ['summary'], '取り込む項目にあるものだけ');
+  assert.deepEqual(codes(items[1]), ['required']);
+  assert.ok(items[1].canImport && !items[1].checked);
+  assert.ok(!items[2].canImport && codes(items[2])[0] === 'badType');
+  assert.ok(!items[3].canImport && codes(items[3])[0] === 'noData');
+  assert.equal(items[4].rec.kind, '受診', '必須でない項目は、ふだんの入力と同じ初めの値');
+  assert.deepEqual(items[4].defaulted, ['kind']);
+  assert.ok(items[4].checked);
+});
+
+test('取り込み：すでに同じものがありそう（今のデータ・ファイルの中）', () => {
+  const items = check([
+    { type: 'visits', data: { date: '2025-05-01', facility: '〇〇病院 （架空）', summary: 'x' } },
+    { type: 'visits', data: { date: '2025-05-01', facility: '△△医院（架空）', summary: 'x' } },
+    { type: 'contacts', data: { kind: '病院', name: '〇〇病院（架空）' } },
+    { type: 'contacts', data: { kind: '病院', name: '〇〇病院（架空）', department: '眼科' } },
+    { type: 'contacts', data: { kind: '病院', name: '□□クリニック（架空）' } },
+    { type: 'contacts', data: { kind: '病院', name: '□□クリニック（架空）' } }
+  ]);
+  assert.equal(items[0].duplicateOf.id, 'v1', '日付と病院が同じ（空白のちがいは見ない）');
+  assert.equal(items[1].duplicateOf, null, '病院がちがう');
+  assert.equal(items[2].duplicateOf.id, 'k1', '診療科が書いていなければ名前だけで見る');
+  assert.equal(items[3].duplicateOf.index, 2, '今のデータの小児科とは別。ファイルの中の、診療科のない同じ名前とは重なる');
+  const dept = check([{ type: 'contacts', data: { kind: '病院', name: '〇〇病院（架空）', department: '眼科' } }]);
+  assert.equal(dept[0].duplicateOf, null, '診療科がちがえば別');
+  assert.equal(items[4].duplicateOf, null);
+  assert.equal(items[5].duplicateOf.index, 4, 'ファイルの中の前の記録');
+  assert.ok(codes(items[0]).includes('duplicate') && !items[0].checked);
+  const other = check([{ type: 'visits', data: { date: '2025-05-01', facility: '〇〇病院（架空）', summary: 'x' } }], { childId: 'c2' });
+  assert.equal(other[0].duplicateOf, null, 'ほかの子どもの記録とは比べない');
+});
+
+test('取り込み：手続きを始める', () => {
+  const db = DB();
+  db.tasks = L.planProcess(L.findTemplate(T, 'ryouiku-renew'), '2027-03-01', { childId: 'c1', today: TODAY });
+  const items = check([
+    { type: 'process', data: { templateId: 'tokuji-shotoku', deadline: '2027-08-31', name: '所得状況届（2027年）' } },
+    { type: 'process', data: { templateId: 'nai-kata', deadline: '2027-08-31' } },
+    { type: 'process', data: { templateId: 'generic' } },
+    { type: 'process', data: { templateId: 'shugaku-sodan' } },
+    { type: 'process', data: { templateId: 'ryouiku-renew', deadline: '2027-03-01' } },
+    { type: 'process', data: { templateId: 'tokuji-shotoku', deadline: '2028-08-31' } }
+  ], { db });
+  assert.ok(items[0].checked);
+  assert.equal(items[0].certificateId, 'z1', '型に合う受給者証が1つなら選んでおく');
+  assert.equal(items[0].rec.sourceFile, undefined, '手続きには元の書類の欄がない');
+  assert.ok(!items[1].canImport && codes(items[1]).includes('noTemplate'));
+  assert.ok(!items[2].canImport && codes(items[2]).includes('required'), '締め切りがなければ工程を作れない');
+  assert.equal(items[3].rec.deadline, '2031-04-01', '生年月日から入学する日を入れる');
+  assert.ok(items[3].checked && codes(items[3]).includes('deadlineFromBirth'));
+  assert.equal(items[4].duplicateOf.col, 'tasks', 'もう始まっている手続き');
+  assert.equal(items[5].duplicateOf.index, 0, 'ファイルの中に同じ型');
+  assert.ok(!items[4].checked && !items[5].checked);
+});
+
+test('取り込み：チェックしたものだけ保存の形にする', () => {
+  const db = DB();
+  const items = check([
+    { type: 'contacts', from: 'a.pdf', data: { kind: '役所', name: '〇〇区役所（架空）' } },
+    { type: 'profile', from: 'b.pdf', data: { category: '医療・服薬', label: '服薬', value: '（架空）' } },
+    { type: 'visits', data: { date: '2099-01-01', summary: 'x' } },
+    { type: 'visits', data: { date: '令和3年', summary: 'x' } },
+    { type: 'process', data: { templateId: 'tokuji-shotoku', deadline: '2027-08-31', name: '所得状況届（2027年）' } }
+  ], { db });
+  items[3].checked = true; // 画面で無理にチェックしても、取り込めないものは入らない
+  const out = L.applyImport(items, 'c1', T, TODAY, { db });
+  assert.deepEqual(plain(out.map((x) => x.col)), ['contacts', 'profile', 'tasks', 'tasks', 'tasks', 'tasks']);
+  const [c, p] = out.map((x) => x.rec);
+  assert.ok(c.id && c.createdAt && c.updatedAt && c.deleted === false);
+  assert.equal(c.childId, 'c1');
+  assert.equal(c.sourceFile, 'a.pdf');
+  assert.equal(p.order, 4, '子どもの情報は今のいちばん下に足す');
+  assert.equal(p.visibility, 'supporter', '分類ごとの見せてよい範囲');
+  const tasks = out.filter((x) => x.col === 'tasks').map((x) => x.rec);
+  assert.ok(tasks.every((t) => t.childId === 'c1' && t.certificateId === 'z1' && t.processName === '所得状況届（2027年）'));
+  assert.equal(tasks.find((t) => t.stepNo === 3).contactId, c.id, '同じファイルの役所を工程の連絡先にする');
+  items[2].checked = true; // 未来の日付でも、利用者がチェックすれば取り込む
+  assert.equal(L.applyImport(items, 'c1', T, TODAY, { db }).filter((x) => x.col === 'visits').length, 1);
+});
+
+test('取り込み：sample/ の架空の取り込み用ファイルは、すべて取り込める', () => {
+  const data = L.parseImportText(fs.readFileSync(root + 'sample/sample-import.json', 'utf8'));
+  const items = L.checkImport(data, S, {}, T, { today: TODAY });
+  assert.ok(items.length >= 5);
+  assert.ok(items.every((x) => x.canImport));
+  assert.deepEqual([...new Set(items.map((x) => x.type))].sort(), [...L.IMPORT_TYPES].sort(), 'すべての種類の例がある');
+  assert.ok(!/"(number|issuerNumber)"/.test(JSON.stringify(data)), '例に番号の項目を入れない（AIへの例になるため）');
+});
+
 console.log(`ロジックのテスト：${n}件すべて成功`);

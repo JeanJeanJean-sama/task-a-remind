@@ -7,6 +7,7 @@
 //   gas/Shared.gs        … GAS版で使うデータ定義と共通ロジック
 //   guide/データ定義書.md … 人が読むためのデータ定義書（schema.json から自動生成）
 //   sample/sample-data.json … 架空のサンプルデータ（読み込みの確認用）
+//   sample/sample-import.json … 架空の取り込み用ファイル（AIで読み取った書類のデータの例。元は src/sample-import.json）
 //   guide/制度の目安一覧.md … 「使えるかもしれない制度」の一覧（benefits.json から自動生成。毎年の見直し用）
 import fs from 'node:fs';
 import path from 'node:path';
@@ -108,14 +109,17 @@ let md = `# ${schema.title}\n\n` +
 for (const [key, c] of Object.entries(schema.collections)) {
   md += `## ${c.label}（\`${key}\`）\n\nスプレッドシートのシート名：「${c.sheet}」\n\n` + (c.description ? c.description + '\n\n' : '') +
     '| キー | 項目名 | 種類 | 必須 | 選択肢・つながり | 説明 |\n|---|---|---|---|---|---|\n' +
-    c.fields.map((f) => `| \`${f.key}\` | ${f.label} | ${typeLabel[f.type] || f.type} | ${f.required ? '○' : ''} | ${f.ref ? '→ ' + schema.collections[f.ref].label : opts(f)} | ${(f.help || '') + (f.hidden ? '（画面には出さず自動で入る）' : '') + (f.showIf ? `（${f.showIf.in.join('・')}のときだけ表示）` : '')} |`).join('\n') + '\n\n';
+    c.fields.map((f) => `| \`${f.key}\` | ${f.label} | ${typeLabel[f.type] || f.type} | ${f.required ? '○' : ''} | ${f.ref ? '→ ' + schema.collections[f.ref].label : opts(f)} | ${(f.help || '') + (f.hidden ? '（画面には出さず自動で入る）' : '') + (f.pastOnly ? '（過去の日付だけ）' : '') + (f.notPrinted ? '（人に渡す書類には印刷しない）' : '') + (f.showIf ? `（${f.showIf.in.join('・')}のときだけ表示）` : '')} |`).join('\n') + '\n\n';
 }
 md += '## 書き出しファイルの形\n\n```json\n{\n  "format": "task-a-remind-export",\n  "schemaVersion": ' + schema.schemaVersion +
   ',\n  "exportedAt": "2026-09-28T13:00:00.000Z",\n  "collections": {\n    "children": [ { "id": "…", "nickname": "…" } ],\n    "tasks": [ … ]\n  }\n}\n```\n\n' +
   '## 定義を変えるときの決まり\n\n' +
   '1. 項目を**足す**のは自由（スプレッドシートは次の保存時に右端へ列が足されます）。\n' +
   '2. 項目の**名前を変える・消す・意味を変える**ときは、`schemaVersion` を1つ上げ、`src/logic.js` の `migrate()` に古い形から新しい形への変換を書く。\n' +
-  '3. `key`（英字）は一度決めたら変えない。画面に出る名前（`label`）は自由に変えてよい。\n';
+  '3. `key`（英字）は一度決めたら変えない。画面に出る名前（`label`）は自由に変えてよい。\n' +
+  '\n## 項目の印\n\n' +
+  '- `pastOnly`（過去の日付だけ）：今日より後の日付は入らないはずの欄。AIで読み取ったデータを取り込むとき、未来の日付や生まれる前の日付になっていないかを調べる（有効期限・締め切りのように未来が正しい欄には付けない）。\n' +
+  '- `notPrinted`（人に渡す書類には印刷しない）：入力の画面には出るが、サポートブックなどには載せない欄。\n';
 write('guide/データ定義書.md', md);
 
 // ---- 制度の目安一覧（benefits.json の中身を人が確かめるための表） ----
@@ -165,4 +169,15 @@ for (const list of Object.values(sample.collections)) for (const r of list) { r.
 const exp = ctx.Logic.makeExport(sample.collections, { name: 'task-a-remind', version: build.version, from: 'sample', sampleDate: SAMPLE_DATE });
 exp.exportedAt = STAMP;
 write('sample/sample-data.json', JSON.stringify(exp, null, 1) + '\n');
+
+// ---- 取り込み用ファイルの例（AIで読み取った書類のデータ。すべて架空） ----
+// 元は src/sample-import.json。取り込めない記録（日付の形が壊れているなど）があればビルドを止める
+{
+  const text = read('src/sample-import.json');
+  const imp = ctx.Logic.parseImportText(text);
+  const items = ctx.Logic.checkImport(imp, schema, sample.collections, templates, { childId: sample.collections.children[0].id, today: SAMPLE_DATE });
+  const bad = items.filter((x) => !x.canImport);
+  if (bad.length) throw new Error('src/sample-import.json に取り込めない記録があります: ' + bad.map((x) => `${x.index + 1}件目 ${x.problems.map((p) => p.message).join('／')}`).join('、'));
+  write('sample/sample-import.json', text);
+}
 console.log('完了');

@@ -70,6 +70,7 @@
 | データの項目 | `src/schema.json`（データ定義書 第2版。画面の入力欄・シートの列・`guide/データ定義書.md` はここから自動で作る） |
 | 手続きの型 | `src/templates.json` |
 | 使えるかもしれない制度（横浜市の目安） | `src/benefits.json`（毎年見直す。手順は `guide/制度の目安一覧.md`） |
+| AIで読み取ったデータの取り込み用ファイルの例（架空） | `src/sample-import.json`（ビルドで確かめて `sample/sample-import.json` に写す） |
 | 工程の計算・通知の文面 | `src/logic.js`（ブラウザとGASの両方で使う。DOMやGoogleのサービスを使わない） |
 | 画面 | `src/app.js`・`src/style.css` |
 | Googleドライブ同期 | `src/drive-sync.js` |

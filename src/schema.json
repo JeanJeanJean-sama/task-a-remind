@@ -53,7 +53,7 @@
         { "key": "nickname", "label": "呼び名", "type": "string", "required": true, "help": "家で呼んでいる名前。通知にも表示されます。" },
         { "key": "fullName", "label": "氏名", "type": "string" },
         { "key": "furigana", "label": "ふりがな", "type": "string" },
-        { "key": "birthDate", "label": "生年月日", "type": "date", "help": "年齢（○歳○ヶ月）を自動で表示します。" },
+        { "key": "birthDate", "label": "生年月日", "type": "date", "pastOnly": true, "help": "年齢（○歳○ヶ月）を自動で表示します。" },
         { "key": "prefecture", "label": "都道府県", "type": "string" },
         { "key": "municipality", "label": "市区町村", "type": "string" },
         { "key": "address", "label": "住所", "type": "text", "help": "印刷では家族用にだけ載ります。" },
@@ -69,7 +69,7 @@
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
         { "key": "relation", "label": "続柄", "type": "string", "required": true, "help": "例：父、母、祖父、きょうだい" },
         { "key": "name", "label": "氏名", "type": "string" },
-        { "key": "birthDate", "label": "生年月日", "type": "date" },
+        { "key": "birthDate", "label": "生年月日", "type": "date", "pastOnly": true },
         { "key": "occupation", "label": "職業", "type": "string" },
         { "key": "phone", "label": "電話番号", "type": "tel" },
         { "key": "address", "label": "住所", "type": "text" },
@@ -95,6 +95,7 @@
         { "key": "validTo", "label": "いつまで", "type": "date", "help": "空欄＝今の情報。過去の情報になったら日付を入れる。" },
         { "key": "visibility", "label": "見せてよい範囲", "type": "select", "optionsRef": "visibility", "default": "supporter" },
         { "key": "order", "label": "並び順", "type": "number", "hidden": true },
+        { "key": "sourceFile", "label": "元の書類", "type": "string", "notPrinted": true, "help": "読み取った書類のファイル名（保管箱のファイル名）。人に渡す書類には印刷しません。" },
         { "key": "note", "label": "メモ", "type": "text" }
       ]
     },
@@ -119,11 +120,12 @@
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
         { "key": "name", "label": "診断名", "type": "string", "required": true },
         { "key": "detail", "label": "正式名・補足", "type": "text" },
-        { "key": "diagnosedOn", "label": "診断された時期", "type": "month" },
+        { "key": "diagnosedOn", "label": "診断された時期", "type": "month", "pastOnly": true },
         { "key": "department", "label": "病院・診療科", "type": "string" },
         { "key": "status", "label": "いまの状態", "type": "select", "default": "経過観察中", "options": ["経過観察中", "治療中", "治療済み", "その他"] },
         { "key": "explanation", "label": "支援者向けの説明", "type": "text", "help": "どんな病気・症状か、日常で気をつけること。サポートブックの「症状について」に載ります。" },
         { "key": "visibility", "label": "見せてよい範囲", "type": "select", "optionsRef": "visibility", "default": "supporter" },
+        { "key": "sourceFile", "label": "元の書類", "type": "string", "notPrinted": true, "help": "読み取った書類のファイル名（保管箱のファイル名）。人に渡す書類には印刷しません。" },
         { "key": "note", "label": "メモ", "type": "text" }
       ]
     },
@@ -135,8 +137,8 @@
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
         { "key": "title", "label": "ケアの名前", "type": "string", "required": true, "help": "例：経鼻経管栄養、在宅酸素療法" },
         { "key": "status", "label": "状態", "type": "select", "options": ["実施中", "終了"], "default": "実施中" },
-        { "key": "startedOn", "label": "開始日", "type": "date" },
-        { "key": "endedOn", "label": "終了日", "type": "date" },
+        { "key": "startedOn", "label": "開始日", "type": "date", "pastOnly": true },
+        { "key": "endedOn", "label": "終了日", "type": "date", "pastOnly": true },
         { "key": "reason", "label": "開始の理由・目的", "type": "text" },
         { "key": "history", "label": "これまでの経過・変化", "type": "text", "help": "例：流量の変化、体重の変化、続けている理由" },
         { "key": "dose", "label": "量・設定", "type": "text", "help": "例：1回○ml×○回、酸素 ○L/分" },
@@ -171,7 +173,7 @@
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
         { "key": "kind", "label": "種類", "type": "select", "default": "受診",
           "options": ["受診", "入院", "日帰り入院", "検査", "手術", "診断", "医療的ケアの開始・変更", "事故・けが", "セカンドオピニオン", "発達の記録", "その他"] },
-        { "key": "date", "label": "日付", "type": "date", "required": true },
+        { "key": "date", "label": "日付", "type": "date", "pastOnly": true, "required": true },
         { "key": "endDate", "label": "終了日（入院など）", "type": "date" },
         { "key": "facility", "label": "病院・機関", "type": "string" },
         { "key": "department", "label": "診療科", "type": "string" },
@@ -180,6 +182,7 @@
         { "key": "symptoms", "label": "症状・経緯", "type": "text" },
         { "key": "treatment", "label": "治療・検査の内容", "type": "text" },
         { "key": "result", "label": "結果・その後の経過", "type": "text" },
+        { "key": "sourceFile", "label": "元の書類", "type": "string", "notPrinted": true, "help": "読み取った書類のファイル名（保管箱のファイル名）。人に渡す書類には印刷しません。" },
         { "key": "note", "label": "メモ", "type": "text" }
       ]
     },
@@ -190,8 +193,9 @@
       "fields": [
         { "key": "childId", "label": "子ども", "type": "ref", "ref": "children", "hidden": true },
         { "key": "item", "label": "できたこと", "type": "string", "required": true, "suggestFrom": "milestoneSuggestions", "help": "例：首すわり、ひとり歩き" },
-        { "key": "achievedOn", "label": "できた日", "type": "date", "help": "日付を入れると、そのときの年齢を自動で出します。" },
+        { "key": "achievedOn", "label": "できた日", "type": "date", "pastOnly": true, "help": "日付を入れると、そのときの年齢を自動で出します。" },
         { "key": "ageText", "label": "できた時期", "type": "string", "help": "日付が分からないときに「1歳2ヶ月」のように入れます。" },
+        { "key": "sourceFile", "label": "元の書類", "type": "string", "notPrinted": true, "help": "読み取った書類のファイル名（保管箱のファイル名）。人に渡す書類には印刷しません。" },
         { "key": "note", "label": "メモ", "type": "text" }
       ]
     },
@@ -218,10 +222,11 @@
           "help": "手帳の「旅客鉄道株式会社旅客運賃減額」の欄に書かれています。" },
         { "key": "disease", "label": "対象の疾患名", "type": "string" },
         { "key": "copay", "label": "自己負担（上限額・割合）", "type": "text" },
-        { "key": "issuedOn", "label": "取得日", "type": "date" },
+        { "key": "issuedOn", "label": "取得日", "type": "date", "pastOnly": true },
         { "key": "validUntil", "label": "有効期限", "type": "date", "help": "ここから更新の手続きを知らせます。" },
         { "key": "renewalNote", "label": "更新の決まり", "type": "text", "help": "例：毎年更新、文書料が必要、自動更新" },
         { "key": "templateId", "label": "更新に使う手続きの型", "type": "template" },
+        { "key": "sourceFile", "label": "元の書類", "type": "string", "notPrinted": true, "help": "読み取った書類のファイル名（保管箱のファイル名）。人に渡す書類には印刷しません。" },
         { "key": "note", "label": "メモ", "type": "text" }
       ]
     },
@@ -235,7 +240,7 @@
         { "key": "benefitId", "label": "制度のID", "type": "string", "hidden": true, "help": "src/benefits.json の id" },
         { "key": "benefitName", "label": "制度の名前", "type": "string", "required": true },
         { "key": "status", "label": "状態", "type": "select", "required": true, "default": "利用している", "options": ["手続き中", "利用している", "対象外だった", "今は使わない"] },
-        { "key": "checkedOn", "label": "確認した日", "type": "date" },
+        { "key": "checkedOn", "label": "確認した日", "type": "date", "pastOnly": true },
         { "key": "note", "label": "メモ", "type": "text", "help": "例：窓口で、所得の条件にあてはまらないと言われた" }
       ]
     },
@@ -256,6 +261,7 @@
         { "key": "address", "label": "住所", "type": "text" },
         { "key": "visitPattern", "label": "通院・利用のしかた", "type": "text", "help": "例：月1回、心臓の経過観察" },
         { "key": "supplies", "label": "処方・診療材料", "type": "text" },
+        { "key": "sourceFile", "label": "元の書類", "type": "string", "notPrinted": true, "help": "読み取った書類のファイル名（保管箱のファイル名）。人に渡す書類には印刷しません。" },
         { "key": "note", "label": "備考", "type": "text" }
       ]
     },
@@ -281,7 +287,7 @@
         { "key": "assignee", "label": "担当", "type": "string", "help": "例：父、母" },
         { "key": "status", "label": "状態", "type": "select", "default": "todo",
           "options": [ { "value": "todo", "label": "未完了" }, { "value": "done", "label": "完了" }, { "value": "skipped", "label": "対象外" } ] },
-        { "key": "doneAt", "label": "完了日", "type": "date", "hidden": true },
+        { "key": "doneAt", "label": "完了日", "type": "date", "pastOnly": true, "hidden": true },
         { "key": "certificateId", "label": "関係する受給者証・手帳", "type": "ref", "ref": "certificates" },
         { "key": "note", "label": "メモ", "type": "text" }
       ]

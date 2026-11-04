@@ -572,6 +572,327 @@ var Logic = (function () {
     return changed;
   }
 
+  // ---------- AIで読み取った書類のデータの取り込み（取り込み用ファイル） ----------
+  // 取り込み用ファイルの形は guide/AI読み取りの指示書.md（3-3 で自動生成）と、提案書A（2026-10-21）の 3-1。
+  // ID・作成日時・子どもはファイルに書かず、取り込むときにTRMが付ける。
+  var IMPORT_FORMAT = 'task-a-remind-import';
+  var IMPORT_FORMAT_VERSION = 1;
+  /** 取り込める記録の種類（process は記録ではなく「手続きを始める」） */
+  var IMPORT_TYPES = ['visits', 'milestones', 'diagnoses', 'certificates', 'contacts', 'profile', 'process'];
+  /** 取り込まない項目：番号（あとで手入力）。sourceFile は from から入れる */
+  var IMPORT_NUMBER_KEYS = ['number', 'issuerNumber'];
+  var PROCESS_FIELDS = [
+    { key: 'templateId', label: '手続きの型', type: 'template', required: true },
+    { key: 'deadline', label: '締め切り', type: 'date', required: true },
+    { key: 'name', label: '手続きの名前', type: 'string' }
+  ];
+  var WAREKI_RE = /明治|大正|昭和|平成|令和|元年|^[MTSHRmtshr]\s*\d{1,2}[.\/年-]/;
+
+  /**
+   * 貼り付けた文やファイルの中身から、取り込み用ファイル（JSON）を取り出す。
+   * AIの答えをそのまま貼っても読めるように、コードブロックや前後の説明を飛ばして { 〜 } を探す。
+   * 形が違うときは、利用者に見せる文で Error を投げる。
+   */
+  function parseImportText(text) {
+    var s = String(text == null ? '' : text).replace(/^﻿/, '').trim();
+    if (!s) throw new Error('中身が空です。AIの答えを貼り付けるか、ファイルを選んでください');
+    var tries = [s];
+    var fence = /```[a-zA-Z]*\s*\n?([\s\S]*?)```/g, m;
+    while ((m = fence.exec(s))) tries.push(m[1].trim());
+    var a = s.indexOf('{'), b = s.lastIndexOf('}');
+    if (a >= 0 && b > a) tries.push(s.slice(a, b + 1));
+    var data = null;
+    for (var i = 0; i < tries.length && !data; i++) {
+      try {
+        var d = JSON.parse(tries[i]);
+        if (d && typeof d === 'object' && !Array.isArray(d)) data = d;
+      } catch (e) { /* 次を試す */ }
+    }
+    if (!data) throw new Error('読み取れませんでした。AIの答えの中に、{ で始まり } で終わる部分（JSON）がありません。途中で切れていないか確かめてください');
+    if (data.format === EXPORT_FORMAT || LEGACY_FORMATS.indexOf(data.format) >= 0) {
+      throw new Error('これは「書き出したデータ」のファイルです。「書き出したデータを読み込む」から読み込んでください');
+    }
+    if (data.format !== IMPORT_FORMAT) throw new Error('取り込み用ファイルではありません（"format" が "' + IMPORT_FORMAT + '" ではありません）');
+    if (Number(data.formatVersion || 1) > IMPORT_FORMAT_VERSION || Number(data.schemaVersion || 0) > CURRENT_SCHEMA_VERSION) {
+      throw new Error('新しいバージョンのアプリ用に作られたファイルです。アプリを更新してください');
+    }
+    if (!Array.isArray(data.records)) throw new Error('取り込む記録（"records"）がありません');
+    return data;
+  }
+
+  function importNorm(v) {
+    var s = String(v == null ? '' : v);
+    if (s.normalize) s = s.normalize('NFKC');
+    return s.replace(/\s+/g, '').toLowerCase();
+  }
+  /** 'YYYY-MM-DD' が実際にある日か */
+  function isRealDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) return false;
+    var d = new Date(+m[1], +m[2] - 1, +m[3]);
+    return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3];
+  }
+  function isRealMonth(s) {
+    var m = /^(\d{4})-(\d{2})$/.exec(s);
+    return !!m && +m[2] >= 1 && +m[2] <= 12;
+  }
+  function optionValues(field, schema) {
+    var src = field.optionsRef ? (schema.options || {})[field.optionsRef] : field.options;
+    if (!Array.isArray(src)) return null;
+    return src.map(function (o) { return typeof o === 'string' ? o : o.value; });
+  }
+  /** 保管箱のファイル名だけを残す（フォルダの名前には利用者の名前が入ることがあるため） */
+  function baseName(s) {
+    var parts = String(s == null ? '' : s).trim().split(/[\\\/]/);
+    return parts[parts.length - 1];
+  }
+
+  /** 重なりを見分けるための「鍵」。同じ鍵の記録は、同じものがありそうと知らせる */
+  function duplicateKey(type, r) {
+    var n = importNorm;
+    switch (type) {
+      case 'visits': return r.date ? n(r.date) + '|' + n(r.facility) : '';
+      case 'milestones': return r.item ? n(r.item) : '';
+      case 'diagnoses': return r.name ? n(r.name) : '';
+      case 'certificates': return r.kind ? n(r.kind) + '|' + n(r.validUntil) : '';
+      case 'contacts': return r.name ? n(r.name) : '';
+      case 'profile': return r.label ? n(r.category) + '|' + n(r.label) + '|' + n(r.value) : '';
+      default: return '';
+    }
+  }
+  /** contacts は、名前が同じで、診療科がどちらか空か同じなら重なりとみなす（診療科ごとに1件ずつ登録するため） */
+  function sameDuplicate(type, a, b) {
+    if (type !== 'contacts') return true;
+    var da = importNorm(a.department), db = importNorm(b.department);
+    return !da || !db || da === db;
+  }
+  function duplicateText(type, r) {
+    switch (type) {
+      case 'visits': return [r.date, r.facility, r.summary].filter(Boolean).join(' ');
+      case 'milestones': return r.item || '';
+      case 'diagnoses': return r.name || '';
+      case 'certificates': return [r.name || r.kind, r.validUntil ? '有効期限 ' + r.validUntil : ''].filter(Boolean).join(' ');
+      case 'contacts': return [r.name, r.department].filter(Boolean).join(' ');
+      case 'profile': return (r.label || '') + '：' + (r.value || '');
+      case 'process': return r.processName || r.name || '';
+      default: return '';
+    }
+  }
+
+  /**
+   * 取り込み用ファイルの記録を1件ずつ調べる（保存はしない）。確認の画面はこの結果を出す。
+   *   data      … parseImportText() の結果
+   *   schema    … src/schema.json
+   *   db        … 今のデータ（{ children: [...], visits: [...], ... }）。重なりと生年月日を調べるのに使う
+   *   templates … src/templates.json
+   *   opts      … { childId: 取り込む先の子ども, today: 'YYYY-MM-DD' }
+   * 子どもを選び直したら、もう一度呼ぶ（生まれる前の日付・重なりは子どもごとに違うため）。
+   * 返す形は、提案書Aの作業記録（3-1）と test/logic.test.mjs を参照。
+   */
+  function checkImport(data, schema, db, templates, opts) {
+    opts = opts || {};
+    db = db || {};
+    var today = opts.today || ymd();
+    var childId = opts.childId || '';
+    var child = childId ? indexById(alive(db.children))[childId] : null;
+    var birth = child && isRealDate(String(child.birthDate || '')) ? child.birthDate : '';
+    var seen = {}; // ファイルの中での重なり：type|鍵 → [{ index, rec }]
+
+    return ((data && data.records) || []).map(function (raw, index) {
+      raw = raw && typeof raw === 'object' ? raw : {};
+      var type = String(raw.type || '').trim();
+      var item = {
+        index: index, type: type, label: '', rec: {}, from: baseName(raw.from), memo: String(raw.memo == null ? '' : raw.memo).trim(),
+        unclear: [], dropped: [], defaulted: [], problems: [], duplicateOf: null,
+        certificateId: '', canImport: true, checked: true
+      };
+      function problem(level, code, message, key) { item.problems.push({ level: level, code: code, key: key || '', message: message }); }
+
+      var def = type === 'process' ? { label: '手続きを始める', fields: PROCESS_FIELDS } : (schema.collections || {})[type];
+      if (IMPORT_TYPES.indexOf(type) < 0 || !def) {
+        item.label = type || '（種類なし）';
+        problem('block', 'badType', type ? 'この種類（' + type + '）は取り込めません' : '記録の種類（type）がありません');
+        return finish(item);
+      }
+      item.label = def.label;
+      var src = raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data) ? raw.data : null;
+      if (!src) { problem('block', 'noData', '項目と値（data）がありません'); return finish(item); }
+
+      var fields = {};
+      def.fields.forEach(function (f) { fields[f.key] = f; });
+      var rec = item.rec;
+
+      // 1. 項目を選ぶ：定義にない・番号・自動で入る項目は捨てる
+      Object.keys(src).forEach(function (k) {
+        var f = fields[k], v = src[k];
+        if (IMPORT_NUMBER_KEYS.indexOf(k) >= 0 && type !== 'process') { item.dropped.push({ key: k, reason: 'number' }); return; }
+        if (!f) { item.dropped.push({ key: k, reason: 'unknown' }); return; }
+        if (f.hidden || f.type === 'ref' || f.type === 'refs' || k === 'sourceFile') { item.dropped.push({ key: k, reason: 'auto' }); return; }
+        if (v == null || v === '') return;
+        if (typeof v === 'object') { item.dropped.push({ key: k, reason: 'badValue' }); return; }
+        rec[k] = typeof v === 'string' ? v.trim() : (f.type === 'number' ? v : String(v));
+      });
+      if (item.dropped.some(function (d) { return d.reason === 'number'; })) {
+        problem('info', 'numberDropped', '番号の項目は取り込みません。必要なら、取り込んだあとに手で入れてください');
+      }
+
+      // 2. 値を調べる
+      def.fields.forEach(function (f) {
+        var k = f.key;
+        if (!(k in rec)) return;
+        var v = rec[k];
+        if (f.type === 'date' || f.type === 'month') {
+          var s = String(v);
+          if (s.normalize) s = s.normalize('NFKC').trim();
+          rec[k] = s;
+          if (WAREKI_RE.test(s)) { problem('block', 'wareki', f.label + 'が和暦のままです（' + s + '）。西暦に直してください', k); return; }
+          var ok = f.type === 'date' ? isRealDate(s) : isRealMonth(s);
+          if (!ok) { problem('block', 'badDate', f.label + 'の形が正しくありません（' + s + '）。' + (f.type === 'date' ? 'YYYY-MM-DD' : 'YYYY-MM') + ' の形で書きます', k); return; }
+          if (f.pastOnly) {
+            var cut = f.type === 'date' ? today : today.slice(0, 7);
+            if (s > cut) problem('warn', 'future', f.label + 'が未来の日付です（' + s + '）', k);
+            else if (birth && s < (f.type === 'date' ? birth : birth.slice(0, 7))) {
+              problem('warn', 'beforeBirth', f.label + '：生まれる前の日付です。妊娠中の記録ならこのままで大丈夫です', k);
+            }
+          }
+          return;
+        }
+        if (f.type === 'select') {
+          var vals = optionValues(f, schema);
+          if (vals && vals.indexOf(v) < 0) problem('warn', 'notInOptions', f.label + '「' + v + '」は選択肢にありません', k);
+          return;
+        }
+        if (f.type === 'number' && (v === '' || isNaN(Number(v)))) { problem('warn', 'notInOptions', f.label + 'が数ではありません（' + v + '）', k); return; }
+        if (f.type === 'template' && !findTemplate(templates, v)) {
+          problem(type === 'process' ? 'block' : 'warn', 'noTemplate', '手続きの型「' + v + '」がありません', k);
+        }
+      });
+
+      // 3. 手続き：締め切りがなく、型に「生年月日から決める」があれば、それを入れる
+      var tpl = type === 'process' ? findTemplate(templates, rec.templateId) : null;
+      if (tpl && !rec.deadline && birth) {
+        var bd = birthDeadline(tpl, birth);
+        if (bd && bd.date) {
+          rec.deadline = bd.date;
+          item.defaulted.push('deadline');
+          problem('info', 'deadlineFromBirth', '締め切りがないので、生年月日から「' + bd.label + '」（' + bd.date + '）を入れました', 'deadline');
+        }
+      }
+
+      // 4. 必須の項目（値がないもの）
+      def.fields.forEach(function (f) {
+        if (f.required && !(f.key in rec) && !item.problems.some(function (p) { return p.key === f.key && p.level === 'block'; })) {
+          // 手続きは、型と締め切りがないと工程を作れないので取り込めない
+          problem(type === 'process' ? 'block' : 'warn', 'required', f.label + 'がありません', f.key);
+        }
+      });
+
+      // 5. 入っていない項目に、ふだんの入力と同じ初めの値を入れる（必須の項目には入れない＝推測で埋めない）
+      def.fields.forEach(function (f) {
+        if (f.default === undefined || f.required || f.hidden || f.key in rec) return;
+        rec[f.key] = (type === 'profile' && f.key === 'visibility' && (schema.options.categoryVisibility || {})[rec.category]) || f.default;
+        item.defaulted.push(f.key);
+      });
+
+      // 6. AIが自信のない項目（取り込む項目にあるものだけ）
+      (Array.isArray(raw.unclear) ? raw.unclear : []).forEach(function (k) {
+        k = String(k);
+        if (k in rec && item.unclear.indexOf(k) < 0 && item.defaulted.indexOf(k) < 0) item.unclear.push(k);
+      });
+      if (item.unclear.length) {
+        problem('warn', 'unclear', 'AIが自信がない項目：' + item.unclear.map(function (k) { return fields[k].label; }).join('、'));
+      }
+
+      if (type !== 'process') rec.sourceFile = item.from;
+
+      // 7. 重なり（今のデータ → ファイルの中の前の記録）
+      if (type === 'process') {
+        if (tpl) {
+          var running = alive(db.tasks).filter(function (t) {
+            return t.templateId === tpl.id && t.childId === childId && t.status === 'todo';
+          });
+          if (running.length) item.duplicateOf = { col: 'tasks', id: running[0].processId, index: -1, text: duplicateText('process', running[0]) };
+          // 型の受給者証の種類に合うものが1つだけなら、最初から選んでおく
+          var certs = alive(db.certificates).filter(function (c) {
+            return c.childId === childId && (tpl.certificateKinds || []).indexOf(c.kind) >= 0;
+          });
+          if (certs.length === 1) item.certificateId = certs[0].id;
+        }
+        var pkey = rec.templateId ? 'process|' + rec.templateId : '';
+        if (!item.duplicateOf && pkey && seen[pkey]) item.duplicateOf = { col: '', id: '', index: seen[pkey][0].index, text: duplicateText('process', seen[pkey][0].rec) };
+        if (pkey) (seen[pkey] = seen[pkey] || []).push({ index: index, rec: rec });
+        if (item.duplicateOf) problem('warn', 'duplicate', item.duplicateOf.index >= 0
+          ? 'このファイルの中に、同じ手続きがもう1つあります'
+          : 'この手続きは、もう始まっています（' + item.duplicateOf.text + '）');
+        return finish(item);
+      }
+      var key = duplicateKey(type, rec);
+      if (key) {
+        var hit = alive(db[type]).filter(function (r) {
+          return r.childId === childId && duplicateKey(type, r) === key && sameDuplicate(type, r, rec);
+        })[0];
+        if (hit) item.duplicateOf = { col: type, id: hit.id, index: -1, text: duplicateText(type, hit) };
+        else {
+          var prev = (seen[type + '|' + key] || []).filter(function (x) { return sameDuplicate(type, x.rec, rec); })[0];
+          if (prev) item.duplicateOf = { col: '', id: '', index: prev.index, text: duplicateText(type, prev.rec) };
+        }
+        (seen[type + '|' + key] = seen[type + '|' + key] || []).push({ index: index, rec: rec });
+      }
+      if (item.duplicateOf) {
+        problem('warn', 'duplicate', item.duplicateOf.index >= 0
+          ? 'このファイルの中に、同じものがもう1つあります（' + item.duplicateOf.text + '）'
+          : 'すでに同じものがありそうです（' + item.duplicateOf.text + '）');
+      }
+      return finish(item);
+    });
+
+    function finish(item) {
+      item.canImport = !item.problems.some(function (p) { return p.level === 'block'; });
+      item.checked = item.canImport && !item.problems.some(function (p) { return p.level === 'warn'; });
+      return item;
+    }
+  }
+
+  /**
+   * 確認の画面でチェックした記録を、保存できる形 [{ col, rec }] にする。
+   *   items     … checkImport() の結果（checked が true で、canImport も true のものだけ使う）
+   *   childId   … 取り込む先の子ども
+   *   templates … src/templates.json
+   *   today     … 'YYYY-MM-DD'（手続きの工程の目安日を、今日より前にしないため）
+   *   opts      … { db: 今のデータ }（工程の連絡先・子どもの情報の並び順に使う）
+   * process は planProcess() で工程ごとのタスクにする。手続きの受給者証は item.certificateId（画面で選ぶ）。
+   */
+  function applyImport(items, childId, templates, today, opts) {
+    opts = opts || {};
+    var db = opts.db || {};
+    var now = nowIso();
+    var out = [];
+    var mine = function (col) { return alive(db[col]).filter(function (r) { return r.childId === childId; }); };
+    var picked = (items || []).filter(function (it) { return it && it.checked && it.canImport; });
+    var order = mine('profile').reduce(function (m, p) { return Math.max(m, Number(p.order) || 0); }, 0);
+    // 先に記録を作る（同じファイルの医療機関を、手続きの連絡先に使えるように）
+    picked.forEach(function (it) {
+      if (it.type === 'process') return;
+      var rec = { id: uuid(), createdAt: now, updatedAt: now, deleted: false, childId: childId };
+      Object.keys(it.rec).forEach(function (k) { rec[k] = it.rec[k]; });
+      if (it.type === 'profile') rec.order = ++order;
+      out.push({ col: it.type, rec: rec });
+    });
+    var byKind = {};
+    mine('contacts').concat(out.filter(function (x) { return x.col === 'contacts'; }).map(function (x) { return x.rec; }))
+      .forEach(function (c) { if (c.kind && !byKind[c.kind]) byKind[c.kind] = c.id; });
+    picked.forEach(function (it) {
+      if (it.type !== 'process') return;
+      var tpl = findTemplate(templates, it.rec.templateId);
+      if (!tpl || !it.rec.deadline) return;
+      planProcess(tpl, it.rec.deadline, {
+        childId: childId, today: today || ymd(), contactIdsByKind: byKind,
+        certificateId: it.certificateId || '', processName: it.rec.name || tpl.name
+      }).forEach(function (t) { out.push({ col: 'tasks', rec: t }); });
+    });
+    return out;
+  }
+
   // ---------- サンプルデータ（すべて架空） ----------
   function buildSample(today, templates) {
     today = today || ymd();
@@ -704,13 +1025,15 @@ var Logic = (function () {
       v('受診', addDays(today, -14), '○○こども病院', '循環器科', '（架空）定期受診。体重が増えている'),
       v('入院', addDays(today, -75), '○○こども病院', '循環器科', '（架空）心臓の手術', {
         endDate: addDays(today, -60), doctor: '○○先生', symptoms: '（架空）成長にともない呼吸が苦しくなってきた',
-        treatment: '（架空）手術', result: '（架空）経過は良好。在宅酸素は終了' }),
+        treatment: '（架空）手術', result: '（架空）経過は良好。在宅酸素は終了',
+        sourceFile: '2026-08-01_退院療養計画書_架空.pdf' }), // 元の書類（人に渡す書類には印刷しない）
       v('医療的ケアの開始・変更', addDays(today, -300), '○○こども病院', '耳鼻科', '（架空）経管栄養を始めるため入院', { endDate: addDays(today, -297) })
     ];
     function ms(item, days, ageText) {
       return rec({ childId: cid, item: item, achievedOn: days === null ? '' : addDays(birth, days), ageText: ageText || '', note: '' });
     }
     var milestones = [ms('追視', 60), ms('首すわり', 150), ms('寝返り', 240), ms('おすわり', null, '1歳2ヶ月')];
+    milestones[1].sourceFile = '2025-06-01_健診結果_架空.pdf';
     return {
       childId: cid,
       collections: {
@@ -732,6 +1055,7 @@ var Logic = (function () {
     certificateAlerts: certificateAlerts, summarize: summarize,
     certGrade: certGrade, ageYears: ageYears, suggestBenefits: suggestBenefits,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,
-    makeExport: makeExport, migrate: migrate, upgradeCollections: upgradeCollections, mergeImport: mergeImport, buildSample: buildSample
+    makeExport: makeExport, migrate: migrate, upgradeCollections: upgradeCollections, mergeImport: mergeImport, buildSample: buildSample,
+    IMPORT_FORMAT: IMPORT_FORMAT, IMPORT_TYPES: IMPORT_TYPES, parseImportText: parseImportText, checkImport: checkImport, applyImport: applyImport
   };
 })();

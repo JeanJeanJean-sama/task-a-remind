@@ -243,6 +243,7 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   const full = await page.textContent('.doc');
   for (const ch of ['プロフィール', 'について', '睡眠・食事', '医療的ケア・服薬', '医療歴', '症状について', '医療歴（詳細）', '成育歴', '保険証・医療証など', '医療機関・関係機関']) ok(full.includes(ch), '家族用に章「' + ch + '」がある');
   ok(full.includes('2,100g') && full.includes('ハイハイ'), '家族用にはすべて載る');
+  ok(![book, full].some((t) => t.includes('退院療養計画書_架空') || t.includes('健診結果_架空')), '元の書類（sourceFile）は、支援者向けにも家族用にも印刷しない');
   await shot('09_サポートブック_家族用');
   await page.click('text=‹ 戻る');
 

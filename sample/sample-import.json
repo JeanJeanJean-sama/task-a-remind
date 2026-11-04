@@ -1,0 +1,72 @@
+{
+  "format": "task-a-remind-import",
+  "formatVersion": 1,
+  "schemaVersion": 2,
+  "madeBy": "（読み取りに使ったAIの名前。任意）",
+  "madeOn": "2026-10-21",
+  "records": [
+    {
+      "type": "visits",
+      "from": "2026-03-10_退院療養計画書_〇〇こども病院_架空.pdf",
+      "data": {
+        "kind": "入院",
+        "date": "2026-02-28",
+        "endDate": "2026-03-10",
+        "facility": "〇〇こども病院（架空）",
+        "department": "小児科",
+        "summary": "肺炎で入院（架空の例）",
+        "treatment": "点滴の治療。退院後は飲み薬を2週間",
+        "result": "退院後2週間で外来受診の予定"
+      },
+      "unclear": ["date"],
+      "memo": "入院日は書類に「令和8年2月28日ごろ」とあり、日がはっきりしない（架空の例）"
+    },
+    {
+      "type": "contacts",
+      "from": "2026-03-10_退院療養計画書_〇〇こども病院_架空.pdf",
+      "data": {
+        "kind": "病院",
+        "name": "〇〇こども病院（架空）",
+        "department": "小児科",
+        "phone": "000-0000-0000",
+        "hours": "平日 9:00〜17:00"
+      }
+    },
+    {
+      "type": "milestones",
+      "from": "2026-06-05_健診結果_〇〇区_架空.pdf",
+      "data": { "item": "ひとり歩き", "ageText": "1歳5ヶ月" }
+    },
+    {
+      "type": "diagnoses",
+      "from": "2026-06-05_健診結果_〇〇区_架空.pdf",
+      "data": { "name": "（架空の診断名）", "diagnosedOn": "2026-06", "department": "〇〇こども病院（架空） 小児科", "status": "経過観察中" }
+    },
+    {
+      "type": "certificates",
+      "from": "2026-08-01_所得状況届の案内_特別児童扶養手当_架空.pdf",
+      "data": {
+        "kind": "特別児童扶養手当",
+        "status": "取得済み",
+        "issuerName": "〇〇市（架空）",
+        "renewalNote": "毎年8月に所得状況届を出す"
+      },
+      "memo": "番号は書類にあったが、指示どおり書いていない"
+    },
+    {
+      "type": "profile",
+      "from": "2026-06-05_健診結果_〇〇区_架空.pdf",
+      "data": { "category": "発達・できること", "label": "運動", "value": "手すりにつかまって階段をのぼれる（架空の例）" }
+    },
+    {
+      "type": "process",
+      "from": "2026-08-01_所得状況届の案内_特別児童扶養手当_架空.pdf",
+      "data": {
+        "templateId": "tokuji-shotoku",
+        "deadline": "2026-09-11",
+        "name": "特別児童扶養手当の所得状況届（2026年）"
+      },
+      "memo": "締め切りは案内の文面から読み取った（架空の例）"
+    }
+  ]
+}
