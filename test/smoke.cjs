@@ -247,6 +247,58 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   await shot('09_サポートブック_家族用');
   await page.click('text=‹ 戻る');
 
+  // AIで読み取ったデータの取り込み（確認の画面）：架空の取り込み用ファイル sample/sample-import.json を使う
+  const aiText = fs.readFileSync(path.join(__dirname, '..', 'sample', 'sample-import.json'), 'utf8');
+  await page.click('button[data-tab=settings]');
+  await page.click('text=読み取ったデータを取り込む（AIで作ったデータ）');
+  await page.fill('.sheet textarea[name=importText]', 'こんにちは。うまく読めませんでした。');
+  await page.click('.sheet button:has-text("読み取る")');
+  await page.waitForSelector('.sheet .import-error');
+  ok((await page.textContent('.sheet .import-error')).includes('JSON'), '取り込み用のデータがない文を貼ると、理由を出して貼り付けの画面に残る');
+  await page.fill('.sheet textarea[name=importText]', 'できました。\n```json\n' + aiText + '\n```\n日付は書類と見くらべてください。');
+  await page.click('.sheet button:has-text("読み取る")');
+  await page.waitForSelector('text=読み取ったデータの確認');
+  ok(true, 'AIの答え（説明やコードブロックがまじった文）をそのまま貼って読み取れる');
+  await page.selectOption('.sheet select[data-change=importChild]', { label: 'さくら（サンプル）' });
+  const impItems = page.locator('.sheet .imp-item');
+  ok((await impItems.count()) === 7, '取り込み用データの記録が1件ずつ並ぶ');
+  const impRow = (type) => page.locator('.sheet .imp-item:has(.imp-type:text-is("' + type + '"))').first();
+  const visitBox = impRow('受診・入院の記録').locator('input[data-change=importCheck]');
+  ok(!(await visitBox.isChecked()) && (await visitBox.isEnabled()) && (await impRow('受診・入院の記録').textContent()).includes('AIが自信がない'), 'AIが自信がない項目のある記録は、印が付き最初はチェックが外れている');
+  ok(await impRow('医療機関・関係機関').locator('input[data-change=importCheck]').isChecked(), '問題のない記録は、最初からチェックが付いている');
+  const diagRow = impRow('診断名');
+  ok((await diagRow.locator('input[data-change=importCheck]').isDisabled()) && (await diagRow.textContent()).includes('まだ取り込めません'), '診断名などは、まだ取り込めない（3-4 で対応）');
+  ok((await impRow('手続きを始める').textContent()).includes('特別児童扶養手当の所得状況届') && (await impRow('手続きを始める').locator('select[data-change=importCert]').count()) === 1, '手続きは、型の受給者証を選べる');
+  ok((await impRow('受診・入院の記録').textContent()).includes('元の書類：2026-03-10_退院療養計画書'), '元の書類の名前とAIのひとことを見られる');
+  await shot('12_取り込みの確認');
+  // 上の「毎年くり返す型」のテストで同じ型の手続きが始まっているので、重なりの印が付く
+  const procBox = impRow('手続きを始める').locator('input[data-change=importCheck]');
+  ok(!(await procBox.isChecked()) && (await impRow('手続きを始める').textContent()).includes('もう始まっています'), '同じ型の手続きがもう始まっていれば、印が付き最初はチェックが外れている');
+  await visitBox.check();
+  ok((await page.textContent('.sheet [data-act=importApply]')).includes('3件'), 'チェックを付けると、取り込む件数が変わる');
+  await procBox.check();
+  await page.click('.sheet [data-act=importApply]');
+  await page.waitForSelector('text=4件を取り込みました');
+  ok(true, 'チェックしたものだけを取り込める');
+  await page.click('button[data-tab=info]');
+  await page.click('.seg button:has-text("医療機関・関係機関")');
+  ok(await page.isVisible('text=〇〇こども病院（架空）'), '取り込んだ医療機関が出る');
+  await page.click('.seg button:has-text("診断・医療歴")');
+  await page.click('text=肺炎で入院（架空の例）');
+  ok((await page.inputValue('.sheet [name=sourceFile]')).startsWith('2026-03-10_退院療養計画書'), '取り込んだ記録の「元の書類」に、読み取った書類の名前が入る');
+  await page.click('.sheet button:has-text("やめる")');
+  await page.click('button[data-tab=process]');
+  ok(await page.isVisible('.proc-name >> text=特別児童扶養手当の所得状況届（2026年）'), '取り込んだ手続きの工程ができる');
+  // 同じものをもう一度取り込もうとすると、重なりの印が付く
+  await page.click('button[data-tab=settings]');
+  await page.click('text=読み取ったデータを取り込む（AIで作ったデータ）');
+  await page.fill('.sheet textarea[name=importText]', aiText);
+  await page.click('.sheet button:has-text("読み取る")');
+  await page.waitForSelector('text=読み取ったデータの確認');
+  await page.selectOption('.sheet select[data-change=importChild]', { label: 'さくら（サンプル）' });
+  ok(!(await impRow('医療機関・関係機関').locator('input[data-change=importCheck]').isChecked()) && (await impRow('医療機関・関係機関').textContent()).includes('すでに同じものがありそう'), '2回目は、すでにある記録と重なる印が付き、チェックが外れる');
+  await page.click('.sheet button:has-text("やめる")');
+
   // 書き出し → 消して → 読み込み
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('text=データを書き出す（バックアップ・移行用）')]);
   const file = path.join(out, 'export.json');

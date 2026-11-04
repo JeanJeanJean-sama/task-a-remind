@@ -967,6 +967,7 @@
       '<p class="small muted">最後に書き出した日時：' + (last ? h(new Date(last).toLocaleString('ja-JP')) : 'まだありません') + '</p>' +
       '<div class="stack">' + btn('データを書き出す（バックアップ・移行用）', 'exportJson', {}, 'block') +
       '<label class="btn block file-btn">書き出したデータを読み込む<input type="file" accept=".json,application/json" data-change="import" hidden></label>' +
+      btn('読み取ったデータを取り込む（AIで作ったデータ）', 'importAi', {}, 'block') +
       btn('サンプル（架空のデータ）を追加する', 'loadSample', {}, 'block ghost') + '</div>');
 
     html += card('このアプリについて',
@@ -1033,6 +1034,8 @@
   function formView() {
     var f = S.form;
     if (f.kind === 'startProcess') return startProcessForm(f);
+    if (f.kind === 'importPaste') return importPasteForm(f);
+    if (f.kind === 'importReview') return importReviewForm(f);
     var def = SCHEMA.collections[f.col];
     var rec = f.rec;
     var title = f.title || (def.label + (f.isNew ? 'を追加' : 'を編集'));
@@ -1431,6 +1434,220 @@
     reader.readAsText(file);
   }
 
+  // =====================================================================
+  // AIで読み取ったデータの取り込み（提案書A。3-2：確認の画面）
+  //   1. 「読み取ったデータを取り込む」→ AIの答えを貼り付けるか、ファイルを選ぶ（importPaste）
+  //   2. Logic.parseImportText → Logic.checkImport の結果を、確認の画面（importReview）に出す
+  //   3. チェックしたものだけ Logic.applyImport で保存できる形にして保存する
+  // =====================================================================
+  /** 確認の画面で取り込める種類。diagnoses・certificates・profile は 3-4 で足す（ロジックはできている） */
+  var IMPORT_UI_TYPES = ['visits', 'milestones', 'contacts', 'process'];
+
+  function openImportPaste(text, error) {
+    S.form = { kind: 'importPaste', text: text || '', error: error || '' };
+    render();
+  }
+
+  function importPasteForm(f) {
+    return sheet('読み取ったデータを取り込む',
+      '<div class="fields">' +
+      '<p class="hint">AI（チャットのAI）に書類を読ませて作った<b>取り込み用のデータ</b>を、TRMに入れます。<br>' +
+      'AIの答えを<b>そのまま貼り付ける</b>か、保存したファイルを選んでください。次の画面で、1件ずつ中身を確かめてから取り込みます。</p>' +
+      (f.error ? '<p class="warn import-error" role="alert">' + br(f.error) + '</p>' : '') +
+      '<label class="field"><span class="lbl">AIの答えを貼り付ける</span><textarea name="importText" rows="8" placeholder="{ &quot;format&quot;: &quot;task-a-remind-import&quot;, … }" spellcheck="false">' + h(f.text) + '</textarea>' +
+      '<span class="help">説明の文がまじっていてもかまいません。{ 〜 } の部分を探して読みます。</span></label>' +
+      '<label class="btn block file-btn">ファイルを選ぶ<input type="file" accept=".json,.txt,.md,application/json,text/plain" data-change="importAiFile" hidden></label>' +
+      '<p class="small muted">番号の項目（受給者番号など）は取り込みません。取り込んだあとに、必要なら手で入れてください。</p>' +
+      '<div class="sheet-actions"><span class="spacer"></span>' + btn('やめる', 'closeForm', {}, 'ghost') + btn('読み取る', 'importRead', {}, 'primary') + '</div>' +
+      '</div>');
+  }
+
+  /** 貼り付けた文（またはファイルの中身）を読み、確認の画面に進む。読めなければ貼り付けの画面に理由を出す */
+  function startImportReview(text) {
+    var data;
+    try { data = L.parseImportText(text); }
+    catch (e) { openImportPaste(text, errMsg(e)); return; }
+    if (!data.records.length) { openImportPaste(text, '取り込む記録が1件もありません'); return; }
+    var children = all('children');
+    var childId = children.some(function (c) { return c.id === S.childId; }) ? S.childId : (children[0] ? children[0].id : '');
+    S.form = { kind: 'importReview', data: data, text: text, childId: childId, items: [], open: {} };
+    checkImportItems();
+    render();
+  }
+
+  /** 選んでいる子どもで、取り込み用データを調べ直す（子どもを選び直したときも呼ぶ） */
+  function checkImportItems() {
+    var f = S.form;
+    var items = L.checkImport(f.data, SCHEMA, S.db, TEMPLATES, { childId: f.childId, today: today() });
+    items.forEach(function (it) {
+      if (it.canImport && IMPORT_UI_TYPES.indexOf(it.type) < 0) {
+        it.problems.push({ level: 'block', code: 'notYet', key: '', message: 'この種類（' + it.label + '）は、まだ取り込めません。次の版で取り込めるようにします' });
+        it.canImport = false;
+        it.checked = false;
+      }
+    });
+    f.items = items;
+  }
+
+  function importCheckedCount() {
+    return S.form.items.filter(function (it) { return it.checked && it.canImport; }).length;
+  }
+  function importSubmitLabel() {
+    var n = importCheckedCount();
+    return n ? 'チェックした' + n + '件を取り込む' : '取り込むものを選んでください';
+  }
+
+  /** 一覧の1行目に出す、記録の短い説明 */
+  function importItemTitle(it) {
+    var r = it.rec;
+    if (it.type === 'process') {
+      var tpl = L.findTemplate(TEMPLATES, r.templateId);
+      return r.name || (tpl && tpl.name) || r.templateId || '（手続き）';
+    }
+    switch (it.type) {
+      case 'visits': return [r.date ? L.fmtDate(r.date) : '', r.summary || r.kind || ''].filter(Boolean).join('　');
+      case 'milestones': return r.item || '';
+      case 'diagnoses': return r.name || '';
+      case 'certificates': return r.name || r.kind || '';
+      case 'contacts': return [r.name, r.department].filter(Boolean).join('　');
+      case 'profile': return (r.label || '') + (r.value ? '：' + r.value : '');
+      default: return '';
+    }
+  }
+
+  /** 項目ごとの値（とその項目の印）を表にする */
+  function importFieldRows(it) {
+    var rows = [];
+    var probs = function (k) { return it.problems.filter(function (p) { return p.key === k; }); };
+    function row(label, value, k) {
+      var MARK = { block: '取り込めない形', warn: '確かめてください', info: 'お知らせ' };
+      var marks = probs(k).filter(function (p) { return p.code !== 'unclear'; }).map(function (p) {
+        return '<span class="imp-mark imp-' + p.level + '">' + MARK[p.level] + '</span>';
+      }).join('');
+      if (it.unclear.indexOf(k) >= 0) marks += '<span class="imp-mark imp-warn">AIが自信がない</span>';
+      if (it.defaulted.indexOf(k) >= 0 && it.type !== 'process') marks += '<span class="imp-mark imp-info">ふだんの初めの値</span>';
+      rows.push('<tr' + (marks ? ' class="imp-flag"' : '') + '><th>' + h(label) + '</th><td>' + br(value) + marks + '</td></tr>');
+    }
+    if (it.type === 'process') {
+      var tpl = L.findTemplate(TEMPLATES, it.rec.templateId);
+      row('手続きの型', tpl ? tpl.name : (it.rec.templateId || ''), 'templateId');
+      row('締め切り', it.rec.deadline ? L.fmtDate(it.rec.deadline) + '（' + it.rec.deadline + '）' : '', 'deadline');
+      row('手続きの名前', it.rec.name || '（型の名前を使います）', 'name');
+    } else if (SCHEMA.collections[it.type]) {
+      SCHEMA.collections[it.type].fields.forEach(function (fd) {
+        if (fd.key === 'sourceFile' || !(fd.key in it.rec)) return;
+        var v = it.rec[fd.key];
+        if (fd.type === 'select') v = optLabel(fd, v) || v;
+        row(fd.label, v, fd.key);
+      });
+    }
+    return '<table class="imp-fields">' + rows.join('') + '</table>';
+  }
+
+  /** 手続き：型の受給者証の種類に合う、この子どもの受給者証を選べるようにする */
+  function importCertSelect(it) {
+    var tpl = L.findTemplate(TEMPLATES, it.rec.templateId);
+    var kinds = (tpl && tpl.certificateKinds) || [];
+    if (!kinds.length) return '';
+    var certs = all('certificates').filter(function (c) { return c.childId === S.form.childId && kinds.indexOf(c.kind) >= 0; });
+    var opts = '<option value="">（なし）</option>' + certs.map(function (c) {
+      return '<option value="' + h(c.id) + '"' + (c.id === it.certificateId ? ' selected' : '') + '>' + h((c.name || c.kind) + (c.validUntil ? '（期限 ' + L.fmtMD(c.validUntil) + '）' : '')) + '</option>';
+    }).join('');
+    return '<label class="field imp-cert"><span class="lbl">関係する受給者証・手帳</span>' +
+      '<select data-change="importCert" data-index="' + it.index + '"' + (it.canImport ? '' : ' disabled') + '>' + opts + '</select>' +
+      (certs.length ? '' : '<span class="help">「' + h(kinds.join('・')) + '」がまだ登録されていません。なしのままでも取り込めます。</span>') + '</label>';
+  }
+
+  function importItemView(it) {
+    var blocks = it.problems.filter(function (p) { return p.level === 'block'; });
+    var warns = it.problems.filter(function (p) { return p.level === 'warn'; });
+    var infos = it.problems.filter(function (p) { return p.level === 'info'; });
+    var state = blocks.length ? '<span class="pill pill-late">取り込めません</span>'
+      : warns.length ? '<span class="pill pill-soon">確かめてください</span>' : '<span class="pill pill-ok">問題なし</span>';
+    var cls = 'imp-item' + (blocks.length ? ' imp-blocked' : warns.length ? ' imp-warned' : '');
+    var list = function (arr, level) {
+      return arr.length ? '<ul class="imp-problems imp-' + level + '">' + arr.map(function (p) { return '<li>' + h(p.message) + '</li>'; }).join('') + '</ul>' : '';
+    };
+    var open = S.form.open[it.index] !== undefined ? S.form.open[it.index] : !it.checked;
+    return '<div class="' + cls + '" data-index="' + it.index + '">' +
+      '<label class="imp-head"><input type="checkbox" data-change="importCheck" data-index="' + it.index + '"' +
+      (it.checked && it.canImport ? ' checked' : '') + (it.canImport ? '' : ' disabled') + ' aria-label="' + h(it.label + '：' + importItemTitle(it) + 'を取り込む') + '">' +
+      '<span class="imp-title"><span class="imp-type">' + h(it.label) + '</span> ' + state + '<br><b>' + h(importItemTitle(it) || '（中身なし）') + '</b></span></label>' +
+      list(blocks, 'block') + list(warns, 'warn') +
+      '<details class="imp-detail" data-index="' + it.index + '"' + (open ? ' open' : '') + '><summary>中身を見る</summary>' +
+      importFieldRows(it) +
+      (it.from ? '<p class="small imp-from">元の書類：' + h(it.from) + '</p>' : '') +
+      (it.memo ? '<p class="small imp-memo">AIからのひとこと：' + br(it.memo) + '</p>' : '') +
+      list(infos, 'info') +
+      (it.dropped.some(function (d) { return d.reason === 'unknown' || d.reason === 'badValue'; })
+        ? '<p class="small muted">取り込まない項目：' + h(it.dropped.filter(function (d) { return d.reason === 'unknown' || d.reason === 'badValue'; }).map(function (d) { return d.key; }).join('、')) + '（TRMにない項目、または値の形が違うもの）</p>' : '') +
+      '</details>' +
+      (it.type === 'process' ? importCertSelect(it) : '') +
+      '</div>';
+  }
+
+  function importReviewForm(f) {
+    var children = all('children');
+    var items = f.items;
+    var nBlock = items.filter(function (it) { return !it.canImport; }).length;
+    var nWarn = items.filter(function (it) { return it.canImport && !it.checked; }).length;
+    var who;
+    if (!children.length) {
+      who = '<p class="warn">先に子どもを登録してください。取り込んだ記録は、子どもごとに入ります。</p>';
+    } else if (children.length === 1) {
+      who = '<p class="small">取り込む先：<b>' + h(children[0].nickname) + '</b></p>';
+    } else {
+      who = '<label class="field"><span class="lbl">どの子どもに取り込みますか <b class="req">必須</b></span><select data-change="importChild">' +
+        children.map(function (c) { return '<option value="' + h(c.id) + '"' + (c.id === f.childId ? ' selected' : '') + '>' + h(c.nickname) + '</option>'; }).join('') +
+        '</select><span class="help">選び直すと、生まれる前の日付・すでにある記録との重なりを調べ直します（チェックも付け直します）。</span></label>';
+    }
+    var meta = [f.data.madeBy ? '作ったAI：' + f.data.madeBy : '', f.data.madeOn ? '作った日：' + f.data.madeOn : ''].filter(Boolean).join('　');
+    return sheet('読み取ったデータの確認',
+      '<div class="fields import-review">' +
+      who +
+      '<p class="hint">' + items.length + '件あります。<b>チェックを付けたものだけ</b>を取り込みます。' +
+      (nWarn ? '<br>印の付いた ' + nWarn + '件は、最初はチェックを外しています。中身を書類と見くらべて、よければチェックを付けてください。' : '') +
+      (nBlock ? '<br>取り込めないものが ' + nBlock + '件あります（理由を赤で出しています）。' : '') +
+      '<br>取り込んだあとも、ふつうの編集画面で直せます。</p>' +
+      (meta ? '<p class="small muted">' + h(meta) + '</p>' : '') +
+      '<div class="imp-list">' + items.map(importItemView).join('') + '</div>' +
+      '<div class="sheet-actions imp-actions">' + btn('貼り付けに戻る', 'importBack', {}, 'ghost') + '<span class="spacer"></span>' + btn('やめる', 'closeForm', {}, 'ghost') +
+      '<button type="button" class="btn primary" data-act="importApply"' + (children.length && importCheckedCount() ? '' : ' disabled') + '>' + h(importSubmitLabel()) + '</button></div>' +
+      '</div>');
+  }
+
+  /** チェックの付け外しでは画面全体を作り直さない（読んでいる場所がずれないように） */
+  function refreshImportButton() {
+    var b = document.querySelector('[data-act="importApply"]');
+    if (!b) return;
+    b.textContent = importSubmitLabel();
+    b.disabled = !(all('children').length && importCheckedCount());
+  }
+  /** 画面を作り直しても、確認の画面の読んでいる場所を保つ */
+  function renderKeepSheetScroll() {
+    var sh = document.querySelector('.sheet');
+    var top = sh ? sh.scrollTop : 0;
+    render();
+    sh = document.querySelector('.sheet');
+    if (sh) sh.scrollTop = top;
+  }
+
+  function applyImportNow() {
+    var f = S.form;
+    if (!f || f.kind !== 'importReview' || !f.childId || !get('children', f.childId)) return;
+    var picked = f.items.filter(function (it) { return it.checked && it.canImport; });
+    if (!picked.length) return;
+    var out = L.applyImport(f.items, f.childId, TEMPLATES, today(), { db: S.db });
+    if (!out.length) return;
+    var nProc = picked.filter(function (it) { return it.type === 'process'; }).length;
+    S.form = null;
+    S.childId = f.childId;
+    saveUi();
+    saveMany(out, { keepStamp: true }).then(function () {
+      toast(picked.length + '件を取り込みました' + (nProc ? '。手続きの工程は「手続き」に出ます' : ''));
+    });
+  }
+
   function loadSample() {
     var s = L.buildSample(today(), TEMPLATES);
     var items = [];
@@ -1529,6 +1746,13 @@
       }).catch(function (e) { showNotice('PDFを作れませんでした', errMsg(e)); });
     },
     exportJson: exportJson,
+    importAi: function () { openImportPaste(''); },
+    importRead: function () {
+      var ta = document.querySelector('.sheet textarea[name=importText]');
+      startImportReview(ta ? ta.value : (S.form && S.form.text) || '');
+    },
+    importBack: function () { openImportPaste(S.form && S.form.text); },
+    importApply: applyImportNow,
     exportIcs: function () {
       var ics = L.toIcs(mine('tasks'), { calName: 'たすかReマインド' });
       saveOut('たすかReマインド_ToDo.ics', ics, 'text/calendar');
@@ -1600,6 +1824,31 @@
     var kind = el.getAttribute && el.getAttribute('data-change');
     if (kind === 'child') { S.childId = el.value; S.careId = null; saveUi(); render(); }
     else if (kind === 'import') { importFile(el.files && el.files[0]); el.value = ''; }
+    else if (kind === 'importAiFile') {
+      var file = el.files && el.files[0];
+      el.value = '';
+      if (file) {
+        var rd = new FileReader();
+        rd.onload = function () { startImportReview(String(rd.result)); };
+        rd.onerror = function () { openImportPaste('', 'ファイルを読めませんでした'); };
+        rd.readAsText(file);
+      }
+    }
+    else if (kind === 'importCheck' && S.form && S.form.kind === 'importReview') {
+      var it = S.form.items[Number(el.getAttribute('data-index'))];
+      if (it && it.canImport) it.checked = el.checked;
+      refreshImportButton();
+    }
+    else if (kind === 'importCert' && S.form && S.form.kind === 'importReview') {
+      var pit = S.form.items[Number(el.getAttribute('data-index'))];
+      if (pit) pit.certificateId = el.value;
+    }
+    else if (kind === 'importChild' && S.form && S.form.kind === 'importReview') {
+      S.form.childId = el.value;
+      S.form.open = {};
+      checkImportItems();
+      renderKeepSheetScroll();
+    }
     else if (el.name === 'category' && S.form && S.form.col === 'profile') {
       var dl = document.getElementById('sugg-label');
       if (dl) dl.innerHTML = suggestionsFor(fieldDef('profile', 'label'), { category: el.value }).map(function (x) { return '<option value="' + h(x) + '">'; }).join('');
@@ -1614,6 +1863,13 @@
     }
     if (el.form && el.form.getAttribute('data-form') === 'record') updateShowIf(el.form);
   });
+  // 確認の画面の「中身を見る」の開け閉めを覚えておく（画面を作り直しても閉じないように）
+  document.addEventListener('toggle', function (e) {
+    var d = e.target;
+    if (S.form && S.form.kind === 'importReview' && d.classList && d.classList.contains('imp-detail')) {
+      S.form.open[d.getAttribute('data-index')] = d.open;
+    }
+  }, true);
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && (S.form || S.notice)) { S.form = null; S.notice = null; render(); }
   });
