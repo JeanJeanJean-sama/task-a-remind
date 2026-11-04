@@ -225,6 +225,33 @@ var Logic = (function () {
     };
   }
 
+  /**
+   * 小学校に入学する日（4月1日）。6歳になったあとの最初の4月1日。
+   * 満年齢は誕生日の前日に増えるので、4月1日生まれまでは前の学年（早生まれ）になる。
+   */
+  function schoolEntryDate(birth) {
+    var b = parseYmd(birth);
+    if (!b) return '';
+    var m = b.getMonth() + 1, d = b.getDate();
+    var early = m < 4 || (m === 4 && d === 1);
+    return (b.getFullYear() + (early ? 6 : 7)) + '-04-01';
+  }
+
+  /**
+   * 生年月日から、手続きの期限を出す（手続きの型の deadlineFromBirth）。
+   *   { "kind": "schoolEntry" }           → 小学校に入学する日（4月1日）
+   *   { "kind": "birthday", "age": 18 }   → 18歳の誕生日
+   * 返す値：{ date, label, note }。型に決まりがない・生年月日がないときは null。
+   */
+  function birthDeadline(template, birthDate) {
+    var r = template && template.deadlineFromBirth;
+    if (!r || !parseYmd(birthDate)) return null;
+    var note = r.note || '';
+    if (r.kind === 'schoolEntry') return { date: schoolEntryDate(birthDate), label: '小学校に入学する日', note: note };
+    if (r.kind === 'birthday' && Number(r.age) > 0) return { date: addYears(birthDate, Number(r.age)), label: Number(r.age) + '歳の誕生日', note: note };
+    return null;
+  }
+
   /** 期限が近いのに、更新の手続きをまだ始めていない受給者証・手帳 */
   function certificateAlerts(db, today, childId, days) {
     var tasks = alive(db.tasks);
@@ -701,6 +728,7 @@ var Logic = (function () {
     nowIso: nowIso, uuid: uuid, alive: alive, indexById: indexById,
     isActionable: isActionable, dueLabel: dueLabel, findTemplate: findTemplate, groupTemplates: groupTemplates, planProcess: planProcess,
     addYears: addYears, processDeadline: processDeadline, nextYearName: nextYearName, nextRepeat: nextRepeat,
+    schoolEntryDate: schoolEntryDate, birthDeadline: birthDeadline,
     certificateAlerts: certificateAlerts, summarize: summarize,
     certGrade: certGrade, ageYears: ageYears, suggestBenefits: suggestBenefits,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,

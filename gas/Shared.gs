@@ -1935,6 +1935,9 @@ var TEMPLATES = {
       "id": "shugaku-sodan",
       "name": "就学相談と就学先の決定（年長）",
       "group": "年齢の節目",
+      "deadlineFromBirth": {
+        "kind": "schoolEntry"
+      },
       "certificateKinds": [],
       "checkedOn": "2026-11-03",
       "source": "横浜市教育委員会 特別支援教育相談課「就学に向けての相談について」（令和9年4月入学者用）：学区の小学校の校長と面談し、個別支援学級を見学する。申込は特別支援教育総合センターへ、特別支援学校を考えるなら6月30日、個別支援学級・通級なら7月31日まで（郵送か電子申請）。発達検査の結果（1年以内）が要る。相談日が決まるまで最大6か月ほど。就学時健康診断の通知は10月ごろ区役所から届く",
@@ -1943,7 +1946,7 @@ var TEMPLATES = {
           "title": "就学相談の申し込み方法と時期を調べる",
           "window": "night",
           "daysBefore": 420,
-          "script": "期限には「小学校に入学する日（4月1日）」を入れる。横浜市の申込の締め切りは、特別支援学校を考えるなら年長の6月30日、個別支援学級・通級なら7月31日。年中のうちに調べ始めると余裕がある"
+          "script": "期限は「小学校に入学する日（4月1日）」。子どもの生年月日が入っていれば、アプリが自動で入れる。横浜市の申込の締め切りは、特別支援学校を考えるなら年長の6月30日、個別支援学級・通級なら7月31日。年中のうちに調べ始めると余裕がある"
         },
         {
           "title": "療育・相談支援の担当に、就学について相談する",
@@ -2002,6 +2005,11 @@ var TEMPLATES = {
       "id": "iko-18",
       "name": "18歳の切り替え（子どものサービスから大人のサービスへ）",
       "group": "年齢の節目",
+      "deadlineFromBirth": {
+        "kind": "birthday",
+        "age": 18,
+        "note": "高校を卒業する日に合わせたいときは、期限を直してください。"
+      },
       "certificateKinds": [],
       "checkedOn": "2026-11-03",
       "source": "横浜市「障害福祉サービスの利用手続きについて」（2025-11-13更新）：18歳以上の窓口は区の福祉保健センターの高齢・障害支援課（18歳未満はこども家庭支援課。高校3年生まではこども家庭支援課の区もある）。障害支援区分の認定には、認定調査と医師意見書がある。横浜市「愛の手帳の交付」（2024-10-08更新）：判定は18歳未満は児童相談所、18歳以上は障害者更生相談所。時期は区役所と相談支援専門員に確認する",
@@ -2011,7 +2019,7 @@ var TEMPLATES = {
           "window": "day",
           "daysBefore": 365,
           "contactKind": "相談支援",
-          "script": "期限には「18歳の誕生日」か「高校を卒業する日」を入れる。卒業後の通い先（生活介護など）も話す"
+          "script": "期限は「18歳の誕生日」（生年月日からアプリが自動で入れる）。高校を卒業する日に合わせたいときは直す。卒業後の通い先（生活介護など）も話す"
         },
         {
           "title": "卒業後の通い先を見学する",
@@ -2052,6 +2060,10 @@ var TEMPLATES = {
       "id": "nenkin-20",
       "name": "20歳の切り替え（障害基礎年金・特別障害者手当）",
       "group": "年齢の節目",
+      "deadlineFromBirth": {
+        "kind": "birthday",
+        "age": 20
+      },
       "certificateKinds": [],
       "checkedOn": "2026-11-03",
       "source": "日本年金機構「先天性の病気などにより20歳前から障害がありますが…」（2025-09-01更新）・「障害基礎年金を受けられるとき」（2025-12-02更新）、横浜市「年金の請求先」（2023-03-16更新）：初診日が20歳前なら、20歳をすぎてから区役所の保険年金課（国民年金係）に請求する。特別児童扶養手当・障害児福祉手当は20歳で終わり、自動では切り替わらない。必要書類・時期は窓口で確認する",
@@ -2060,7 +2072,7 @@ var TEMPLATES = {
           "title": "初めて病院にかかった日（初診日）と、その病院を確かめる",
           "window": "night",
           "daysBefore": 365,
-          "script": "期限には「20歳の誕生日」を入れる。保管箱の「12_障害年金の準備」を見る。カルテが残っているうちに証明をもらう。乳幼児健診などで障害が確かめられた記録や、療育手帳も役に立つ"
+          "script": "期限は「20歳の誕生日」（生年月日からアプリが自動で入れる）。保管箱の「12_障害年金の準備」を見る。カルテが残っているうちに証明をもらう。乳幼児健診などで障害が確かめられた記録や、療育手帳も役に立つ"
         },
         {
           "title": "区役所の保険年金課（国民年金係）に、申請の流れと必要な書類を聞く",
@@ -2444,6 +2456,33 @@ var Logic = (function () {
       deadline: deadline ? addYears(deadline, 1) : '',
       name: nextYearName(first.processName || tpl.name)
     };
+  }
+
+  /**
+   * 小学校に入学する日（4月1日）。6歳になったあとの最初の4月1日。
+   * 満年齢は誕生日の前日に増えるので、4月1日生まれまでは前の学年（早生まれ）になる。
+   */
+  function schoolEntryDate(birth) {
+    var b = parseYmd(birth);
+    if (!b) return '';
+    var m = b.getMonth() + 1, d = b.getDate();
+    var early = m < 4 || (m === 4 && d === 1);
+    return (b.getFullYear() + (early ? 6 : 7)) + '-04-01';
+  }
+
+  /**
+   * 生年月日から、手続きの期限を出す（手続きの型の deadlineFromBirth）。
+   *   { "kind": "schoolEntry" }           → 小学校に入学する日（4月1日）
+   *   { "kind": "birthday", "age": 18 }   → 18歳の誕生日
+   * 返す値：{ date, label, note }。型に決まりがない・生年月日がないときは null。
+   */
+  function birthDeadline(template, birthDate) {
+    var r = template && template.deadlineFromBirth;
+    if (!r || !parseYmd(birthDate)) return null;
+    var note = r.note || '';
+    if (r.kind === 'schoolEntry') return { date: schoolEntryDate(birthDate), label: '小学校に入学する日', note: note };
+    if (r.kind === 'birthday' && Number(r.age) > 0) return { date: addYears(birthDate, Number(r.age)), label: Number(r.age) + '歳の誕生日', note: note };
+    return null;
   }
 
   /** 期限が近いのに、更新の手続きをまだ始めていない受給者証・手帳 */
@@ -2922,6 +2961,7 @@ var Logic = (function () {
     nowIso: nowIso, uuid: uuid, alive: alive, indexById: indexById,
     isActionable: isActionable, dueLabel: dueLabel, findTemplate: findTemplate, groupTemplates: groupTemplates, planProcess: planProcess,
     addYears: addYears, processDeadline: processDeadline, nextYearName: nextYearName, nextRepeat: nextRepeat,
+    schoolEntryDate: schoolEntryDate, birthDeadline: birthDeadline,
     certificateAlerts: certificateAlerts, summarize: summarize,
     certGrade: certGrade, ageYears: ageYears, suggestBenefits: suggestBenefits,
     buildDigestText: buildDigestText, buildDayText: buildDayText, toIcs: toIcs,

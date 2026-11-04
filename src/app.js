@@ -513,6 +513,40 @@
       '<p>制度は変わることがあります。くわしくは窓口で確かめてください。</p></details>';
   }
 
+  /**
+   * 年齢の節目の型（deadlineFromBirth）なら、子どもの生年月日から期限を入れる。
+   * 期限が空か、前に自動で入れた日のままのときだけ入れ直す（利用者が直した日は変えない）。
+   * すでに過ぎている日は入れない。
+   */
+  function withBirthDeadline(f) {
+    var tpl = L.findTemplate(TEMPLATES, f.templateId);
+    var c = childOf(f.childId || S.childId);
+    var bd = L.birthDeadline(tpl, c.birthDate);
+    var untouched = !f.deadline || (f.autoDeadline && f.deadline === f.autoDeadline);
+    if (!untouched) return f;
+    if (bd && bd.date >= today()) { f.deadline = bd.date; f.autoDeadline = bd.date; }
+    else if (f.autoDeadline) { f.deadline = ''; f.autoDeadline = ''; }
+    return f;
+  }
+  /** 期限の欄の下に出す、生年月日から入れた期限の説明 */
+  function birthDeadlineHint(tpl, f) {
+    if (!tpl || !tpl.deadlineFromBirth) return '';
+    var c = childOf(f.childId || S.childId);
+    var bd = L.birthDeadline(tpl, c.birthDate);
+    var msg;
+    if (!bd) {
+      var label = tpl.deadlineFromBirth.kind === 'schoolEntry' ? '小学校に入学する日' : tpl.deadlineFromBirth.age + '歳の誕生日';
+      msg = '子どもの情報に生年月日を入れると、「' + label + '」を期限に自動で入れます。';
+    } else if (bd.date < today()) {
+      msg = '生年月日から出した「' + bd.label + '」（' + L.fmtDate(bd.date) + '）は、もう過ぎています。期限を入れてください。';
+    } else if (f.deadline === bd.date) {
+      msg = '生年月日（' + L.fmtDate(c.birthDate) + '）から、「' + bd.label + '」（' + L.fmtDate(bd.date) + '）を入れました。' + (bd.note ? bd.note : '');
+    } else {
+      msg = '生年月日から出した「' + bd.label + '」は ' + L.fmtDate(bd.date) + ' です。';
+    }
+    return '<span class="help birth-deadline">' + h(msg) + '</span>';
+  }
+
   function startProcessForm(f) {
     var certs = mine('certificates');
     var tplOpts = templateOptions(f.templateId);
@@ -534,7 +568,9 @@
       }).join('') + '</ol>' + templateSource(tpl) + '</div>' +
       '<label class="field"><span class="lbl">関係する受給者証・手帳</span><select name="certificateId">' + certOpts + '</select></label>' +
       '<label class="field"><span class="lbl">' + (ben ? '申請を終えたい日' : repeat ? '期限（来年の締め切りの見込み）' : '期限（有効期限など）') + ' <b class="req">必須</b></span><input type="date" name="deadline" required value="' + h(f.deadline || '') + '">' +
+      birthDeadlineHint(tpl, f) +
       '<span class="help">この日から逆算して、工程ごとの目安日を決めます。</span></label>' +
+      (f.autoDeadline ? '<input type="hidden" name="autoDeadline" value="' + h(f.autoDeadline) + '">' : '') +
       '<label class="field"><span class="lbl">手続きの名前</span><input type="text" name="name" placeholder="' + h(tpl.name) + '" value="' + h(f.name || '') + '"></label>' +
       '<p class="small muted">' + h(TEMPLATES.caution) + '</p>' +
       '<div class="sheet-actions"><span class="spacer"></span>' + btn(repeat ? '今はしない' : 'やめる', 'closeForm', {}, 'ghost') + '<button type="submit" class="btn primary">' + (repeat ? '来年の分を始める' : '始める') + '</button></div>' +
@@ -1451,7 +1487,7 @@
         var match = TEMPLATES.templates.find(function (t) { return (t.certificateKinds || []).indexOf(cert.kind) >= 0; });
         tplId = match ? match.id : 'generic';
       }
-      S.form = { kind: 'startProcess', templateId: tplId || TEMPLATES.templates[0].id, certificateId: cert ? cert.id : '', deadline: cert ? cert.validUntil : '' };
+      S.form = withBirthDeadline({ kind: 'startProcess', templateId: tplId || TEMPLATES.templates[0].id, certificateId: cert ? cert.id : '', deadline: cert ? cert.validUntil : '' });
       render();
     },
     benefitStart: function (d) {
@@ -1573,7 +1609,7 @@
     else if (kind === 'tplPreview') {
       var form = el.form;
       var fd = new FormData(form);
-      S.form = { kind: 'startProcess', templateId: fd.get('templateId'), certificateId: fd.get('certificateId'), deadline: fd.get('deadline'), name: fd.get('name'), benefitId: fd.get('benefitId') || '', childId: fd.get('childId') || '', repeat: fd.get('repeat') || '' };
+      S.form = withBirthDeadline({ kind: 'startProcess', templateId: fd.get('templateId'), certificateId: fd.get('certificateId'), deadline: fd.get('deadline'), name: fd.get('name'), benefitId: fd.get('benefitId') || '', childId: fd.get('childId') || '', repeat: fd.get('repeat') || '', autoDeadline: fd.get('autoDeadline') || '' });
       render();
     }
     if (el.form && el.form.getAttribute('data-form') === 'record') updateShowIf(el.form);

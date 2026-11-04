@@ -254,6 +254,10 @@ test('手続きの型が決まりに合っている（選択肢・工程の日�
     if (t.group !== undefined) assert.ok(groups.includes(t.group), `${t.id} の group「${t.group}」`);
     if (t.repeat !== undefined) assert.equal(t.repeat, 'yearly', t.id);
     if (t.checkedOn !== undefined) assert.match(t.checkedOn, /^\d{4}-\d{2}-\d{2}$/, t.id);
+    if (t.deadlineFromBirth !== undefined) {
+      const r = t.deadlineFromBirth;
+      assert.ok(r.kind === 'schoolEntry' || (r.kind === 'birthday' && Number.isInteger(r.age) && r.age > 0), `${t.id} の deadlineFromBirth`);
+    }
     let prev = Infinity;
     for (const st of t.steps) {
       assert.ok(st.title, t.id);
@@ -292,6 +296,31 @@ test('新しい手続きの型（所得状況届）から工程を作る', () =>
   assert.equal(tasks[0].dueDate, '2027-08-12');
   assert.equal(tasks[2].contactId, 'k9');
   assert.ok(tasks[0].script.includes('9月11日'));
+});
+
+test('生年月日から期限を出す（就学：入学する年の4月1日、18歳・20歳：誕生日）', () => {
+  // 4月2日生まれ〜翌年4月1日生まれが同じ学年（4月1日生まれは早生まれ）
+  assert.equal(L.schoolEntryDate('2020-04-02'), '2027-04-01');
+  assert.equal(L.schoolEntryDate('2020-04-01'), '2026-04-01');
+  assert.equal(L.schoolEntryDate('2021-03-31'), '2027-04-01');
+  assert.equal(L.schoolEntryDate('2020-12-25'), '2027-04-01');
+  assert.equal(L.schoolEntryDate('2021-01-01'), '2027-04-01');
+  assert.equal(L.schoolEntryDate(''), '');
+  const sh = L.birthDeadline(L.findTemplate(T, 'shugaku-sodan'), '2021-06-10');
+  assert.equal(sh.date, '2028-04-01');
+  assert.equal(sh.label, '小学校に入学する日');
+  const b18 = L.birthDeadline(L.findTemplate(T, 'iko-18'), '2010-07-20');
+  assert.equal(b18.date, '2028-07-20');
+  assert.equal(b18.label, '18歳の誕生日');
+  assert.ok(b18.note.includes('高校を卒業する日'));
+  assert.equal(L.birthDeadline(L.findTemplate(T, 'nenkin-20'), '2008-02-29').date, '2028-02-29', 'うるう年の20歳の誕生日');
+  assert.equal(L.birthDeadline(L.findTemplate(T, 'iko-18'), '2008-02-29').date, '2026-02-28', 'うるう年でなければ2/28');
+  assert.equal(L.birthDeadline(L.findTemplate(T, 'nenkin-20'), ''), null, '生年月日がなければ出さない');
+  assert.equal(L.birthDeadline(L.findTemplate(T, 'ryouiku-renew'), '2020-04-02'), null, '決まりのない型は出さない');
+  assert.deepEqual(T.templates.filter((t) => t.deadlineFromBirth).map((t) => t.id).sort(), ['iko-18', 'nenkin-20', 'shugaku-sodan']);
+  // 出した期限から工程を作れる（就学相談の最初の工程は420日前）
+  const tasks = L.planProcess(L.findTemplate(T, 'shugaku-sodan'), sh.date, { childId: 'c1', today: '2026-11-04' });
+  assert.equal(tasks[0].dueDate, '2027-02-06');
 });
 
 test('毎年くり返す型：最後の工程が終わったら、期限を1年先にした来年の分の案を出す', () => {

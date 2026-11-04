@@ -97,6 +97,47 @@ const url = 'file://' + path.join(__dirname, '..', 'docs', 'index.html');
   ok(!(await doneCard.locator('button:has-text("来年の分を始める")').count()), '来年の分を始めたら、ボタンは消える');
   await doneCard.locator('button:has-text("閉じる")').click();
 
+  // 年齢の節目の型：生年月日から期限を自動で入れる（サンプルの子どもは今日の640日前に生まれた架空の子）
+  const birth = new Date(); birth.setHours(0, 0, 0, 0); birth.setDate(birth.getDate() - 640);
+  const early = birth.getMonth() + 1 < 4 || (birth.getMonth() + 1 === 4 && birth.getDate() === 1);
+  const entry = (birth.getFullYear() + (early ? 6 : 7)) + '-04-01';
+  const bday = (n) => { const d = new Date(birth); d.setFullYear(birth.getFullYear() + n); if (d.getDate() !== birth.getDate()) d.setDate(0); return ymd(d); };
+  await page.click('text=＋ 手続きを始める');
+  await page.selectOption('select[name=templateId]', 'shugaku-sodan');
+  await page.waitForSelector('.sheet .birth-deadline:has-text("小学校に入学する日")');
+  ok((await page.inputValue('.sheet input[name=deadline]')) === entry, '就学相談の型を選ぶと、期限に入学する年の4月1日が入る');
+  await shot('03c_生年月日から期限');
+  await page.selectOption('select[name=templateId]', 'iko-18');
+  await page.waitForSelector('.sheet .birth-deadline:has-text("18歳の誕生日")');
+  ok((await page.inputValue('.sheet input[name=deadline]')) === bday(18), '18歳の切り替えの型では、18歳の誕生日が入る');
+  ok(await page.isVisible('.sheet .birth-deadline:has-text("高校を卒業する日")'), '18歳の型では、卒業の日に直せることを案内する');
+  await page.fill('input[name=deadline]', '2040-03-01');
+  await page.selectOption('select[name=templateId]', 'nenkin-20');
+  await page.waitForSelector('.sheet .birth-deadline:has-text("20歳の誕生日")');
+  ok((await page.inputValue('.sheet input[name=deadline]')) === '2040-03-01', '自分で直した期限は、型を変えても上書きしない');
+  await page.fill('input[name=deadline]', '');
+  await page.selectOption('select[name=templateId]', 'shugaku-sodan');
+  await page.selectOption('select[name=templateId]', 'nenkin-20');
+  await page.waitForSelector('.sheet .birth-deadline:has-text("を入れました")');
+  ok((await page.inputValue('.sheet input[name=deadline]')) === bday(20), '期限が空なら、20歳の誕生日が入る');
+  await page.selectOption('select[name=templateId]', 'ryouiku-renew');
+  ok((await page.inputValue('.sheet input[name=deadline]')) === '', '年齢の節目でない型に変えると、自動で入れた期限は消える');
+  await page.selectOption('select[name=templateId]', 'nenkin-20');
+  await page.click('.sheet button[type=submit]');
+  await page.waitForSelector('text=手続きを登録しました');
+  ok(await page.isVisible('.proc-name >> text=20歳の切り替え'), '生年月日から入れた期限で手続きを作れる');
+  // 生年月日のない子ども（最初に登録した「テスト」）では入れずに、生年月日を入れるよう案内する
+  const sampleChild = await page.inputValue('select.child-select');
+  await page.selectOption('select.child-select', { label: 'テスト' });
+  await page.click('button[data-tab=process]');
+  await page.click('text=＋ 手続きを始める');
+  await page.selectOption('select[name=templateId]', 'shugaku-sodan');
+  await page.waitForSelector('.sheet .birth-deadline:has-text("生年月日を入れると")');
+  ok((await page.inputValue('.sheet input[name=deadline]')) === '', '生年月日がなければ、期限は入れずに案内だけ出す');
+  await page.click('.sheet button:has-text("やめる")');
+  await page.selectOption('select.child-select', sampleChild);
+  await page.click('button[data-tab=process]');
+
   // 使えるかもしれない制度（目安）：サンプルは横浜市・身体障害者手帳3級（架空）
   const ben = page.locator('.card:has-text("使えるかもしれない制度（目安）")');
   ok(await ben.isVisible(), '手続きの画面に「使えるかもしれない制度（目安）」が出る');
